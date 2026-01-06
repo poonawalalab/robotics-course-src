@@ -10,10 +10,13 @@ execute:
   freeze: auto
 ---
 
-|Date		|Topic										| Slides			| Notes | Modern Robotics Chapter | RMC Book|
-|:---		|:---										|:---				|:---|:---:|:---:|
-|Jan 10	    |Course Overview; Motion Tasks				| [Introduction](assets/01_Introduction.pdf) | | 1 |1|
-|Jan 12	    |Simulation using `Julia`; Alternatives		| | \pdflink{Julia Tutorial}{JuliaTutorial}|
+|Date		|Topic										| Slides					| Notes | Modern Robotics Chapter	| RMC Book[^1]	|
+|:---		|:---										|:---						|:---	|:---:						|:---:		|
+|Jan 13	    | Course Overview; Motion Tasks				| [Overview](overview.html)	|		| 1							|1			|
+|Jan 15	    | `MuJoCo` Setup							|							|		|
+
+[^1]: \emph{Robot Modeling and Control}, M. W. Spong, S. Hutchinson, and M. Vidyasagar, John Wiley \& Sons, 2006.
+<!--
 |Jan 17	    |Robots as powered mechanisms				|  \pdflink{Powered Mechanisms}{02_Robots_As_Powered_Mechanisms} | | 2.1-2.3|1|
 | (self)	|Affine Spaces								| \pdflink{Euclidean Space}{04_Euclidean_Space}|\coursenotes{1}|
 |Jan 19		|Reference Frames & Coordinates; Coordinate/Rigid Body Transformations| \pdflink{Euclidean Space}{04_Euclidean_Space}|\coursenotes{1}| 3.1|2.1|
@@ -52,4 +55,5 @@ execute:
 |			|Feedback Linearization| | | |10.2|
 |			|Grasping and Manipulation| | |- |
 |			|Wheeled Mobile Robots| | | 13 |10.5 |
+-->
 

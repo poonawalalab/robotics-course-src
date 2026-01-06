@@ -62,7 +62,7 @@ execute:
  
 ## About me
 
--   Grew up in UK and India
+-   Grew up in England and India
 
 -   Undergraduate degree in Mech. Engg. in India
 
@@ -79,6 +79,43 @@ execute:
 
 **Day-to-day:** Theory from dynamics and control systems, simulations/experiments involving machine learning and robots.
 :::
+
+## Navigation 
+
+::: {.centered-content}
+![](assets/images/wheeledbot.png)
+:::
+
++ Simple linear controller $< 1$ MB size 
+	+ Based on the Support Vector Machine
+
++ Guaranteed to navigate hallway without crashing
+
+## Contact-Rich Manipulation
+
+:::: {.columns}
+
+::: {.column width="49%"}
+
+<video width="100%"  controls autoplay="on" loop onloadstart="this.playbackRate = 2.0;">
+  <source src="assets/videos/expert_short.mp4" type="video/mp4"/>
+</video>
+
+Guided Policy Search
+
+:::
+
+::: {.column width="49%"}
+
+<video width="100%"  controls autoplay="on" loop onloadstart="this.playbackRate = 2.0;">
+  <source src="assets/videos/no_expert_step.mp4" type="video/mp4"/>
+</video>
+
+No guidance
+
+:::
+
+::::
 
 ## Motivation 
 
@@ -118,6 +155,18 @@ execute:
 
 <!-- ![](assets/images/anymal.png){height="20%"} -->
 <!-- ![](assets/images/drone.jpg){height="20%"} -->
+
+## What's Left? 
+
+- Touch feedback
+- Human-Robot Interaction 
+- Safety
+- Reliability
+- Energetic Efficiency
+
+Previous: Will the prototype work? 
+
+Now: Will this be a viable commercial product?
 
 ## Tasks For Robots
 
@@ -161,7 +210,9 @@ Learning Goals:
 
 6.  Learn optimization-based approaches to planning and control.
 
-7.  Simulate robotic systems and test control algorithms.
+7.  Understand contact modeling and control challenges.
+
+8.  Simulate robotic systems and test control algorithms.
 
 ## Course Overview  {.smaller}
 
@@ -180,16 +231,14 @@ Approaches for achieving goals:
 
     5.  Feedback Control
 
--   Paper readings
+-   Research article discussions
 
--   Practice through assignments (code and question) and **Course
-    Project**
+-   Practice through assignments (code and question) and **Course Project**
 :::
 
 ## Expectations{.smaller}
 
--   Read notes ahead of time. Classroom activities ASSUME YOU ARE DOING
-    THE READING.
+-   You are reviewing notes and slides.
 
 -   Comfort with mathematics:
 

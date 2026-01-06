@@ -15,7 +15,7 @@ website:
       contents:
         - text: "Getting Started"
           href: introduction.qmd
-        # - schedule.qmd
+        - schedule.qmd
         - overview.qmd
 
 format:
