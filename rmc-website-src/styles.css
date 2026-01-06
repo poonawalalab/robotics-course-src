@@ -1,0 +1,13 @@
+/* css styles */
+.centered-content {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.centered-content-flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}

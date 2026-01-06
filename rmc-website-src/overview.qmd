@@ -1,0 +1,211 @@
+---
+title: "Overview"
+pagetitle: "Overview"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css	  
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "Robot Modeling and Control •<a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+	
+execute:
+    freeze: auto
+# execute:
+#     freeze: auto
+---
+
+## Syllabus {.smaller}
+
+-   **Lecture:** Tue & Thur 2:00pm - 3:15pm, FPAT 253.
+
+-   **Office Hours:** TBD
+
+-   **Text:** Notes +*Modern Robotics*+ *Robot Modeling and Control*
+
+-   **Workload:** 2.5 hours of lecture, 8 hours of reading notes,
+    papers, and writing simulation code per week.
+
+-   **Course announcements:** I use canvas to send information, but
+    don't read inbox messages. Contacting me by email with **\[ME 676
+    RMC\]:** or **\[AER 676 RMC\]:** makes it easy for me to track and
+    respond to your emails.
+
+-   **Course website:** All course material will be available on the
+    website, which will be updated as the course proceeds.
+
+## Syllabus {.smaller}
+-   **Academic Integrity**
+
+-   **Accommodations due to disability**
+
+-   **Attendance Policy**
+
+-   **Classroom Conduct**
+
+-   **Excused Absences & Verification of Absences**
+
+-   **Exams:** None.
+
+-   **Homework:** Weekly assignments, must adhere to rules in syllabus
+
+-   **Grading:** See Syllabus. Subject to change.
+ 
+ 
+## About me
+
+-   Grew up in UK and India
+
+-   Undergraduate degree in Mech. Engg. in India
+
+-   Masters in Mech. Engg from U. Michigan
+
+-   Ph.D in Electrical Engg. from UT Dallas
+
+-   PostDoc at UT Austin in Computational Control
+
+
+::: {.callout-tip icon="false" .fragment fragment-index=0}
+## Research 
+**Goal:** Get mechanical robots to control themselves.
+
+**Day-to-day:** Theory from dynamics and control systems, simulations/experiments involving machine learning and robots.
+:::
+
+## Motivation 
+
+![](assets/images/terminator.jpg){width="80%"}
+
+## Motivation 
+
+::: {.centered-content}
+![](assets/images/robutler.jpg){width="50%"}
+:::
+
+## Motivation
+
+
+::: {.centered-content-flex}
+![](assets/images/atlas.jpg){height="20%"}
+![](assets/images/cassie.jpg){height="20%"}
+
+![](assets/images/anymal.png){height="20%"}
+![](assets/images/drone.jpg){height="20%"}
+:::
+
+## Tasks For Robots
+
+-   What kinds of tasks requires a physical robot? (Or, what can't your
+    phone do?)
+
+-   How would you describe the motion you want to a robot?
+
+-   How would you, as a robot, convert that description into action?
+
+## Course Overview
+
+
+::: {.callout-tip}
+## Learning Goal 
+
+For you to be able to read and assimilate both recent
+papers and early foundational papers on robotics. Furthermore, develop
+programming skills that enable you to implement and try (possibly new)
+methods in simulation.
+
+:::
+
+## Course Overview {.smaller}
+
+Learning Goals:
+
+1.  Understand coordinates and robot configurations.
+
+2.  Understand how to transform the robot configuration into task
+    coordinates and *vice versa*, along with the challenges in these
+    processes.
+
+3.  Learn approaches to planning motions in both task coordinates and
+    robot configurations.
+
+4.  Learn approaches to achieving planned motions using feedback
+    control.
+
+5.  Understand the challenges of state estimation.
+
+6.  Learn optimization-based approaches to planning and control.
+
+7.  Simulate robotic systems and test control algorithms.
+
+## Course Overview  {.smaller}
+
+Approaches for achieving goals:
+
+::: {.incremental}
+-   Lecture/Discussion on
+
+    1.  Coordinates
+
+    2.  Dynamical Systems: single and articulated rigid bodies
+
+    3.  Planning Trajectories
+
+    4.  Sensing and State Estimation
+
+    5.  Feedback Control
+
+-   Paper readings
+
+-   Practice through assignments (code and question) and **Course
+    Project**
+:::
+
+## Expectations{.smaller}
+
+-   Read notes ahead of time. Classroom activities ASSUME YOU ARE DOING
+    THE READING.
+
+-   Comfort with mathematics:
+
+    -   Abstract definitions.
+
+    -   Imagining concrete examples to which they apply.
+
+    -   Applying definitions to complete derivations and proofs.
+
+-   Comfort with code:
+
+    -   How to use documentation describing installation and use of
+        packages.
+
+    -   Awareness of the need to test code frequently
+        tests will need testing.
+
+-   Study groups. Don't go this one alone.
+
+## About You 
+
+On an index card / sheet of paper, write down:
+
+1.  Name
+
+2.  First robot you were aware of and/or Favorite robot
+
+3.  Motivation for taking this course
+
+4.  Concerns about the course
+
+5.  Topics you wish were on the syllabus
+
+6.  Topics you have already studied
+
+7.  Learning/teaching styles that you feel work well for you
+

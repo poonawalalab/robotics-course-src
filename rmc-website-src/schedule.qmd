@@ -1,0 +1,55 @@
+---
+title: "Topics"
+format: 
+  html:
+    standalone: false
+    self-contained: false
+
+execute: 
+  echo: false
+  freeze: auto
+---
+
+|Date		|Topic										| Slides			| Notes | Modern Robotics Chapter | RMC Book|
+|:---		|:---										|:---				|:---|:---:|:---:|
+|Jan 10	    |Course Overview; Motion Tasks				| [Introduction](assets/01_Introduction.pdf) | | 1 |1|
+|Jan 12	    |Simulation using `Julia`; Alternatives		| | \pdflink{Julia Tutorial}{JuliaTutorial}|
+|Jan 17	    |Robots as powered mechanisms				|  \pdflink{Powered Mechanisms}{02_Robots_As_Powered_Mechanisms} | | 2.1-2.3|1|
+| (self)	|Affine Spaces								| \pdflink{Euclidean Space}{04_Euclidean_Space}|\coursenotes{1}|
+|Jan 19		|Reference Frames & Coordinates; Coordinate/Rigid Body Transformations| \pdflink{Euclidean Space}{04_Euclidean_Space}|\coursenotes{1}| 3.1|2.1|
+|Jan 24		|Coordinate/Frame Transformation; Homogenous Transformations| \pdflink{Homogenous Transformations}{05_Cartesian_Coordinates_Homogenous_Transformations} |\coursenotes{ 1.5 } |3.3.1|2.2-2.6|
+| (self)	|Forward Kinematics|  \pdflink{FwdKin}{06_Forward_Kinematics_Jacobians}| \coursenotes{2.2, 2.3} |4| 3.1|
+|Jan 26		|Rotations| \pdflink{Rotations}{05_Rotation_Matrices} |\coursenotes{ 1.5 } |3.3.1|2.2-2.6|
+| Jan 26	| Jacobians | \pdflink{Velocities}{05_Velocities_Of_Frames}| \coursenotes{2.2, 2.3} |5.1 | 4.6 |
+| Jan 26 	| Twists, Wrenches|  \pdflink{TwistWrench}{05_Wrenches_and_Twists}|  |3.3|- |
+| (self) 	|Inverse Kinematics|\pdflink{InvKin}{07_Inverse_Kinematics} |\coursenotes{2.2} | 6 | 3.2|
+| (self) 	| Velocity Kinematics | \pdflink{Velocities}{05_Velocities_Of_Frames}| \coursenotes{2.2, 2.3} |3.3 | 4.1-4.5 |
+|			| 2D Newton-Euler Dynamics| | \coursenotes{3.1} |3.1 | 7.6
+|			| 3D Newton-Euler Dynamics| | \coursenotes{3.1} | 8.2| 7.6
+|			|Euler-Lagrangian Dynamics| \pdflink{Dynamics}{08_Euler_Lagrangian_Models}| \coursenotes{3.2, 3.3} | 8.1, 8.4-8.5|7.1-7.4
+|			|Newton-Euler Inverse Dynamics| | |8.3 |7.6 |
+|			|Actuator Models|  \pdflink{Actuation}{09_Actuation}|\coursenotes{3} | 8.9| 6.5|
+|			|Feedforward and Feedback Control|  [FF and FB](\fillnote/10_Feedforward_Feedback_Tracking.pdf)|\coursenotes{4.1}|  |
+|			| Independent Joint Control| [IJC](\fillnote/11_IJC_PID.pdf)|\coursenotes{4.1}|11.4.2.1 | 6|
+|			| Gravity Compensation | \pdflink{GravComp}{12_GC_PD}| \coursenotes{4.2} | | 8.1
+|			| Inverse Dynamics Control| [InvDyn](\fillnote/13_Inverse_Dynamics_CTC.pdf)|\coursenotes{4.2}|11.4.2.2 | 8.2|
+|			(self)|  Properties of EL Dynamics| \pdflink{Dynamics}{08_Euler_Lagrangian_Models}|\coursenotes{3.4} | 8.1|7.5|
+|			| Robust and Adaptive Control| |\coursenotes{4.2.4,4.2.5}| | 8.3|
+|			|Passivity-Based Control| |\coursenotes{4.3} | |8.4|
+|			|Force Control| |\coursenotes{4.4} |11.5 |9|
+|			|Contacts| |\coursenotes{4.4} |11.6 | 9.1|
+|			|Hybrid Force-Position Control| |\coursenotes{4.4} |11.6 | 9.3.3|
+|			|Impedance||\coursenotes{4.5} |11.7| 9.2|
+|			|Hybrid Impedance Control||\coursenotes{4.5} |11.7| 9.3.2|
+|			|Impedance Control||\coursenotes{4.5} |11.7| 9.3.2|
+|			| Motion Planning |[MP0](\fillnote/21_Motion_Planning_0.pdf), [Search](\fillnote/20_Search.pdf), [MP1](\fillnote/21_Motion_Planning_I.pdf) |\coursenotes{5.1, 5.3, 5.4} |10.3| 5.2, 5.3 |
+|			| Potential-based Methods|[MP2](\fillnote/22_Motion_Planning_II.pdf)|\coursenotes{5.2}|10.5| 5.4|
+|			| Kalman Filtering|[Probability](\fillnote/23_Probability.pdf), [KF](\fillnote/24_State_Estimation.pdf)| | | |
+|			| KF, SLAM|[SLAM](\fillnote/25_SLAM.pdf)| | | |
+|			| SLAM, Review|[SLAM](\fillnote/25_SLAM.pdf)| | | |
+|			| Brief: Optimal Control, RL|[LQR](\fillnote/18_LQR.pdf)| | | |
+|			| | | | ||
+|			|Feedback Linearization| | | |10.2|
+|			|Grasping and Manipulation| | |- |
+|			|Wheeled Mobile Robots| | | 13 |10.5 |
+

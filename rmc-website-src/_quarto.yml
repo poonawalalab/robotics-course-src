@@ -1,0 +1,30 @@
+project:
+  type: website
+  resources: assets/
+
+website:
+  title: "Robot Modeling Control"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - about.qmd
+  sidebar:
+      style: "docked"
+      search: true
+      contents:
+        - text: "Getting Started"
+          href: introduction.qmd
+        # - schedule.qmd
+        - overview.qmd
+
+format:
+  html:
+    theme:
+      - cosmo
+      - brand
+    css: styles.css
+    toc: true
+
+
+
