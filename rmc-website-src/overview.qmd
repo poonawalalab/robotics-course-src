@@ -86,20 +86,38 @@ execute:
 
 ## Motivation 
 
+{{< video https://www.youtube.com/watch?v=JZllfrHRc4g width="1067" height="600" >}}
+
+
+## Motivation 
+
 ::: {.centered-content}
 ![](assets/images/robutler.jpg){width="50%"}
 :::
 
 ## Motivation
 
+{{< video https://www.youtube.com/watch?v=uVcBa6NXAbk width="1067" height="600" >}}
 
-::: {.centered-content-flex}
-![](assets/images/atlas.jpg){height="20%"}
-![](assets/images/cassie.jpg){height="20%"}
 
-![](assets/images/anymal.png){height="20%"}
-![](assets/images/drone.jpg){height="20%"}
+## Motivation
+
+
+::: {.centered-content-flex} 
+{{< video https://www.youtube.com/watch?v=I44_zbEwz_w width="400" height="226" >}}
+{{< video https://www.youtube.com/watch?v=q8IdbodRG14 width="400" height="226" >}}
+{{< video https://www.youtube.com/watch?v=DeLpnTgzJT4 width="400" height="226" >}}
 :::
+::: {.centered-content-flex} 
+{{< video https://www.youtube.com/watch?v=REvNnUzVDAA width="400" height="226" >}}
+{{< video https://www.youtube.com/watch?v=yz2in2eFATE width="400" height="226" >}}
+{{< video https://www.youtube.com/watch?v=6XrbWp9xeKM width="400" height="226" >}}
+:::
+<!-- ![](assets/images/atlas.jpg){height="20%"} -->
+<!-- ![](assets/images/cassie.jpg){height="20%"} -->
+
+<!-- ![](assets/images/anymal.png){height="20%"} -->
+<!-- ![](assets/images/drone.jpg){height="20%"} -->
 
 ## Tasks For Robots
 
