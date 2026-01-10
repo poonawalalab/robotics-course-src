@@ -1,5 +1,5 @@
 ---
-title: "Getting Started"
+title: "Python Setup"
 format: 
   html:
     standalone: false
@@ -36,7 +36,7 @@ If you want to use machine learning, consider the following packages:
 
 Virtual environments allow you to install a custom set of packages with custom package versions for a project. 
 
-Inside the `dlcourse` directory, run
+Inside the `robotics-course` directory, run
 ```
 python -m venv code-venv
 ```
@@ -61,3 +61,4 @@ Two **KEY** issues to watch out for:
 
 
 ## MuJoCo
+

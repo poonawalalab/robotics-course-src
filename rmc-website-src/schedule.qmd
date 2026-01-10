@@ -13,9 +13,9 @@ execute:
 |Date		|Topic										| Slides					| Notes | Modern Robotics Chapter	| RMC Book[^1]	|
 |:---		|:---										|:---						|:---	|:---:						|:---:		|
 |Jan 13	    | Course Overview; Motion Tasks				| [Overview](overview.html)	|		| 1							|1			|
-|Jan 15	    | `MuJoCo` Setup							|							|		|
+|Jan 15	    | `MuJoCo` Setup							|							| [webpage](introduction.html#mujoco)		|
 
-[^1]: \emph{Robot Modeling and Control}, M. W. Spong, S. Hutchinson, and M. Vidyasagar, John Wiley \& Sons, 2006.
+[^1]: _Robot Modeling and Control_, M. W. Spong, S. Hutchinson, and M. Vidyasagar, John Wiley \& Sons, 2006.
 <!--
 |Jan 17	    |Robots as powered mechanisms				|  \pdflink{Powered Mechanisms}{02_Robots_As_Powered_Mechanisms} | | 2.1-2.3|1|
 | (self)	|Affine Spaces								| \pdflink{Euclidean Space}{04_Euclidean_Space}|\coursenotes{1}|

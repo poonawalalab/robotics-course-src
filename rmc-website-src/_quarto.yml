@@ -9,14 +9,18 @@ website:
       - href: index.qmd
         text: Home
       - about.qmd
+    right: 
+      - href: https://uk.instructure.com/courses/2151702
+        text: Canvas
   sidebar:
       style: "docked"
       search: true
       contents:
-        - text: "Getting Started"
+        - text: "Python"
           href: introduction.qmd
         - schedule.qmd
-        - overview.qmd
+        - papers.qmd
+        - extras.qmd
 
 format:
   html:

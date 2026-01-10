@@ -1,0 +1,28 @@
+---
+title: "Extras"
+format: 
+  html:
+    standalone: false
+    self-contained: false
+
+execute: 
+  echo: false
+  freeze: auto
+
+coursepdf: assets/extras/
+---
+
+|Topic|Other|
+|:---|:---|
+|Linear Algebra |[Gilbert Strang's lectures](https://ocw.mit.edu/courses/mathematics/18-06-linear-algebra-spring-2010/)
+|ODEs| [ODE Slides]({{< meta coursepdf >}}/ME340_A1_Differential_Equations_Slides.pdf) [ODE Models]({{< meta coursepdf >}}/ME340_02_ODE_Models_Notes.pdf), [Mechanical Sys]({{< meta coursepdf >}}/ME340_03_Mechanical_Systems.pdf),  [Electrical Sys]({{< meta coursepdf >}}/ME340_04_Electrical\ Systems.pdf),
+|Servo Motors|[mynotes]({{< meta coursepdf >}}/Servo_Motors.pdf), [PID](https://www.youtube.com/playlist?list=PLggLP4f-rq02ecj0q0VB9jEbfua8lOc_E), [PMDC Motors](https://www.youtube.com/playlist?list=PLggLP4f-rq02o8CuzclHrbdVCEZ1noFEj), [Gears](https://www.youtube.com/playlist?list=PLggLP4f-rq02tJpO5NUa-w0wP_fL_n72n), [DC Motor Control](https://www.youtube.com/playlist?list=PLggLP4f-rq03w7Bm5M-EjF8Yn4wL_M7HW)  |
+|Control Systems|[Laplace Transforms]({{< meta coursepdf >}}/ME340_05_Laplace_Transform_Notes.pdf), [Transfer Functions]({{< meta coursepdf >}}/ME340_06_Transfer_Functions_Notes.pdf), [Stability]({{< meta coursepdf >}}/stability.pdf)  |
+|Linear Systems| [Linearization]({{< meta coursepdf >}}/ME340_08_Linearization_Notes.pdf), [LTI Systems]({{< meta coursepdf >}}/ME340_10_Linear_State_Variable_Equations_Notes.pdf)|
+|Probability|[CS188 Lec11](https://www.youtube.com/watch?v=dAreEFoRONw), [mynotes]({{< meta coursepdf >}}/Probability.pdf)
+|Optimization|[OG Source](https://stanford.edu/~boyd/cvxbook/), [Course](https://poonawalalab.github.io/opt-slides/)|
+| AI as Search| [Berekeley CS 188 Lec1](https://www.youtube.com/watch?v=BEjSz-0H97g)
+|Markov decision processes (MDPs)|[CS188 Lec 7](https://www.youtube.com/watch?v=wIloocUqL-E), [CS188 Lec 8](https://www.youtube.com/watch?v=S0jvKddQdUU)
+|Reinforcement Learning|[Sergey Levine's course](http://rail.eecs.berkeley.edu/deeprlcourse/), [mynotes]({{< meta coursepdf >}}/Reinforcement_Learning.pdf)|
+|Differential Geometry|[mynotes]({{< meta coursepdf >}}/Differential_Geometry.pdf)|
+
