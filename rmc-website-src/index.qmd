@@ -2,7 +2,7 @@
 title: "Robot Modeling Control"
 ---
 
-This course covers methods for planning and executing the movement of mobile robots (navigation), robot arms (manipulation) and legs (manipulation). 
+This course covers methods for planning and executing the movement of mobile robots (navigation), robot arms (manipulation) and legs (locomotion). 
 
 Course github: [poonawalalab/robotics-course](https://github.com/poonawalalab/robotics-course)
 

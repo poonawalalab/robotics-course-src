@@ -91,6 +91,84 @@ execute:
 
 + Guaranteed to navigate hallway without crashing
 
+## Results
+
+
+<video width="32%"  controls autoplay="on" loop onloadstart="this.playbackRate = 2.0;">
+  <source src="https://poonawalalab.github.io/ccs-seminar-slides/assets/IMG_0943.MOV" type="video/mp4">
+</video>
+
+<video width="32%"  controls autoplay="on" loop onloadstart="this.playbackRate = 2.0;">
+  <source src="https://poonawalalab.github.io/ccs-seminar-slides/assets/robot_short_camnavonly.mov" type="video/mp4">
+</video>
+
+<video width="32%" controls autoplay="on" loop onloadstart="this.playbackRate = 2.0;">
+  <source src="https://poonawalalab.github.io/ccs-seminar-slides/assets/robot_short_lidar.mov" type="video/mp4">
+</video>
+
+[^1]: 2x playback
+
+## Guaranteed Collision Avoidance
+
+::: {.centered-content}
+![](assets/images/csl25_sim.png)
+:::
+
+## Distance-based Navigation
+
+::: {.centered-content}
+![](assets/images/rangescan.png)
+:::
+
+
+## Object-aware Navigation
+
+::: {style=position:absolute;left:0px;top:100px;width:50%}
+![](assets/images/mmdetection.png){width="50%"}
+![](assets/images/arrowphi.png){width="50%"}
+:::
+
+
+::: {style=position:absolute;left:0px;bottom:100px;width:45%;font-size:5;}
+Replace $1/r(\phi)$ with measure of object presence at $\phi$
+:::
+
+
+::: {.centered-content}
+![](assets/images/traversescan.png){width="40%"}
+:::
+
+
+::: {.fragment fragment-index=1 style=position:absolute;right:-100px;top:150px;width:45%;}
+![](assets/images/transformers.png){width="60%"}
+
+"Find [bus]{style=color:blue} below [tree]{style=color:green}. Approach and help [people]{style=color:red} getting on." 
+
+:::
+
+## Yolov9 Segmentation Model
+
+::: {.centered-content}
+![[Source: https://img.freepik.com/premium-vector/vector-realistic-washing-machine-white-3d-mockup_208581-782.jpg?semt=ais_hybrid]{style=font-size:10px}](https://poonawalalab.github.io/ccs-seminar-slides/assets/187674113-2074d658-f2fb-42d1-ac15-9c4a695e64d7.png){height="150px"}
+:::
+
+<video width="320" height="240" controls autoplay="on" loop onloadstart="this.playbackRate = 0.1;">
+  <source src="https://poonawalalab.github.io/ccs-seminar-slides/assets/0b.mov" type="video/mp4">
+</video>
+
+<video width="320" height="240" controls autoplay="on" loop onloadstart="this.playbackRate = 0.1;">
+  <source src="https://poonawalalab.github.io/ccs-seminar-slides/assets/1.mov" type="video/mp4">
+</video>
+
+<video width="320" height="240" controls autoplay="on" loop onloadstart="this.playbackRate = 0.1;">
+  <source src="https://poonawalalab.github.io/ccs-seminar-slides/assets/2.mov" type="video/mp4">
+</video>
+
+::: aside 
+Implementation by Karthika Hariprasad, Paul Dunbar High School
+:::
+
+
 ## Contact-Rich Manipulation
 
 :::: {.columns}
