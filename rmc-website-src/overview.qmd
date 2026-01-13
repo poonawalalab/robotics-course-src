@@ -118,6 +118,18 @@ Approaches for achieving goals:
 
 -   Practice through assignments (code and question) and **Course Project**
 
+## Grades 
+
+| Name                            | Weight | Due (Tentative) | 
+|:---|:---:|:---|
+| Assignment 1                 | 20%    | Week 3          |
+| Assignment 2                 | 20%    | Week 6          |
+| Research Article Discussions | 10%    | Weeks 7 -10     |
+| Project Proposal             | 10%    | Week 11         |
+| Assignment 3                 | 20%    | Week 12         |
+| Project Presentation         | 20%    | Week 15         |
+
+
 ## Expectations{.smaller}
 
 -   You are reviewing notes and slides.
@@ -160,6 +172,20 @@ Approaches for achieving goals:
 :::
 
 
+
+## Inspiration
+
+
+::: {.centered-content-flex} 
+{{< video https://www.youtube.com/watch?v=VloMC21HIWo width="400" height="226" >}}
+{{< video https://www.youtube.com/watch?v=7a6GrKqOxeU width="400" height="226" >}}
+{{< video https://www.youtube.com/watch?v=wMlDT17C_Vs width="400" height="226" >}}
+:::
+::: {.centered-content-flex} 
+{{< video https://www.youtube.com/watch?v=XFXj81mvInc width="400" height="226" >}}
+{{< video https://www.youtube.com/watch?v=wE3fmFTtP9g&t=3s width="400" height="226" >}}
+{{< video https://www.youtube.com/watch?v=xlOwk6_xpWo width="400" height="226" >}}
+:::
 
 ## About You 
 
