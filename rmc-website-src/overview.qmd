@@ -23,6 +23,8 @@ execute:
 #     freeze: auto
 ---
 
+# Syllabus
+
 ## Syllabus {.smaller}
 
 -   **Lecture:** Tue & Thur 2:00pm - 3:15pm, FPAT 253.
@@ -55,32 +57,220 @@ execute:
 
 -   **Exams:** None.
 
--   **Homework:** Weekly assignments, must adhere to rules in syllabus
+-   **Homework:** Intermittent assignments, must adhere to rules in syllabus
 
 -   **Grading:** See Syllabus. Subject to change.
  
- 
-## About me
+## Course Overview
 
--   Grew up in England and India
+
+::: {.callout-tip}
+## Learning Goal 
+
+For you to be able to read and assimilate both recent
+papers and early foundational papers on robotics. Furthermore, develop
+programming skills that enable you to implement and try (possibly new)
+methods in simulation.
+
+:::
+
+## Course Overview {.smaller}
+
+Learning Goals:
+
+1.  Understand coordinates and robot configurations.
+
+2.  Understand how to transform the robot configuration into task
+    coordinates and *vice versa*, along with the challenges in these
+    processes.
+
+3.  Learn approaches to planning motions in both task coordinates and
+    robot configurations.
+
+4.  Learn approaches to achieving planned motions using feedback
+    control.
+
+5.  Understand the challenges of state estimation.
+
+6.  Learn optimization-based approaches to planning and control.
+
+7.  Understand contact modeling and control challenges.
+
+8.  Simulate robotic systems and test control algorithms.
+
+## Course Overview  {.smaller}
+
+Approaches for achieving goals:
+
+-   Lecture/Discussion on
+
+    1.  Coordinates
+
+    2.  Dynamical Systems: single and articulated rigid bodies
+
+    3.  Planning Trajectories
+
+    4.  Sensing and State Estimation
+
+    5.  Feedback Control
+
+-   Research article discussions
+
+-   Practice through assignments (code and question) and **Course Project**
+
+## Expectations{.smaller}
+
+-   You are reviewing notes and slides.
+
+-   Comfort with mathematics:
+
+    -   Abstract definitions.
+
+    -   Imagining concrete examples to which they apply.
+
+    -   Applying definitions to complete derivations and proofs.
+
+-   Comfort with code:
+
+    -   How to use documentation describing installation and use of
+        packages.
+
+    -   Awareness of the need to test code frequently
+        tests will need testing.
+
+-   Study groups. Don't go this one alone.
+
+
+## About Me
+
+-   Grew up in India (early childhood in England)
 
 -   Undergraduate degree in Mech. Engg. in India
 
--   Masters in Mech. Engg from U. Michigan
+-   Masters in Mech. Engg focusing on Mechatronics
 
--   Ph.D in Electrical Engg. from UT Dallas
+-   Ph.D in Electrical Engg. from UT Dallas: Legged Robots -> Graph Theory + Multi-robot coordination + Quadrotors
 
--   PostDoc at UT Austin in Computational Control
+-   PostDoc at UT Austin: Stability Analysis of Classifier-in-the-Loop Systems
 
 
 ::: {.callout-tip icon="false" .fragment fragment-index=0}
 ## Research 
 **Goal:** Get mechanical robots to control themselves.
-
-**Day-to-day:** Theory from dynamics and control systems, simulations/experiments involving machine learning and robots.
 :::
 
-## Navigation 
+
+
+## About You 
+
+On an index card / sheet of paper, write down:
+
+1.  Name
+
+2.  First robot you were aware of and/or Favorite robot
+
+3.  Motivation for taking this course
+
+4.  Concerns about the course
+
+5.  Topics you wish were on the syllabus
+
+6.  Topics you have already studied
+
+7.  Learning/teaching styles that you feel work well for you
+
+ 
+# Motivation 
+
+## Motivation 
+
+![](assets/images/terminator.jpg){width="80%"}
+
+## Motivation 
+
+{{< video https://www.youtube.com/watch?v=JZllfrHRc4g width="1067" height="600" >}}
+
+
+## Motivation 
+
+::: {.centered-content}
+![](assets/images/robutler.jpg){width="50%"}
+:::
+
+## Motivation
+
+{{< video https://www.youtube.com/watch?v=uVcBa6NXAbk width="1067" height="600" >}}
+
+
+## Motivation
+
+
+::: {.centered-content-flex} 
+{{< video https://www.youtube.com/watch?v=I44_zbEwz_w width="400" height="226" >}}
+{{< video https://www.youtube.com/watch?v=q8IdbodRG14 width="400" height="226" >}}
+{{< video https://www.youtube.com/watch?v=DeLpnTgzJT4 width="400" height="226" >}}
+:::
+::: {.centered-content-flex} 
+{{< video https://www.youtube.com/watch?v=REvNnUzVDAA width="400" height="226" >}}
+{{< video https://www.youtube.com/watch?v=yz2in2eFATE width="400" height="226" >}}
+{{< video https://www.youtube.com/watch?v=6XrbWp9xeKM width="400" height="226" >}}
+:::
+<!-- ![](assets/images/atlas.jpg){height="20%"} -->
+<!-- ![](assets/images/cassie.jpg){height="20%"} -->
+
+<!-- ![](assets/images/anymal.png){height="20%"} -->
+<!-- ![](assets/images/drone.jpg){height="20%"} -->
+
+
+
+## Exercise
+
+Sketch a diagram describing your guess for the underlying system architecture that achieves these kinds of behaviors
+
+
+## What's Left? 
+
+- Touch feedback
+- Human-Robot Interaction 
+- Safety
+- Reliability
+- Energetic Efficiency
+
+Previous: Will the prototype work? 
+
+Now: Will this be a viable commercial product?
+
+
+# My Research
+
+## 
+
+![](assets/images/Research_Showcase_2.png)
+
+## Goal 
+
+**Goal:** Get mechanical robots to control themselves.
+
+**Day-to-day:**
+
+- Theory from dynamics and control systems, 
+- Algorithm development: optimization   
+- Simulations/experiments
+
+
+## Navigation using Deep Learning
+
+::: {.centered-content}
+![](assets/images/quadcils.jpg){width="75%"}
+:::
+
+## End-to-end Neural Net Control
+
+::: {.centered-content}
+![](assets/images/e2e.png)
+:::
+
+## Navigation using Machine Learning
 
 ::: {.centered-content}
 ![](assets/images/wheeledbot.png)
@@ -113,6 +303,15 @@ execute:
 ::: {.centered-content}
 ![](assets/images/csl25_sim.png)
 :::
+
+
+## Mapping 
+
+::: {.centered-content}
+![](assets/videos/slam-animation.gif)
+:::
+
+Uses Pose-Graph-based SLAM, A$^*$, and pure pursuit algorithm to get to a location. 
 
 ## Distance-based Navigation
 
@@ -169,6 +368,16 @@ Implementation by Karthika Hariprasad, Paul Dunbar High School
 :::
 
 
+
+
+
+## Contact-Rich Manipulation
+
+
+::: {.centered-content}
+![](assets/images/eager_problem.png){width="100%"}
+:::
+
 ## Contact-Rich Manipulation
 
 :::: {.columns}
@@ -195,162 +404,69 @@ No guidance
 
 ::::
 
-## Motivation 
-
-![](assets/images/terminator.jpg){width="80%"}
-
-## Motivation 
-
-{{< video https://www.youtube.com/watch?v=JZllfrHRc4g width="1067" height="600" >}}
 
 
-## Motivation 
+## Contact-Rich Manipulation
+
+<video width="64%"  controls autoplay="on" loop onloadstart="this.playbackRate = 2.0;">
+  <source src="assets/videos/EAGER_result_Jan26_clip.mp4" type="video/mp4">
+</video>
+
+## DL for Smart Sensors and Data
+
+
+![](https://images.squarespace-cdn.com/content/v1/57f6d51c9f74566f55ecf271/1665060932040-MLI0XZ0XR5ZV6V84ZXK2/MATHIS_2018_fly.gif?format=1000w){height=300px}
+![](assets/images/weldpool.png){height=300px}
+![](https://www.iberoptics.com/5905-thickbox_default/smart-camera-sc3000.jpg){height=300px}
+
+![](https://pyimagesearch.com/wp-content/uploads/2015/11/pedestrian_detection_person_293.jpg){height=300px}
+![](https://www.researchgate.net/profile/Shuvendu-Roy-2/publication/332255419/figure/fig2/AS:845119586582528@1578503619055/Examples-of-car-detection-by-YOLO-object-detector.ppm){height=300px}
+
+
+
+## Tracking Robot Arms
 
 ::: {.centered-content}
-![](assets/images/robutler.jpg){width="50%"}
+![](assets/images/panda_grip.jpg){width="70%"}
 :::
 
-## Motivation
-
-{{< video https://www.youtube.com/watch?v=uVcBa6NXAbk width="1067" height="600" >}}
-
-
-## Motivation
-
-
-::: {.centered-content-flex} 
-{{< video https://www.youtube.com/watch?v=I44_zbEwz_w width="400" height="226" >}}
-{{< video https://www.youtube.com/watch?v=q8IdbodRG14 width="400" height="226" >}}
-{{< video https://www.youtube.com/watch?v=DeLpnTgzJT4 width="400" height="226" >}}
+::: {style=position:absolute;top:50px;right:0px}
+<img src="assets/images/aicoach3.jpg" width="94px" height="123px" style="transform:rotate(-30deg);"> </img>
 :::
-::: {.centered-content-flex} 
-{{< video https://www.youtube.com/watch?v=REvNnUzVDAA width="400" height="226" >}}
-{{< video https://www.youtube.com/watch?v=yz2in2eFATE width="400" height="226" >}}
-{{< video https://www.youtube.com/watch?v=6XrbWp9xeKM width="400" height="226" >}}
+
+::: {style=position:absolute;top:300px;left:0px}
+<img src="assets/images/aicoach3.jpg" width="94px" height="123px" style="transform:scaleX(-1);"> </img>
 :::
-<!-- ![](assets/images/atlas.jpg){height="20%"} -->
-<!-- ![](assets/images/cassie.jpg){height="20%"} -->
 
-<!-- ![](assets/images/anymal.png){height="20%"} -->
-<!-- ![](assets/images/drone.jpg){height="20%"} -->
+::: {style=position:absolute;bottom:50px;right:0px}
+<img src="assets/images/aicoach3.jpg" width="94px" height="123px" style="transform:rotate(30deg);"> </img>
+:::
 
-## What's Left? 
-
-- Touch feedback
-- Human-Robot Interaction 
-- Safety
-- Reliability
-- Energetic Efficiency
-
-Previous: Will the prototype work? 
-
-Now: Will this be a viable commercial product?
-
-## Tasks For Robots
-
--   What kinds of tasks requires a physical robot? (Or, what can't your
-    phone do?)
-
--   How would you describe the motion you want to a robot?
-
--   How would you, as a robot, convert that description into action?
-
-## Course Overview
+## DREAM Model 
+::: {.centered-content}
+![[https://sim2realai.github.io/assets/img/2020-06-29/Lee_etal_2020_dream_panda_reaching_frame.png]{style=font-size:15px}](https://sim2realai.github.io/assets/img/2020-06-29/Lee_etal_2020_dream_panda_reaching_frame.png)
+:::
 
 
-::: {.callout-tip}
-## Learning Goal 
+## DREAM Model
 
-For you to be able to read and assimilate both recent
-papers and early foundational papers on robotics. Furthermore, develop
-programming skills that enable you to implement and try (possibly new)
-methods in simulation.
+::: {.centered-content}
+![https://sim2realai.github.io/assets/img/2020-06-29/Lee_etal_2020_dream_pipeline.png](https://sim2realai.github.io/assets/img/2020-06-29/Lee_etal_2020_dream_pipeline.png)
 
 :::
 
-## Course Overview {.smaller}
++ 80 - 200 MB model depending on the backbone (VGG-X vs ResNet-X)
 
-Learning Goals:
+## DREAM On Jetson Nanos 
 
-1.  Understand coordinates and robot configurations.
-
-2.  Understand how to transform the robot configuration into task
-    coordinates and *vice versa*, along with the challenges in these
-    processes.
-
-3.  Learn approaches to planning motions in both task coordinates and
-    robot configurations.
-
-4.  Learn approaches to achieving planned motions using feedback
-    control.
-
-5.  Understand the challenges of state estimation.
-
-6.  Learn optimization-based approaches to planning and control.
-
-7.  Understand contact modeling and control challenges.
-
-8.  Simulate robotic systems and test control algorithms.
-
-## Course Overview  {.smaller}
-
-Approaches for achieving goals:
-
-::: {.incremental}
--   Lecture/Discussion on
-
-    1.  Coordinates
-
-    2.  Dynamical Systems: single and articulated rigid bodies
-
-    3.  Planning Trajectories
-
-    4.  Sensing and State Estimation
-
-    5.  Feedback Control
-
--   Research article discussions
-
--   Practice through assignments (code and question) and **Course Project**
+::: {.centered-content}
+![image](assets/images/IMG_0164.jpg){width="30%"}
+![image](assets/images/IMG_0165.jpg){width="30%"}
+![image](assets/images/IMG_0166.jpg){width="30%"}
 :::
 
-## Expectations{.smaller}
 
--   You are reviewing notes and slides.
-
--   Comfort with mathematics:
-
-    -   Abstract definitions.
-
-    -   Imagining concrete examples to which they apply.
-
-    -   Applying definitions to complete derivations and proofs.
-
--   Comfort with code:
-
-    -   How to use documentation describing installation and use of
-        packages.
-
-    -   Awareness of the need to test code frequently
-        tests will need testing.
-
--   Study groups. Don't go this one alone.
-
-## About You 
-
-On an index card / sheet of paper, write down:
-
-1.  Name
-
-2.  First robot you were aware of and/or Favorite robot
-
-3.  Motivation for taking this course
-
-4.  Concerns about the course
-
-5.  Topics you wish were on the syllabus
-
-6.  Topics you have already studied
-
-7.  Learning/teaching styles that you feel work well for you
+::: aside 
+Implementation by Varun Hariprasad
+:::
 
