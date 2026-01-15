@@ -13,7 +13,7 @@ execute:
 |Date		|Topic										| Slides					| [Notes](https://poonawalalab.github.io/rmc-s21/assets/pdf/00_RMC_Notes.pdf) | Modern Robotics Chapter	| RMC Book[^1]	|
 |:---		|:---										|:---						|:---	|:---:						|:---:		|
 |Jan 13	    | Course Overview; Motion Tasks				| [Overview](overview.html)	|		| 1							|1			|
-|Jan 15	    | `MuJoCo` Setup							|							| [webpage](introduction.html)		|
+|Jan 15	    | `MuJoCo` Setup							|[`MuJoCo`](mujoco.html)		| [webpage](introduction.html)		|
 
 [^1]: _Robot Modeling and Control_, M. W. Spong, S. Hutchinson, and M. Vidyasagar, John Wiley \& Sons, 2006.
 <!--

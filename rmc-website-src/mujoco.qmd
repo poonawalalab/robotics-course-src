@@ -1,0 +1,186 @@
+
+---
+title: "MuJoCo and XML"
+pagetitle: "MuJoCo"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css	  
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "Robot Modeling and Control •<a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+	
+execute:
+    freeze: auto
+# execute:
+#     freeze: auto
+---
+
+
+# Modeling via XML
+
+## Basic Example
+
+
+:::: {.columns}
+
+::: {.column width="49%"}
+
+```python
+{{< include _site/code/basic_mujoco.py >}}
+```
+
+:::
+
+::: {.column width="49%"}
+
+```{python}
+{{< include ../code/render_SP.py >}}
+```
+Run `python3 code/basic_mujoco.py`
+
+
+:::
+
+::::
+
+
+## Basic Example
+
+
+
+```{.python  code-line-numbers="10-22|10,22|12,21|13|14|16,20|18,19|17"}
+{{< include _site/code/basic_mujoco.py >}}
+```
+
+
+## Basic Example with Loading 
+
+
+:::: {.columns}
+
+::: {.column width="49%"}
+
+```{.python code-line-numbers="|5,6"}
+{{< include _site/code/basic_mujoco.py >}}
+```
+`code/basic_mujoco.py`
+
+:::
+
+::: {.column width="49%"}
+
+```{.python code-line-numbers="|5,6"}
+{{< include _site/code/mujoco_load_xml.py >}}
+```
+
+`code/mujoco_load_xml.py`
+
+:::
+
+::::
+
+
+
+## Interactive 
+
+```{python}
+#| eval: False
+#| echo: True
+python3 -m mujoco.viewer 
+```
+and then drag and drop `xml` files from `models/`
+
+
+## Block Example
+
+```{.python  code-line-numbers="|1,11|2|3,10|4|5|6-9|8|7"}
+{{< include _site/models/block.xml >}}
+```
+
+```{python} 
+import mujoco
+import matplotlib.pyplot as plt
+
+model = mujoco.MjModel.from_xml_path('_site/models/block.xml')
+data = mujoco.MjData(model)
+data.qpos[0]=0.1
+
+{{< include ../code/renderer.py >}}
+
+```
+
+## Blocks Example
+
+:::: {.columns}
+
+::: {.column width="49%"}
+
+```{.python  code-line-numbers="|10-13|10|14-17"}
+{{< include _site/models/blocks.xml >}}
+```
+
+:::
+
+::: {.column width="49%"}
+
+```{python} 
+import mujoco
+import matplotlib.pyplot as plt
+
+model = mujoco.MjModel.from_xml_path('_site/models/blocks.xml')
+data = mujoco.MjData(model)
+data.qpos[0]=0.1
+
+{{< include ../code/renderer.py >}}
+
+```
+
+
+:::
+
+::::
+
+
+## Actuated Example
+
+```{python} 
+import mujoco
+import matplotlib.pyplot as plt
+
+model = mujoco.MjModel.from_xml_path('_site/models/simple_pendulum_act.xml')
+data = mujoco.MjData(model)
+data.qpos[0]=0.1
+
+{{< include ../code/renderer.py >}}
+
+```
+
+
+## Actuated Example
+
+```{python} 
+#| eval: False
+#| echo: True
+{{< include _site/code/mujoco_load_xml_control.py >}}
+```
+`code/mujoco_load_xml_control.py`
+
+## Extras 
+
+### Models 
+
+[MuJoCo menagerie](https://github.com/google-deepmind/mujoco_menagerie)
+
+### Simulation
+
+[MuJoCo Playground](https://playground.mujoco.org/)
+[MJ Control](https://github.com/kevinzakka/mjctrl)
