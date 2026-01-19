@@ -1,0 +1,972 @@
+---
+pagetitle: "Unconstrained Optimization"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css	  
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "From Systems Optimization I •<a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+	
+execute:
+    freeze: auto
+# execute:
+#     freeze: auto
+---
+
+
+## Optimization Theory and Practice {.center .smaller}
+<!-- ###################################################################### -->
+
+<hr>
+
+### Nonlinear Least Squares
+
+<br/>
+
+::: {layout="[120, 60]"}
+__Instructor__: Hasan A. Poonawala<br>
+<br>
+Mechanical and Aerospace Engineering <br>
+University of Kentucky, Lexington, KY, USA
+
+__Topics__: <br>
+Nonlinear Least Squares <br>
+Necessary and Sufficient Conditions <br>
+Overview of Algorithms <br>
+:::
+
+
+## Example: Curve Fitting {.smaller}
+
+Suppose we have data in the form of pairs $$\{x_{i},y_{i}\}_ {i \in \{1,\dots,m\}}.$$
+
+We believe that the model is of the form $$\phi(x; \theta) = \theta_{1} + \theta_{2} e^{\frac{(\theta_{3}-x )^2}{\theta_{4}}} + \theta_{5} \cos(\theta_{6} x).$$
+
+A standard approach is to find the values of $\theta_{j}$, $j \in \{1,\dots,6\}$ by solving $$\min_{\theta \in \mathbb R^6} \sum_{i=1}^{m} r_{i}^{2}(\theta)$$ 
+where $$r_{i}(\theta) = y_{i} - \phi(x_{i}; \theta)$$
+
+This is a _nonlinear least-square problem_.
+
+## Nonlinear Least Squares 
+
+Residual (or error): $$r_{i}(\theta) = e_{i}(\theta) = y_{i} - \phi(x_{i}; \theta)$$
+Loss: Mean Square Error:  
+
+\begin{aligned}
+L(\theta) &= \frac{1}{m} \sum_{i=1}^{m} r_{i}^{2}(\theta) = \frac{1}{m} \sum_{i=1}^{m}  r_{i}(\theta)^T r_{i}(\theta)\\
+ &= e(\theta)^T e(\theta)\\
+\end{aligned}
+::: {.fragment fragment-index=0}
+\begin{aligned}
+\implies \nabla_\theta L(\theta) &= -2 e^T(\theta) J(\theta)\\
+\implies \nabla_\theta^2 L(\theta) &= -2 J^T(\theta) J(\theta)- 2 \sum e_i(\theta) H_i(\theta)
+\end{aligned}
+
+Where $J(\theta)$ is the *Jacobian* $\nabla_\theta \phi(x;\theta)$ \
+$H_i(\theta)$ is the Hessian $\nabla_\theta^2 \phi(x_i;\theta)$
+:::
+
+## Nonlinear Least Squares 
+
+Residual (or error): $$r_{i}(\theta) = e_{i}(\theta) = y_{i} - \phi(x_{i}; \theta)$$
+Loss: Mean Square Error:  
+
+\begin{aligned}
+L(\theta) &= \frac{1}{m} \sum_{i=1}^{m} r_{i}^{2}(\theta) = \frac{1}{m} \sum_{i=1}^{m}  r_{i}(\theta)^T r_{i}(\theta)\\
+ &= e(\theta)^T e(\theta)
+\end{aligned}
+::: {.fragment fragment-index=0}
+\begin{aligned}
+\implies \frac{ \mathrm{ d} L(\theta)}{\mathrm{ d} t} &= e(\theta)^T \frac{ \partial e(\theta)}{\partial \theta} \dot \theta(t)  = -e(\theta)^T J(\theta) \dot \theta(t)
+\end{aligned}
+:::
+
+::: {.fragment fragment-index=1}
+Choosing $\dot \theta(t)$  produces some $\frac{ \mathrm{ d} L(\theta(t))}{\mathrm{ d} t}$. What values should we want for these?
+:::
+
+## Nonlinear Least Squares 
+
+We want\ $\frac{ \mathrm{ d} L(\theta(t))}{\mathrm{ d} t} < 0$ so as to minimize $L(\theta(t))$ as $t \to \infty$
+
+We can achieve that if\ $\frac{ \mathrm{ d} L(\theta)}{\mathrm{ d} t} =  - e(\theta)^T B e(\theta)$
+
+$\implies$ solve $J(\theta) \dot \theta = B e(\theta)$ for $\dot \theta$ where $B = B^T \succ 0$
+
+Options:
+
+1. Steepest descent: $\dot \theta(t) =   J(\theta)^T e(\theta)$
+2. Gauss-Newton direction:  $\dot \theta(t) = J^{+} e(\theta)$[^4]
+3. Levenberg–Marquardt direction:  $\dot \theta(t) = J^{+}_{\text{damped}} e(\theta)$
+
+[^4]: $J^{+}$ is the Moore Penrose Pseudoinverse^T
+
+## Dimensions
+
+$\theta \in \mathbb{R}^p$ and $y_i, \phi(x_i;\theta),e_i \in \mathbb R$, 
+
+$\implies e \in \mathbb R^m$ $\implies J(\theta) \in \mathbb R^(m \times p)$, $\implies e^T J(\theta) \in \mathbb R^(1 \times p)$
+
+$\nabla_\theta L(\theta) \in \mathbb{R}^(1 \times p)$, $\nabla_\theta^{2} L(\theta) \in \mathbb{R}^(p \times p)$
+
+Assume $J(\theta) = J$ has rank $\min(m,p)$
+
+If $m < p$ then $J^{+} = J^T ( J J^T )^{-1}   \in \mathbb{R}^(p \times m)$
+
+If $m > p$ then $J^{+} = ( J^T J )^{-1}  J^T  \in \mathbb{R}^(p \times m)$
+
+Compute $J^{+}$ using a singular value decomposition of $J(\theta)$
+
+## Solutions 
+
+
+::: {.callout-tip icon=false}
+### Global minimizer
+A point $x^{*}$ is a _global minimizer_ if $f(x^*) \leq f(x)$[^3] for all $x \in \mathbb R^n$.   
+:::
+
+::: {.callout-tip icon=false}
+### Local minimizer
+A point $x^{*}$ is a _local minimizer_ if there is a neighborhood $\mathcal N$ of $x^*$ where $f(x^*) \leq f(x)$  for all $x \in \mathcal N$, where a neighborhood of $y$ is an open set containing $y$. 
+:::
+
+
+::: {.callout-tip icon=false}
+### Strict local minimizer
+A point $x^{*}$ is a _strict local minimizer_ if there is a neighborhood $\mathcal N$ of $x^*$ where $f(x^*) < f(x)$  for all $x \in \mathcal N$ with $x \neq x^*$.
+:::
+
+[^3]: $f(x)$ in optimizer is $L(\theta)$ in curve fitting
+
+
+## Summary {.smaller}
+
+| Condition | What we know | What it tells us | Notes |
+|---|---|---|---|
+| 1st Ord Necessary| $x^\star$ is LM[^1], $f$ differentiable | $\nabla f(x^{\star})=0$ | Proof justifies steepest descent|
+| 2nd Ord Necessary| $x^\star$ is LM, $f$ and $\nabla^2 f$ exist, are continuous on $\mathcal N$  | $\nabla f(x^{\star})=0$ and $\nabla^2 f(x^{\star})$ is PSD||
+| 2nd Ord Sufficient| $\nabla f(x^{\star})=0$ and $\nabla^2 f(x^{\star})$ is PD|  $x^\star$ is strict LM | Leads to algorithms for finding LMs |
+| 1st Ord Sufficient| $f$ is convex, $x^\star$ is LM |  $x^\star$ is GM[^2] |  |
+| 1st Ord Sufficient| $f$ is convex, differentiable, $\nabla f(x^{\star})=0$ |  $x^\star$ is GM | Leads to effective algorithms for finding global minima |
+
+[^1]: Local Minimizer
+[^2]: Global Minimizer
+
+## Overview of Algorithms
+- Recall that the algorithms are iterative
+- We need a starting point $\mathbf x_0$
+- ... and a method to produce iterates $\mathbf{x}_1$, $\mathbf{x}_2$,$\dots$
+- Generally two methods:
+	- Line Search
+	- Trust Region
+
+::: {.callout-note}
+The words method and algorithm are used interchangeably
+:::
+
+
+## Line Search Methods
+- The algorithm chooses a direction $p_k \in \mathbb{R}^n$
+- Then, minimize $f(x)$ on the line defined by $\mathbf{x}_k + \alpha p_k$. That is, solve $$\min_{\alpha>0}\quad f(\mathbf{x}_k + \alpha p_k)$$ {#eq-nine}
+	- In practice choose an $\alpha$ that makes $f(\mathbf{x}_{k+1}) < f(\mathbf{x}_{k})$, not solve @eq-nine.
+	- Practical method uses back-tracking line search to pick $\alpha$ given $p_k$
+
+## Line Search Methods
+- Two common choices for directions. 
+  - Negative gradient (steepest descent) $$p_k = - \nabla f(\mathbf{x}_{k})$$
+  - Newton direction: $$p_k = - (\nabla^2 f(\mathbf{x}_{k}))^{-1}\nabla f(\mathbf{x}_{k})$$
+
+## Example: Line Search Algorithms {.smaller} 
+
+$$
+\begin{align}
+\operatorname{minimize} & f(x) = (0.5 x_1 - 2)^2 + (x_2 - 3)^2
+\end{align}
+$$
+
+:::: {.columns}
+
+::: {.column width="60%"}
+::: {.centered-content}
+
+```{python}
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define the objective function and its gradient and Hessian
+def f(x, y):
+    return (0.5*x - 2)**2 + (y - 3)**2
+
+def grad_f(x, y):
+    """Gradient of f"""
+    grad_x = 2 * (0.5*x - 2)*0.5
+    grad_y = 2 * (y - 3)
+    return np.array([grad_x, grad_y])
+
+def hess_f(x, y):
+    """Hessian of f"""
+    return np.array([[0.5, 0],
+                     [0, 2]])
+
+
+
+# Newton's Method
+def newtons_method(start, tol=1e-6, max_iter=50):
+    x = np.array(start, dtype=float)
+    iterates = [x.copy()]
+    
+    for _ in range(max_iter):
+        grad = grad_f(x[0], x[1])
+        hess = hess_f(x[0], x[1])
+        
+        # Newton step: x_new = x - H_inv * grad
+        step = np.linalg.solve(hess, grad)
+        x -= step
+        
+        iterates.append(x.copy())
+        
+        # Convergence check
+        if np.linalg.norm(step) < tol:
+            break
+    
+    return x, iterates
+
+# Steepest Descent
+def steepest_descent(start, alpha=0.1,tol=1e-6, max_iter=500):
+    x = np.array(start, dtype=float)
+    iterates = [x.copy()]
+    optimal_values=[f(x[0],x[1])]
+    for _ in range(max_iter):
+        grad = grad_f(x[0], x[1])
+        
+        # Newton step: x_new = x - H_inv * grad
+        x -= alpha*grad
+        
+        iterates.append(x.copy())
+        optimal_values.append(f(x[0],x[1]))
+        
+        # Convergence check
+        if np.linalg.norm(grad) < tol:
+            break
+    
+    return x, iterates, optimal_values
+# Run Newton's method
+start_point = [-1.0, 1.0]
+optimum, iterates = newtons_method(start_point)
+
+# Extract iterate points for plotting
+iterates = np.array(iterates)
+x_iterates_nm, y_iterates_nm = iterates[:, 0], iterates[:, 1]
+
+# Plotting
+x = np.linspace(-1.5, 4.5, 100)
+y = np.linspace(-0.5, 5.5, 100)
+X, Y = np.meshgrid(x, y)
+Z = f(X, Y)
+
+plt.figure(figsize=(8, 6))
+# Contour plot of the objective function
+contour = plt.contour(X, Y, Z, levels=30, cmap="viridis")
+plt.clabel(contour, inline=True, fontsize=8)
+plt.colorbar(contour, label="Objective Function Value")
+
+# Plot the iterates
+plt.plot(4, 3, 'x', color="blue", markersize=10, label="True Optimum (4, 3)")
+
+
+optimum, iterates, optimal_values_pt1 = steepest_descent(start_point)
+# Extract iterate points for plotting
+iterates = np.array(iterates)
+x_iterates, y_iterates = iterates[:, 0], iterates[:, 1]
+plt.plot(x_iterates, y_iterates, 'o-', color="blue", label="SD Iterates alpha=0.1")
+
+optimum, iterates, optimal_values_pt5 = steepest_descent(start_point,alpha=0.5)
+# Extract iterate points for plotting
+iterates = np.array(iterates)
+x_iterates, y_iterates = iterates[:, 0], iterates[:, 1]
+plt.plot(x_iterates, y_iterates, 'o-', color="purple", label="SD Iterates alpha=0.5")
+
+optimum, iterates, optimal_values_1 = steepest_descent(start_point,alpha=1)
+# Extract iterate points for plotting
+iterates = np.array(iterates)
+x_iterates, y_iterates = iterates[:, 0], iterates[:, 1]
+plt.plot(x_iterates, y_iterates, 'o-', color="red", label="SD Iterates alpha=1")
+
+plt.plot(x_iterates_nm, y_iterates_nm, 'o-', color="green", label="NM Iterates")
+# Annotate start and end points
+plt.annotate("Start", (x_iterates[0], y_iterates[0]), textcoords="offset points", xytext=(-10, 10), ha="center", color="red")
+plt.annotate("End", (x_iterates[-1], y_iterates[-1]), textcoords="offset points", xytext=(-10, -15), ha="center", color="red")
+
+# Labels and legend
+plt.xlabel("x_1")
+plt.ylabel("x_2")
+plt.title("Steepest Descent vs Newton's Method for Optimization")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+
+```
+
+:::  
+<!-- ends centered content -->
+::: 
+<!-- ends centered content -->
+
+::: {.column width="39%"}
+
+```{python}
+
+plt.figure(figsize=(8, 6))
+plt.plot(range(0,len(optimal_values_pt1)),optimal_values_pt1,  'o-', color="blue", label="alpha = 0.1")
+plt.plot(range(0,len(optimal_values_pt5)),optimal_values_pt5,  'o-', color="purple", label="alpha = 0.5")
+plt.plot(range(0,len(optimal_values_1)),optimal_values_1,  'o-', color="red", label="alpha = 0.1")
+plt.xlabel("iterates")
+plt.ylabel("optimum")
+plt.legend()
+plt.show()
+```
+
+:::
+
+::::
+
+
+::: {.callout-important style=position:absolute;top:50px;right:-70px .fragment fragment-index=1}
+Newton's method is not always better
+:::
+
+
+<!-- Wish there was an easy overlay option -->
+
+## Plotting Code {.smaller}
+
+```
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define the objective function and its gradient and Hessian
+def f(x, y):
+    return #<answer>
+
+def grad_f(x, y):
+    """Gradient of f"""
+    return np.array()
+
+def hess_f(x, y):
+    """Hessian of f"""
+    return np.array()
+
+
+# Steepest Descent
+def steepest_descent(start, alpha=0.1,tol=1e-6, max_iter=50):
+	# your code
+    return x, iterates
+
+
+# Plotting
+x = np.linspace(-1, 4, 100)
+y = np.linspace(-1, 5, 100)
+X, Y = np.meshgrid(x, y)
+Z = f(X, Y)
+
+plt.figure(figsize=(8, 6))
+# Contour plot of the objective function
+contour = plt.contour(X, Y, Z, levels=30, cmap="viridis")
+plt.clabel(contour, inline=True, fontsize=8)
+plt.colorbar(contour, label="Objective Function Value")
+
+plt.plot(4, 3, 'x', color="blue", markersize=10, label="True Optimum (4, 3)")
+
+# Run Steepest Descent
+start_point = [-1.0, 1.0]
+optimum, iterates = steepest_descent(start_point)
+# Extract iterate points for plotting
+iterates = np.array(iterates)
+x_iterates, y_iterates = iterates[:, 0], iterates[:, 1]
+plt.plot(x_iterates, y_iterates, 'o-', color="blue", label="SD Iterates alpha=0.1")
+
+# Annotate start and end points
+plt.annotate("Start", (x_iterates[0], y_iterates[0]), textcoords="offset points", xytext=(-10, 10), ha="center", color="red")
+plt.annotate("End", (x_iterates[-1], y_iterates[-1]), textcoords="offset points", xytext=(-10, -15), ha="center", color="red")
+
+# Labels and legend
+plt.xlabel("x_1")
+plt.ylabel("x_2")
+plt.title("Steepest Descent vs Newton's Method for Optimization")
+plt.legend()
+plt.grid(True)
+plt.show()
+```
+
+
+## Trust Region Methods
+- Approximate $f$ near $\mathbf{x}_k$ using a model function $m_k$ 
+- Minimize $m_k$ near $\mathbf{x}_k$  by solving 
+  $$
+\begin{align}
+  \min_{p} & m_k\left(\mathbf{x}_k+p\right)\\
+\text{s.t.} & \mathbf{x}_k+p \in \text{Trust region}
+\end{align}
+  $$
+- Common choice: local quadratic Taylor series, with a spherical trust region  
+  (trust-region Newton's method)
+
+## Line Search and Trust Region Methods 
+
+In some cases, the two methods overlap [^5]
+	$$
+\begin{align}
+  \min_{p} & m_k\left(\mathbf{x}_k+p\right) = f_K + p^T \nabla f_k\\
+\text{s.t.} & \| p\|_2 \leq \alpha \| \nabla f_k\|_2
+\end{align} 
+  $$yields $$p = - \alpha \nabla f_{k}$$ 
+
+[^5]: $f_k = f(\mathbf{x}_k)$, $\nabla f_k = \nabla f(\mathbf{x}_k)$
+
+
+
+## Exercise: Steepest Descent {.smaller}
+
+$$
+\begin{align}
+\operatorname{minimize} & f(x) = (1 - x_1)^2 + 10 (x_2 - x_1^2)^2  %a = 1, b = 10
+\end{align}
+$$
+
+The optimum is at $(1,1)$. Test the behavior of steepest descent algorithms $x_{k+1} = x_{k} - \alpha \nabla f_k$ with various constant values of $\alpha$, starting from $(0,1)$. 
+
+
+
+
+## Solution  {.smaller}
+
+::: {.callout-important  appearance="minimal"}
+$$ \nabla f = \begin{bmatrix} -2(1-x_1) - 40 (x_2 - x_1^2) x_1\\ 20 (x_2-x_2^2)\end{bmatrix} $$
+:::
+
+::: {.centered-content}
+
+```{python}
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define the objective function and its gradient and Hessian
+
+def f2(x, y):
+    return (1-x)**2+10*(y-x*x)**2
+
+def grad_f2(x, y):
+    """Gradient of f"""
+    grad_x = -2*(1-x)-40*(y-x*x)*x
+    grad_y = 20 * (y - x*x)
+    return np.array([grad_x, grad_y])
+
+def hess_f(x, y):
+    """Hessian of f"""
+    h11 = 2 + 80*x*x-40*(y-x*x)
+    h12 = -40*x
+    h22 = 20
+    return np.array([[h11, h12],
+                     [h12, h22]])
+
+
+
+# Newton's Method
+def newtons_method(start, tol=1e-6, max_iter=50):
+    x = np.array(start, dtype=float)
+    iterates = [x.copy()]
+    optimal_values=[f2(x[0],x[1])]
+    
+    for _ in range(max_iter):
+        grad = grad_f2(x[0], x[1])
+        hess = hess_f(x[0], x[1])
+        
+        # Newton step: x_new = x - H_inv * grad
+        step = np.linalg.solve(hess, grad)
+        x -= step
+        
+        iterates.append(x.copy())
+        optimal_values.append(f2(x[0],x[1]))
+        
+        # Convergence check
+        if np.linalg.norm(step) < tol:
+            break
+    
+    return x, iterates, optimal_values
+
+# Steepest Descent
+def steepest_descent(start, alpha=0.00001,tol=1e-6, max_iter=5000):
+    x = np.array(start, dtype=float)
+    iterates = [x.copy()]
+    optimal_values=[f2(x[0],x[1])]
+    for _ in range(max_iter):
+        grad = grad_f2(x[0], x[1])
+        
+        # Newton step: x_new = x - H_inv * grad
+        x -= alpha*grad
+        
+        iterates.append(x.copy())
+        optimal_values.append(f2(x[0],x[1]))
+        
+        # Convergence check
+        if np.linalg.norm(grad) < tol:
+            break
+    
+    return x, iterates, optimal_values
+
+
+# Plotting
+x = np.linspace(-2, 2, 100)
+y = np.linspace(-0.5, 1.5, 100)
+X, Y = np.meshgrid(x, y)
+Z = f2(X, Y)
+
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6));
+# Contour plot of the objective function
+contour = ax1.contour(X, Y, Z, levels=200, cmap="viridis")
+ax1.clabel(contour, inline=True, fontsize=8)
+plt.colorbar(contour, label="Objective Function Value")
+
+# Plot the iterates
+ax1.plot(1, 1, 'x', color="blue", markersize=10, label="True Optimum (1, 1)")
+
+
+#######################################
+# Run Newton's method 
+start_point = [0, 1.0]
+optimum, iterates, optimal_values_nm  = newtons_method(start_point)
+# Extract iterate points for plotting
+iterates = np.array(iterates)
+x_iterates_nm, y_iterates_nm = iterates[:, 0], iterates[:, 1]
+ax1.plot(x_iterates_nm, y_iterates_nm, 'o-', color="green", label="NM Iterates")
+
+#######################################
+# Steepest Descent 
+optimum, iterates, optimal_values_pt1 = steepest_descent(start_point,alpha=0.001)
+# Extract iterate points for plotting
+iterates = np.array(iterates)
+x_iterates, y_iterates = iterates[:, 0], iterates[:, 1]
+ax1.plot(x_iterates, y_iterates, 'o-', color="blue", label="SD Iterates alpha=0.001")
+
+
+#######################################
+# Steepest Descent 
+optimum, iterates, optimal_values_pt5 = steepest_descent(start_point,alpha=0.005)
+# Extract iterate points for plotting
+iterates = np.array(iterates)
+x_iterates, y_iterates = iterates[:, 0], iterates[:, 1]
+ax1.plot(x_iterates, y_iterates, 'o-', color="purple", label="SD Iterates alpha=0.005")
+
+#######################################
+# Steepest Descent 
+optimum, iterates, optimal_values_1 = steepest_descent(start_point,alpha=0.01)
+# Extract iterate points for plotting
+iterates = np.array(iterates)
+x_iterates, y_iterates = iterates[:, 0], iterates[:, 1]
+ax1.plot(x_iterates, y_iterates, 'o-', color="red", label="SD Iterates alpha=0.01")
+
+# Annotate start and end points
+ax1.annotate("Start", (x_iterates[0], y_iterates[0]), textcoords="offset points", xytext=(-10, 10), ha="center", color="red")
+ax1.annotate("End", (x_iterates[-1], y_iterates[-1]), textcoords="offset points", xytext=(-10, -15), ha="center", color="red")
+
+# Labels and legend
+ax1.set_xlabel("x_1")
+ax1.set_ylabel("x_2")
+ax1.set_title("Steepest Descent Iterates")
+
+
+ax2.plot(range(0,len(optimal_values_pt1)),optimal_values_pt1,  'o-', color="blue", label="SD alpha = 0.001")
+ax2.plot(range(0,len(optimal_values_pt5)),optimal_values_pt5,  'o-', color="purple", label="SD alpha = 0.005")
+ax2.plot(range(0,len(optimal_values_1)),optimal_values_1,  'o-', color="red", label="SD alpha = 0.01")
+ax2.plot(range(0,len(optimal_values_nm)),optimal_values_nm,  'o-', color="green", label="Newton Method")
+plt.xlabel("iteration number")
+plt.ylabel("optimum")
+ax2.set_title("$log f(x_k)$")
+plt.legend()
+plt.yscale('log')
+plt.grid(True)
+plt.show()
+
+
+
+
+```
+
+:::  
+<!-- ends centered content -->
+
+
+
+
+
+<!-- Wish there was an easy overlay option -->
+
+# Step size selection
+
+## Recap {.smaller}
+
+- In [Unconstrained Optimization](uncon.html) we saw theory that suggests algorithms:
+	- In proof of First Order Necessary Conditions, we saw that choosing $p_k = -\nabla f_k$ and $\alpha_k$ implies $f(x_{k+1}) < f(x_k)$
+		- However, decreasing $f_k$ does not imply we reach the optimum if the decrease is too small
+	- Another strategy from the Sufficient Conditions is to solve $\|\nabla f(x) = 0\|$
+- Now we look at rules for $\alpha_k$ and $p_k$ in an algorithm $x_{k+1} = x_k + \alpha_k p_k$ that will 
+	- decrease $f(x_k)$ enough so that
+	- we solve $\|\nabla f(x) = 0\|$
+
+
+## Lipschitz Function
+
+A function $f \colon \mathbb{R}^m \to \mathbb{R}$ is Lipschitz on a set $S$ if for any $x,y \in S$
+$$ \|f(x) - f(y) \| \leq L \|x - y\|$$
+
+For twice differentiable functions, $\nabla f$ being differentiable is equivalent to 
+$$ \nabla^2 f(w) \preceq L I$$ for all $w \in S$
+
+
+## Steepest Descent {.smaller}
+
+::: {.callout-tip}
+## Descent Lemma
+Let $f$ be a twice differentiable function whose gradient $\nabla f$ is Lipschitz continuous over some convex set $S$. Then, for all $x,y \in S$, by Taylor's Theorem,
+$$ f(y) = f(x) + \nabla f(x)^T (y-x) + \frac{1}{2} (y-x)^T \nabla^2 f(z) (y-x)$$ 
+
+$$ \implies f(y) \leq f(x) + \nabla f(x)^T (y-x) + \frac{L}{2} \|y-x\|^2,$$ 
+
+:::
+
+This Lemma says that we can define a local quadratic function that is an upper bound for $f$ near a point $x$.
+
+
+::: {.fragment fragment-index=1}
+If $x = x_k$ and $y = x_k - \alpha_k \nabla f_k$, we get 
+$$ f_{k+1} \leq f_k -\frac{\alpha_{k} (2 - L \alpha_{k} )}{2} \|\nabla f_k\|^2$$ 
+:::
+
+::: {.fragment fragment-index=2}
+- If $0 < \alpha_k < \frac{2}{L}$, then $f_{k+1} < f_{k}$. 
+- $f_{k}-f_{k+1}$ approaches zero only when $\nabla f_k \to 0$
+:::
+
+
+## Example {.smaller}
+
+
+
+:::: {.columns}
+
+
+::: {.column width="39%"}
+
+$$ min_{x \in \mathbb{R}} \quad f(x) = (x-3)^2 $$
+
+$$ \nabla^2 f = 2$$
+
+To ensure decrease, we need $$ \alpha < \frac{2}{L} = 1$$
+
+If $\alpha =1$, then $f_{k+1} = f_{k}$
+
+If $x_k = x^{\star} + y$, then $x_{k+1} = x^{\star} -y$
+
+
+:::
+
+::: {.column width="60%"}
+
+
+::: {.centered-content}
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define the objective function and its gradient and Hessian
+def f(x):
+    return (x-3)**2
+
+def grad_f(x):
+    """Gradient of f"""
+    return 2*(x-3)
+
+def hess_f(x):
+    """Hessian of f"""
+    return 2.0
+
+def myplot(xlist,ylist,func,x,grad):
+    points = len(xlist)
+    for i in range(0,points):
+        ylist[i] = func(xlist[i])
+    plt.plot(xlist, ylist,'-',color="black")
+
+
+
+def steepest_descent_BTLS(start_point=5.5,tol=1e-6,max_iter=50,alpha0=1.0):
+    x = start_point
+    iterates = [x]
+    optimal_values=[f(x)]
+
+    points = 1000 #Number of points
+    xmin, xmax = 0.0, 6.0
+    xlist=np.zeros(points)
+    ylist=np.zeros(points)
+    for i in range(0,points):
+        xlist[i] = xmin+ (xmax-xmin)*i/points
+    grad = grad_f(x)
+    step=-grad
+    myplot(xlist,ylist,f,x,grad)
+
+    plt.plot(x,f(x),'.',markersize=10,color="blue",label="$x_{k}$")
+    flag=f(x+alpha0*step) > f(x) + 0.1*alpha0*grad*step
+    plt.plot(x+step*alpha0,f(x+step*alpha0),'s',markersize=10,color="red",label="$x_{k+1}$" )
+    plt.ylabel("f(x)")
+    plt.xlabel("x")
+    plt.legend()
+    plt.grid(True)
+
+
+plt.figure(figsize=(8, 6))
+steepest_descent_BTLS()
+
+plt.show()
+```
+:::
+
+:::
+
+
+
+::::
+
+
+## Rosenbrock Function  {.smaller}
+
+::: {.callout-important  appearance="minimal"}
+$$ \log \epsilon = -m\ k + c \iff k = - \frac{1}{m} \log \epsilon -\frac{c}{m} \iff k = \frac{1}{m} \log \frac{1}{\epsilon}  \quad + \frac{c}{m} $$
+:::
+
+::: {.centered-content}
+
+```{python}
+{{< include _site/code/steepest_descent.py >}}
+
+```
+
+:::  
+
+
+## Condition Number  {.smaller}
+
+::: {.callout-important  appearance="minimal"}
+$$ f(x,y) = x^2 + \kappa y^2  $$
+:::
+
+::: {.centered-content}
+
+```{python}
+{{< include _site/code/steepest_descent_condition_number.py >}}
+
+```
+
+:::  
+
+# Newton's Method
+
+## Motivation
+
+
+- We know that whatever point we are looking must be a stationary one, it must satisfy $\nabla f(x) = 0$.
+
+- Newton's method applies the Newton root-finding algorithm to $\nabla f$:
+
+	- To solve $g(x) = 0$, iteratively solve [^1] $$g(x_k) + (x_{k+1} - x_k)^T \nabla g(x) = 0 \implies x_{k+1} = x_k - (\nabla g(x) )^{\sharp} g(x)$$
+
+- Apply root finding to $\nabla f(x) = 0$: 
+ $$x_{k+1} = x_k - (\nabla^2 f(x) )^{-1} \nabla f(x)$$
+
+[^1]: $\sharp$ is the left pseudo-inverse: $A^\sharp = (A^T A)^{-1} A^T$
+	
+
+
+## Example {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+* We want to find the minimizer of 
+
+$$ f(x) = \frac{1}{2}x^2 - \sin{x}, \quad x_0 = \frac{1}{2}. $$
+
+* We want an accuracy of $\varepsilon = 10^{-5}$, i.e., stop when 
+
+$$ |x_{k+1} - x_k | < \varepsilon. $$
+
+* We compute
+
+$$ f'(x) = x - \cos{x}, \quad f''(x) = 1 + \sin{x}. $$
+:::
+
+::: {.column width="50%"}
+<br>
+<br>
+$$
+\begin{align}
+x_1 &= \frac{1}{2} - \frac{\frac{1}{2} - \cos{\frac{1}{2}}}{1 +
+\sin{\frac{1}{2}}} = 0.7552, \\
+x_2 &= x_1 - \frac{f'(x_1)}{f''(x_1)} = x_1 - \frac{0.02710}{1.685} = 0.7391, \\
+x_3 &= x_2 - \frac{f'(x_2)}{f''(x_2)} = x_2 - \frac{9.461 \times 10^{-5}}{1.673}
+= 0.7390, \\
+x_4 &= x_3 - \frac{f'(x_3)}{f''(x_3)} = x_3 - \frac{1.17 \times 10^{-9}}{1.673}
+= 0.7390.
+\end{align}
+$$
+:::
+
+::::
+
+
+## Alternate Motivation {.smaller}
+
+
+ When $\nabla^2 f_k \succ 0$, we are minimizing the quadratic approximation $$f(x) \approx f_k + \nabla f_k^T (x-x_k) + \frac{1}{2} (x-x_k)^T \nabla^2 f_k (x-x_k),$$ which need not have minimum at $x^\star$
+
+
+::: {.callout-tip icon="false" .fragment fragment-index=1}
+## Example: Quadratic Function
+Consider $$f(x) = x^T Q x - b^T x \quad \text{ for }Q=Q^T \succ 0,$$ where $x^\star = Q^{-1} b$
+\begin{align}
+\text{ Ideal update: }&& x_{k+1} &= x_k - (x_k - x^\star) = x_k - 1 \cdot (x_k - Q^{-1} b )\\
+\text{Newton update:}&& x_{k+1} &= x_k + 1 \cdot (-1) \cdot Q^{-1} (Q x_k - b) = x_k -1 \cdot (x_k - Q^{-1} b)\\
+\text{Steepest descent:}&& x_{k+1} &= x_k + \alpha_k \cdot (-1) \cdot (Q x_k - b)
+\end{align}
+:::
+
+::: {.callout-warning  appearance="minimal" .fragment fragment-index=2}
+What happens when $Q = Q^T \prec 0$?
+:::
+
+
+## Example: Rosenbrock Function
+
+```{python}
+{{< include _site/code/newton.py >}}
+```
+
+## Convergence Rate 
+
+::: {.callout-tip}
+## Theorem 3.5
+Suppose that $f$ is twice differentiable and that the Hessian $\nabla^2 f$ is Lipschitz continuous in a neighborhood of a solution $x^\star$ at which the sufficient conditions are satisfied. Consider the iteration $x_{k+1} = x_k + p_k$ where $p_k = - \nabla^2 f_k^{-1} \nabla f_k$. Then
+
+- If $x_0$ is sufficiently close to $x^\star$, then $x_k \to x^\star$
+- [The rate of convergence $\{x_k\}$ is quadratic]{style=color:red}
+- The sequence of gradient norms $\{\|\nabla f_k\|\}$ converges quadratically to zero
+
+:::
+
+
+
+## Newton's Revenge
+
+
+::: {.centered-content}
+
+```{python}
+{{< include _site/code/newton_1D.py >}}
+```
+:::
+
+## Modifications 
+
+::: {.callout-important appearance="minimal"}
+Although Newton's method is very attractive in terms of its convergence
+properties \underline{near} the solution, it requires modification before it can be used at points that are *far* from the solution.
+:::
+
+The following modifications are typically used:
+
+- Step-size reduction (damping)
+- Modifying Hessian to be positive definite
+- Approximation of Hessian
+
+## Damping
+A search parameter $\alpha$ is introduced 
+$$ \bm{x}_{k+1} = \bm{x}_k - \alpha_k \nabla^2 f(\bm{x}_k)^{-1}\nabla
+f(\bm{x}_k), $$
+where $\alpha_k$ is selected to minimize $f$.
+
+A popular selection method is backtracking line search.
+
+## Positive Definiteness and Scaling
+General class of algorithms is given by 
+$$ \bm{x}_{k+1} = \bm{x}_k + \alpha p_k = \bm{x}_k - \alpha B_k \nabla f_k, $$ {#eq-general}
+
+* SD: $B_k = \bm{I}$, Newton: $B_k = \nabla^2 f(\bm{x}_k)^{-1}$.
+
+For small $\alpha$, it can be shown that $$ f(\bm{x}_{k+1}) = f(\bm{x}_k) -
+\alpha \nabla f_k^T B_k \nabla f_k + O(\alpha^2). $$
+
+* As $\alpha \rightarrow 0$, the second term on the rhs dominates the third.
+* To guarantee a decrease in $f$, we must have $\nabla f_k^T B_k \nabla f_k
+> 0$.
+  - Simplest way to ensure this is to require $B_k \succ \bm{0}$.
+
+## Positive Definiteness and Scaling {.smaller}
+* In practice, Newton's method must be modified to accommodate the possible
+non-positive definiteness of $\nabla^2 f$ at regions far from the solution.
+
+* Common approach: $B_k = [\mu_k\bm{I} +
+\nabla^2 f(\bm{x}_k)]^{-1}$ for some $\mu_k > 0$.
+
+* This can be regarded as a compromise between SD ($\mu_k$ very large) and
+Newton's method ($\mu_k = 0$).
+
+__Levenberg-Marquardt__ performs Cholesky factorization for a given value of
+$\mu_k$ as follows $$\mu_k \bm{I} + \nabla^2 f(\bm{x}_k) = \bm{G}^T\bm{G}. $$
+
+
+- This factorization checks implicitly for positive definiteness.
+
+- If the factorization fails (matrix not PD) $\mu_k$ is increased.
+
+- Step direction is found by solving $\bm{G}^T\bm{G} p_k = -\nabla f_k$.
+
+
+## Newton's Revenge Avenged
+
+
+::: {.centered-content}
+
+```{python}
+{{< include _site/code/newton_1D_mods.py >}}
+```
+:::
+
+
+# Summary
+
+## Summary {.smaller}
+
+You can now minimize $f(x)$ (when unconstrained) iteratively. Find LM $x^\star$ by 
+
+- Choosing direction $p_k$
+  - Steepest descent with constant step size is easy and reliable but slow
+  - Newton method is fast but expensive and unreliable
+	- needs modifications for reliable convergence
+  - Quasi-newton methods are a balance, but tricky 
+- Choosing step size $\alpha_k$
+  - Back-tracking for SD and modified NM improves performance
+  - Strong Wolfe conditions for Quasi-newton methods
+- Not tackled: constraints, expensive $f$/$\nabla f$, discrete $x$, non-smooth $f$ 
