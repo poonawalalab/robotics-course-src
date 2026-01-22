@@ -70,6 +70,11 @@ Point Cloud Alignment <br>
 
 ::::
 
+
+## 2D LiDAR Sensor
+
+![Depiction of LiDAR scan](assets/images/rangescan.png){width=80%}
+
 ## LiDAR Data Format
 
 Points returned in polar coordinates $(r_i, \phi_i)$
@@ -741,7 +746,39 @@ grad = numerical_gradient(lambda p: alignment_cost(p, source[:,:5], target[:,:5]
 print(f"Numerical gradient: {grad.round(4)}")
 ```
 
-# Modeling for Assignment 1
+
+# Assignment 1
+
+## Project Goal
+
+::: {.callout-note}
+## Goal
+The goal of the assignment is to generate an image depicting a map of the environment in which a sequence of 2D LiDAR scans were recorded. 
+:::
+
+Your team must create code that 
+
+- saves the map in a `.png` file,
+- save the poses associated with every scan in the provided list of scans, assuming the first scan is at $(0,0,0)$, in a `.npz` file.
+
+## Example
+
+:::: {.columns}
+
+::: {.column width="49%"}
+
+![](assets/videos/slam-animation.gif)
+
+:::
+
+::: {.column width="49%"}
+
+![](assets/images/lidarbot.jpg)
+:::
+
+::::
+
+
 
 ## Robot Pose
 
@@ -758,19 +795,19 @@ When robot frame coincides with world frame: pose is $(0, 0, 0)$
 
 ## Coordinate Transformation
 
-Given scan points $\left\{(x_j, y_j)\right\}$ in the robot frame at pose $(X_i, Y_i, \theta_i)$ in the current frame $F$:
+Given scan points $\left\{(x_j, y_j)\right\}$ in the robot frame at pose $(\Delta X_i, \Delta Y_i, \Delta \theta_i)$ **relative** to the current frame $F$:
 
 ::: {.callout-tip icon=false appearance="minimal"}
 $$
 \begin{aligned}
-x_{F} &= X_i + x_j \cos \theta_i - y_j \sin \theta_i \\
-y_{F} &= Y_i + x_j \sin \theta_i + y_j \cos \theta_i
+x_{F} &= \Delta X_i + x_j \cos \Delta \theta_i - y_j \sin \Delta \theta_i \\
+y_{F} &= \Delta Y_i + x_j \sin \Delta \theta_i + y_j \cos \Delta \theta_i
 \end{aligned}
 $$
 :::
 
 ::: {.fragment fragment-index=0}
-This transformation transforms all points in from the robot frame to the frame $F$
+Relative pose  transforms all points in the robot frame to the frame $F$
 :::
 
 ## Scan Matching as Optimization
@@ -778,105 +815,36 @@ This transformation transforms all points in from the robot frame to the frame $
 To match two scans:
 
 1. Treat one scan as the **reference frame**
-2. Find $(X_i, Y_i, \theta_i)$ that transforms the second scan to align with the reference
+2. Find $(\Delta X_i, \Delta Y_i, \Delta \theta_i)$ that transforms the second scan to align with the reference
 
 ::: {.callout-important appearance="minimal"}
 Goal: Find the transformation that provides the **best** alignment
 :::
 
-# Midterm Project 1
-
-## Project Goal
-
-Estimate the sequence of poses $\{(X_i, Y_i, \theta_i)\}$ from a sequence of scans
-
-::: {.fragment fragment-index=0}
-**Three components needed:**
-
-1. **Evaluation function**: Scalar measure of alignment quality
-2. **Optimization algorithm**: Minimize the evaluation function
-3. **Path integration**: Convert relative transformations to global trajectory
-:::
 
 ## Instructions
 
 - Teams of up to **two individuals**
 - Input: 2D laser scans in `sims_N_scans.npz` or `.mat`
-- Output: Sequence of poses $(X_i, Y_i, \theta_i)$
-  - 2D plot of path $(X_i, Y_i)$
-  - Lines indicating orientation $\theta_i$
+- Output: 
+  - Sequence of poses $(X_i, Y_i, \theta_i)$ (`.npz` file)
+  - Estimated map of the environment in which scans were taken (`.png` file)
 
-## Evaluation Function
+## Evaluation Criteria
 
-How "good" is a candidate transformation $(X, Y, \theta)$?
+The evaluation is based on 
 
-::: {.fragment fragment-index=0}
-Common approach: Sum of squared distances between transformed points and reference
-$$
-L(X, Y, \theta) = \sum_j d_j^2
-$$
-:::
++ Sum of squared errors between true and estimated relative poses between temporally successive poses.
++ Relative error in the final position and orientation relative to ground truth.
 
-::: {.fragment fragment-index=1}
-**Challenge**: The same physical point is mostly *not* observed in both scans
-:::
+## Hints
 
-## Optimization Methods
-
-Given two scans and an evaluation function:
-
-- Use optimization algorithms to find $(X, Y, \theta)$ that minimizes the cost
-- Methods from nonlinear least squares apply here
-
-::: {.fragment fragment-index=0}
-**Popular methods:**
-
-- Iterative Closest Point (ICP) algorithm
-- Normal Distribution Transform (NDT)
-:::
-
-## Path Integration
-
-Scan matching gives **relative** transformations between consecutive scans
-
-::: {.fragment fragment-index=0}
-To get the full trajectory:
-
-- Chain the relative transformations
-- Accumulate poses in the world frame
-:::
-
-# Evaluation Criteria
-
-## Report Requirements {.smaller}
-
-The evaluation is based on a report containing:
-
-1. Description of all evaluation functions and algorithms considered
-2. Discussion of changes made along the way and **why**
-3. Whether changes had the expected impact or not
-4. Performance summary:
-   - Average run time per iteration
-   - Number of iterations per scan match
-   - Average error in scan match
-   - Average error in pose
-5. Discussion of potential improvements
-
-# Hints
-
-## Expectations
-
-::: {.callout-warning}
-It is **not expected** that you will obtain highly accurate predictions of the robot's motion
-:::
-
-::: {.fragment fragment-index=0}
-**Emphasis is on connecting theory and practice:**
-
-- Try simple things first
-- Use results (and surprises) to inform choices
-- An approach that produces accurate predictions without explainable choices is not success
-:::
+- You can use scan matching to get an estimate of where the robot was at different times 
+	- Chain the relative transformations
+	- Accumulate poses in the world frame
+- You can then use pose graph optimization to correct the drift over time using long-range connections, by defining a suitable set of edges
+- Two popular methods for scan matching involve the Iterative Closes Point algorithm, and the Normal Distribution Transform
+	- Copying from existing implementations of these algorithms that produce highly accurate predictions is not success
 
 ## Testing Strategy
 
@@ -896,16 +864,6 @@ $$(x'_i, y'_i) = (x_i \cos \theta^* - y_i \sin \theta^*, x_i \sin \theta^* + y_i
 For synthetic data: same point appears in both scans, so use direct point-to-point error
 :::
 
-## Practical Tips
-
-- Log all decisions and save plots as you go
-- Create reusable visualization tools early
-- Don't only copy existing ICP/NDT implementations
-  - Understanding the choices matters more than accuracy
-
-::: {.callout-note}
-A well-documented journey with modest results beats an unexplained accurate solution
-:::
 
 ## Summary
 
@@ -913,5 +871,4 @@ A well-documented journey with modest results beats an unexplained accurate solu
 2. **Point cloud alignment**: Minimize sum of squared residuals
 3. **ICP algorithm**: Iterate between correspondence and transformation
 4. **Local minima**: ICP needs good initialization
-5. **Path integration**: Chain relative poses into trajectory
 

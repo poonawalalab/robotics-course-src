@@ -322,8 +322,6 @@ Now: Will this be a viable commercial product?
   <source src="https://poonawalalab.github.io/ccs-seminar-slides/assets/robot_short_lidar.mov" type="video/mp4">
 </video>
 
-[^1]: 2x playback
-
 ## Guaranteed Collision Avoidance
 
 ::: {.centered-content}
