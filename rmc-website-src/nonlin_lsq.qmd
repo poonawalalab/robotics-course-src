@@ -44,75 +44,133 @@ Necessary and Sufficient Conditions <br>
 Overview of Algorithms <br>
 :::
 
+## Forward Problems 
 
-## Example: Curve Fitting {.smaller}
+We are often trying to work with a model that turns input $x \in \mathbb{R}^{n}$ into output $y\in \mathbb{R}^{m}$:
 
-Suppose we have data in the form of pairs $$\{x_{i},y_{i}\}_ {i \in \{1,\dots,m\}}.$$
+$$ y \gets \phi_{\theta}(x),$$
 
-We believe that the model is of the form $$\phi(x; \theta) = \theta_{1} + \theta_{2} e^{\frac{(\theta_{3}-x )^2}{\theta_{4}}} + \theta_{5} \cos(\theta_{6} x).$$
+where $\theta \in \mathbb{R}^p$ are the parameters of the model $\phi_{\theta}$. 
 
-A standard approach is to find the values of $\theta_{j}$, $j \in \{1,\dots,6\}$ by solving $$\min_{\theta \in \mathbb R^6} \sum_{i=1}^{m} r_{i}^{2}(\theta)$$ 
-where $$r_{i}(\theta) = y_{i} - \phi(x_{i}; \theta)$$
-
-This is a _nonlinear least-square problem_.
-
-## Nonlinear Least Squares 
-
-Residual (or error): $$r_{i}(\theta) = e_{i}(\theta) = y_{i} - \phi(x_{i}; \theta)$$
-Loss: Mean Square Error:  
-
-\begin{aligned}
-L(\theta) &= \frac{1}{m} \sum_{i=1}^{m} r_{i}^{2}(\theta) = \frac{1}{m} \sum_{i=1}^{m}  r_{i}(\theta)^T r_{i}(\theta)\\
- &= e(\theta)^T e(\theta)\\
-\end{aligned}
 ::: {.fragment fragment-index=0}
-\begin{aligned}
-\implies \nabla_\theta L(\theta) &= -2 e^T(\theta) J(\theta)\\
-\implies \nabla_\theta^2 L(\theta) &= -2 J^T(\theta) J(\theta)- 2 \sum e_i(\theta) H_i(\theta)
-\end{aligned}
+Example: Given joint angles $q$, where is the robot arm's 'hand'? (Forward Kinematics)
+:::
 
-Where $J(\theta)$ is the *Jacobian* $\nabla_\theta \phi(x;\theta)$ \
-$H_i(\theta)$ is the Hessian $\nabla_\theta^2 \phi(x_i;\theta)$
+## Inverse Problems 
+
+The inverse problem is to find $x$ given $y$ and parameters $\theta$
+
+$$ x \gets \text{ solution of } y = \phi_{\theta}(x),$$
+
+where $\theta \in \mathbb{R}^p$ are the parameters of the model $\phi_{\theta}$. 
+
+::: {.fragment fragment-index=0}
+Example: Given where we want the robot's arm to be, what values should we set the joint angles $q$ to? (Inverse Kinematics)
 :::
 
 ## Nonlinear Least Squares 
 
-Residual (or error): $$r_{i}(\theta) = e_{i}(\theta) = y_{i} - \phi(x_{i}; \theta)$$
-Loss: Mean Square Error:  
+Residual (or error): $$r(x) = e(x) = y - \phi_{\theta}(x)$$
+Loss: Squared Error:  
 
 \begin{aligned}
-L(\theta) &= \frac{1}{m} \sum_{i=1}^{m} r_{i}^{2}(\theta) = \frac{1}{m} \sum_{i=1}^{m}  r_{i}(\theta)^T r_{i}(\theta)\\
- &= e(\theta)^T e(\theta)
+L(x) &= e^T(x) e(x)
 \end{aligned}
 ::: {.fragment fragment-index=0}
 \begin{aligned}
-\implies \frac{ \mathrm{ d} L(\theta)}{\mathrm{ d} t} &= e(\theta)^T \frac{ \partial e(\theta)}{\partial \theta} \dot \theta(t)  = -e(\theta)^T J(\theta) \dot \theta(t)
+\implies \nabla_x L(x) &= -2 e^T(x) J(x)\\
+\implies \nabla_x^2 L(x) &= -2 J^T(x) J(x)- 2 \sum e_i(x) H_i(x)
+\end{aligned}
+
+Where $J(x)$ is the *Jacobian* $\nabla_x \phi_{\theta}(x)$ \
+$H_i(x)$ is the Hessian $\nabla_x^2 \phi_{\theta}(x)$
+:::
+
+## Nonlinear Least Squares 
+
+Residual (or error): $$r(x) = e(x) = y - \phi_{\theta}(x)$$
+Loss: Squared Error:  
+
+\begin{aligned}
+L(x) &= e^T(x) e(x)
+\end{aligned}
+::: {.fragment fragment-index=0}
+\begin{aligned}
+\implies \frac{ \mathrm{ d} L(x)}{\mathrm{ d} t} &= e^T(x) \frac{ \partial e(x)}{\partial x} \dot x(t)  = -e^T(x) J(x) \dot x(t)
 \end{aligned}
 :::
 
 ::: {.fragment fragment-index=1}
-Choosing $\dot \theta(t)$  produces some $\frac{ \mathrm{ d} L(\theta(t))}{\mathrm{ d} t}$. What values should we want for these?
+Choosing $\dot x(t)$  produces some $\frac{ \mathrm{ d} L(x(t))}{\mathrm{ d} t}$. What values should we want for these?
 :::
 
 ## Nonlinear Least Squares 
 
-We want\ $\frac{ \mathrm{ d} L(\theta(t))}{\mathrm{ d} t} < 0$ so as to minimize $L(\theta(t))$ as $t \to \infty$
+We want\ $\frac{ \mathrm{ d} L(x(t))}{\mathrm{ d} t} < 0$ so as to minimize $L(x(t))$ as $t \to \infty$
 
-We can achieve that if\ $\frac{ \mathrm{ d} L(\theta)}{\mathrm{ d} t} =  - e(\theta)^T B e(\theta)$
+We can achieve that if\ $\frac{ \mathrm{ d} L(x)}{\mathrm{ d} t} =  - e^T(x) B e(x)$
 
-$\implies$ solve $J(\theta) \dot \theta = B e(\theta)$ for $\dot \theta$ where $B = B^T \succ 0$
+$\implies$ solve $J(x) \dot x = B e(x)$ for $\dot x$ where $B = B^T \succ 0$
 
 Options:
 
-1. Steepest descent: $\dot \theta(t) =   J(\theta)^T e(\theta)$
-2. Gauss-Newton direction:  $\dot \theta(t) = J^{+} e(\theta)$[^4]
-3. Levenberg–Marquardt direction:  $\dot \theta(t) = J^{+}_{\text{damped}} e(\theta)$
+1. Steepest descent: $\dot x(t) =   J^T(x) e(x)$
+2. Gauss-Newton direction:  $\dot x(t) = J^{+} e(x)$[^4]
+3. Levenberg–Marquardt direction:  $\dot x(t) = J^{+}_{\text{damped}} e(x)$
 
 [^4]: $J^{+}$ is the Moore Penrose Pseudoinverse^T
 
 ## Dimensions
 
-$\theta \in \mathbb{R}^p$ and $y_i, \phi(x_i;\theta),e_i \in \mathbb R$, 
+$x \in \mathbb{R}^n$ and $\phi_{\theta}(x) \in \mathbb R^{m}$, 
+
+$\implies J(x) \in \mathbb R^(m \times n)$, $\implies e^T J(x) \in \mathbb R^(1 \times n)$
+
+$\nabla_x L(x) \in \mathbb{R}^(1 \times n)$, $\nabla_x^{2} L(x) \in \mathbb{R}^(n \times n)$
+
+Assume $J(x) = J$ has rank $\min(m,n)$
+
+If $m < n$ then $J^{+} = J^T ( J J^T )_{m \times m}^{-1}   \in \mathbb{R}^(n \times m)$
+
+If $m > n$ then $J^{+} = ( J^T J )_{n \times n}^{-1}  J^T  \in \mathbb{R}^(n \times m)$
+
+Compute $J^{+}$ using a singular value decomposition of $J(x)$
+
+
+## Aside: Supervised Machine Learning {.smaller}
+
+Suppose we have data in the form of pairs $$\{x_{i},y_{i}\}_ {i \in \{1,\dots,m\}}.$$
+
+We believe that the model is of the form $$\phi_{\theta}(x; \theta) = \theta_{1} + \theta_{2} e^{\frac{(\theta_{3}-x )^2}{\theta_{4}}} + \theta_{5} \cos(\theta_{6} x).$$
+
+A standard approach is to find the values of $\theta_{j}$, $j \in \{1,\dots,6\}$ by solving $$\min_{\theta \in \mathbb R^6} \sum_{i=1}^{m} r_{i}^{2}(\theta)$$ 
+where $$r_{i}(\theta) = y_{i} - \phi_{\theta}(x_i)$$
+
+This is a _nonlinear least-square problem_.
+
+However, $x_i$ are parameters and we are searching for $\theta$; opposite of previous slides
+
+## Nonlinear Least Squares 
+
+Residual (or error): $$r_{i}(\theta) = e_{i}(\theta) = y_{i} - \phi(x_{i};\theta)$$
+Loss: Mean Square Error:  
+
+\begin{aligned}
+L(\theta) &= \frac{1}{m} \sum_{i=1}^{m} r_{i}^{2}(\theta) = \frac{1}{m} \sum_{i=1}^{m}  r_{i}^T(\theta) r_{i}(\theta)\\
+ &= e^T(\theta) e(\theta)\\
+\end{aligned}
+
+\begin{aligned}
+\implies \nabla_\theta L(\theta) &= -2 e^T(\theta) J(\theta)\\
+\implies \nabla_\theta^2 L(\theta) &= -2 J^T(\theta) J(\theta)- 2 \sum e_i(\theta) H_i(\theta)
+\end{aligned}
+
+Where $J(\theta)$ is the *Jacobian* $\nabla_\theta \phi_{\theta}(x)$ \
+$H_i(\theta)$ is the Hessian $\nabla_\theta^2 \phi_{\theta}(x_i;\theta)$
+
+## Dimensions
+
+$\theta \in \mathbb{R}^p$ and $y_i, \phi_{\theta}(x_i;\theta),e_i \in \mathbb R$, 
 
 $\implies e \in \mathbb R^m$ $\implies J(\theta) \in \mathbb R^(m \times p)$, $\implies e^T J(\theta) \in \mathbb R^(1 \times p)$
 
@@ -791,12 +849,12 @@ $$ f(x,y) = x^2 + \kappa y^2  $$
 
 - Newton's method applies the Newton root-finding algorithm to $\nabla f$:
 
-	- To solve $g(x) = 0$, iteratively solve [^1] $$g(x_k) + (x_{k+1} - x_k)^T \nabla g(x) = 0 \implies x_{k+1} = x_k - (\nabla g(x) )^{\sharp} g(x)$$
+	- To solve $g(x) = 0$, iteratively solve [^6] $$g(x_k) + (x_{k+1} - x_k)^T \nabla g(x) = 0 \implies x_{k+1} = x_k - (\nabla g(x) )^{\sharp} g(x)$$
 
 - Apply root finding to $\nabla f(x) = 0$: 
  $$x_{k+1} = x_k - (\nabla^2 f(x) )^{-1} \nabla f(x)$$
 
-[^1]: $\sharp$ is the left pseudo-inverse: $A^\sharp = (A^T A)^{-1} A^T$
+[^6]: $\sharp$ is the left pseudo-inverse: $A^\sharp = (A^T A)^{-1} A^T$
 	
 
 
