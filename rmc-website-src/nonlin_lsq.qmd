@@ -665,13 +665,9 @@ plt.show()
 ```
 
 :::  
-<!-- ends centered content -->
 
 
 
-
-
-<!-- Wish there was an easy overlay option -->
 
 # Step size selection
 
@@ -1010,6 +1006,425 @@ $\mu_k$ as follows $$\mu_k \bm{I} + \nabla^2 f(\bm{x}_k) = \bm{G}^T\bm{G}. $$
 ```{python}
 {{< include _site/code/newton_1D_mods.py >}}
 ```
+:::
+
+# Nonlinear Least Squares: Localization Example
+
+
+## Problem Definition {.smaller}
+
+**Range-Based Localization:** Find position $x = (x_1, x_2)$ given noisy range measurements to known beacons.
+
+```{python}
+#| fig-align: center
+
+# Beacon positions (known) - corners of a 5x5 square
+beacons = np.array([[0, 0], [5, 0], [5, 5], [0, 5]], dtype=float)
+true_pos = np.array([3.0, 2.75])  # True position for generating data
+
+x0 = np.array([0.0, 1.0])
+# Two-panel figure
+fig, ax1 = plt.subplots(1, 1, figsize=(7, 5))
+
+# Left: Contour plot with iterate paths
+ax1.clabel(contour, inline=True, fontsize=7)
+
+# Plot beacons
+ax1.plot(beacons[:, 0], beacons[:, 1], 'ks', markersize=12, label='Beacons')
+
+
+# Mark start and optimum
+ax1.plot(true_pos[0], true_pos[1], 'ko', markersize=10, label='Start')
+
+ax1.set_xlabel('$x_1$')
+ax1.set_ylabel('$x_2$')
+ax1.legend(loc='upper center', fontsize=8)
+ax1.set_aspect('equal')
+ax1.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Problem Definition {.smaller}
+
+**Range-Based Localization:** Find position $x = (x_1, x_2)$ given noisy range measurements to known beacons.
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+**Given:**
+
+- Beacon positions $b_1, b_2, b_3, b_4 \in \mathbb{R}^2$
+- Measured distances $d_1, d_2, d_3, d_4$
+
+**Residuals:**
+$$e_i(x) = \|x - b_i\| - d_i$$
+
+**Objective:**
+$$\min_x \sum_{i=1}^4 e_i(x)^2 = \min_x \|e(x)\|^2$$
+
+:::
+
+::: {.column width="50%"}
+
+**Jacobian:** Row $i$ is
+$$J_i = \frac{(x - b_i)^T}{\|x - b_i\|}$$
+
+This is a unit vector pointing from beacon $i$ toward $x$.
+
+::: {.callout-note appearance="minimal"}
+This is a common robotics problem: GPS, UWB localization, acoustic positioning
+:::
+
+:::
+
+::::
+
+
+## Algorithm Comparison {.smaller}
+
+Three methods to solve $\min_x \|e(x)\|^2$:
+
+| Method | Update Rule | Direction |
+|--------|-------------|-----------|
+| **Gradient Descent** | $x_{k+1} = x_k - \alpha J^T e$ | Steepest descent on $\|e\|^2$ |
+| **Gauss-Newton** | $x_{k+1} = x_k - (J^T J)^{-1} J^T e$ | Newton with $H \approx J^T J$ |
+| **Levenberg-Marquardt** | $x_{k+1} = x_k - (J^T J + \lambda I)^{-1} J^T e$ | Damped Gauss-Newton |
+
+::: {.fragment fragment-index=1}
+**Key Insights:**
+
+- GN approximates Hessian as $J^T J$, ignoring second-order residual terms $\sum e_i H_i$
+- LM blends GD (large $\lambda$) and GN (small $\lambda$) via damping parameter
+- Adaptive $\lambda$: increase when step rejected, decrease when accepted
+:::
+
+
+## Code: Localization Example {.smaller}
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| code-summary: "Show setup code"
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+# Generate noisy measurements
+np.random.seed(42)
+noise_std = 0.1
+true_distances = np.linalg.norm(beacons - true_pos, axis=1)
+measured_distances = true_distances + np.random.randn(4) * noise_std
+
+def residuals(x):
+    """Compute residual vector e(x) = ||x - b_i|| - d_i"""
+    return np.linalg.norm(beacons - x, axis=1) - measured_distances
+
+def jacobian(x):
+    """Compute Jacobian matrix J(x) where J_i = (x - b_i)^T / ||x - b_i||"""
+    J = np.zeros((4, 2))
+    for i, b in enumerate(beacons):
+        diff = x - b
+        norm = np.linalg.norm(diff)
+        if norm > 1e-10:
+            J[i] = diff / norm
+    return J
+
+def cost(x):
+    """Compute sum of squared residuals"""
+    e = residuals(x)
+    return np.sum(e**2)
+```
+
+## Gradient Descent for NLS {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+**Update:** $x_{k+1} = x_k - \alpha J^T e$
+
+- Direction $-J^T e$ is gradient of $\frac{1}{2}\|e\|^2$
+- Requires step size $\alpha$ selection
+- Slow but reliable convergence
+
+```{python}
+#| code-fold: false
+
+def gradient_descent_nls(x0, alpha=0.1,
+                         max_iter=100, tol=1e-8):
+    x = x0.copy()
+    iterates = [x.copy()]
+    costs = [cost(x)]
+
+    for _ in range(max_iter):
+        e = residuals(x)
+        J = jacobian(x)
+        grad = J.T @ e  # Gradient of 0.5*||e||^2
+        x = x - alpha * grad
+        iterates.append(x.copy())
+        costs.append(cost(x))
+        if np.linalg.norm(grad) < tol:
+            break
+    return np.array(iterates), costs
+```
+
+:::
+
+::: {.column width="50%"}
+
+```{python}
+# Run gradient descent
+gd_iterates, gd_costs = gradient_descent_nls(
+    x0, alpha=0.15, max_iter=50)
+
+# Plot convergence
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.semilogy(gd_costs, 'b.-', label='GD')
+ax.set_xlabel('Iteration')
+ax.set_ylabel('Cost $\|e(x)\|^2$')
+ax.set_title('Gradient Descent Convergence')
+ax.grid(True)
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+:::
+
+::::
+
+
+## Gauss-Newton Method {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+**Update:** $x_{k+1} = x_k - (J^T J)^{-1} J^T e$
+
+- Solves linear system $(J^T J) p = -J^T e$
+- No step size needed (full step)
+- Fast quadratic convergence near solution
+
+```{python}
+#| code-fold: false
+
+def gauss_newton(x0, max_iter=100, tol=1e-8):
+    x = x0.copy()
+    iterates = [x.copy()]
+    costs = [cost(x)]
+
+    for _ in range(max_iter):
+        e = residuals(x)
+        J = jacobian(x)
+        # Solve (J^T J) p = -J^T e
+        JTJ = J.T @ J
+        step = np.linalg.solve(JTJ, -J.T @ e)
+        x = x + step
+        iterates.append(x.copy())
+        costs.append(cost(x))
+        if np.linalg.norm(step) < tol:
+            break
+    return np.array(iterates), costs
+```
+
+:::
+
+::: {.column width="50%"}
+
+```{python}
+# Run Gauss-Newton
+gn_iterates, gn_costs = gauss_newton(x0, max_iter=20)
+
+# Plot convergence comparison
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.semilogy(gd_costs, 'b.-', label='GD ($\\alpha=0.15$)')
+ax.semilogy(gn_costs, 'g.-', label='Gauss-Newton')
+ax.set_xlabel('Iteration')
+ax.set_ylabel('Cost $\|e(x)\|^2$')
+ax.set_title('GD vs Gauss-Newton')
+ax.grid(True)
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+:::
+
+::::
+
+
+## Levenberg-Marquardt Method {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+**Update:** $x_{k+1} = x_k - (J^T J + \lambda I)^{-1} J^T e$
+
+- Adaptive $\lambda$: blend GD and GN
+- Large $\lambda \to$ gradient descent (robust)
+- Small $\lambda \to$ Gauss-Newton (fast)
+
+```{python}
+#| code-fold: false
+
+def levenberg_marquardt(x0, lambda0=1.0,
+                        max_iter=100, tol=1e-8):
+    x = x0.copy()
+    lam = lambda0
+    iterates = [x.copy()]
+    c = cost(x)
+    costs = [c]
+
+    for _ in range(max_iter):
+        e = residuals(x)
+        J = jacobian(x)
+        JTJ = J.T @ J
+        # Solve (J^T J + λI) p = -J^T e
+        step = np.linalg.solve(
+            JTJ + lam * np.eye(2), -J.T @ e)
+        x_new = x + step
+        c_new = cost(x_new)
+
+        if c_new < c:  # Accept, decrease λ
+            x, c = x_new, c_new
+            lam *= 0.5
+            iterates.append(x.copy())
+            costs.append(c)
+        else:  # Reject, increase λ
+            lam *= 2.0
+        if np.linalg.norm(step) < tol:
+            break
+    return np.array(iterates), costs
+```
+
+:::
+
+::: {.column width="50%"}
+
+```{python}
+# Run Levenberg-Marquardt
+lm_iterates, lm_costs = levenberg_marquardt(
+    x0, lambda0=1.0, max_iter=20)
+
+# Plot all three methods
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.semilogy(gd_costs, 'b.-', label='GD')
+ax.semilogy(gn_costs, 'g.-', label='Gauss-Newton')
+ax.semilogy(lm_costs, 'm.-', label='Levenberg-Marquardt')
+ax.set_xlabel('Iteration')
+ax.set_ylabel('Cost $\|e(x)\|^2$')
+ax.set_title('Method Comparison')
+ax.grid(True)
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+:::
+
+::::
+
+
+## Visualization: Iterate Paths {.smaller}
+
+```{python}
+#| fig-align: center
+
+# Create cost surface for contour plot
+x_range = np.linspace(-0.5, 5.5, 100)
+y_range = np.linspace(-0.5, 5.5, 100)
+X, Y = np.meshgrid(x_range, y_range)
+Z = np.zeros_like(X)
+for i in range(X.shape[0]):
+    for j in range(X.shape[1]):
+        Z[i, j] = cost(np.array([X[i, j], Y[i, j]]))
+
+# Two-panel figure
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+# Left: Contour plot with iterate paths
+contour = ax1.contour(X, Y, Z, levels=30, cmap='viridis')
+ax1.clabel(contour, inline=True, fontsize=7)
+
+# Plot beacons
+ax1.plot(beacons[:, 0], beacons[:, 1], 'ks', markersize=12, label='Beacons')
+
+# Plot iterate paths
+ax1.plot(gd_iterates[:, 0], gd_iterates[:, 1], 'b.-',
+         markersize=8, linewidth=1.5, label='GD')
+ax1.plot(gn_iterates[:, 0], gn_iterates[:, 1], 'g.-',
+         markersize=8, linewidth=1.5, label='Gauss-Newton')
+ax1.plot(lm_iterates[:, 0], lm_iterates[:, 1], 'm.-',
+         markersize=8, linewidth=1.5, label='Levenberg-Marquardt')
+
+# Mark start and optimum
+ax1.plot(x0[0], x0[1], 'ko', markersize=10, label='Start')
+ax1.plot(true_pos[0], true_pos[1], 'rx', markersize=12,
+         markeredgewidth=3, label='True position')
+
+ax1.set_xlabel('$x_1$')
+ax1.set_ylabel('$x_2$')
+ax1.set_title('Iterate Paths on Cost Surface')
+ax1.legend(loc='upper right', fontsize=8)
+ax1.set_aspect('equal')
+ax1.grid(True, alpha=0.3)
+
+# Right: Convergence history (log scale)
+ax2.semilogy(gd_costs, 'b.-', markersize=6, label=f'GD ({len(gd_costs)-1} iters)')
+ax2.semilogy(gn_costs, 'g.-', markersize=6, label=f'GN ({len(gn_costs)-1} iters)')
+ax2.semilogy(lm_costs, 'm.-', markersize=6, label=f'LM ({len(lm_costs)-1} iters)')
+ax2.set_xlabel('Iteration')
+ax2.set_ylabel('Cost $\|e(x)\|^2$ (log scale)')
+ax2.set_title('Convergence History')
+ax2.legend()
+ax2.grid(True)
+
+plt.tight_layout()
+plt.show()
+```
+
+
+## Results Discussion {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+**Observations:**
+
+| Method | Iterations | Convergence |
+|--------|------------|-------------|
+| Gradient Descent | Many (~50) | Linear rate |
+| Gauss-Newton | Few (~5) | Quadratic near solution |
+| Levenberg-Marquardt | Few (~5) | Adaptive, robust |
+
+:::
+
+::: {.column width="50%"}
+
+**Key Takeaways:**
+
+1. **GD**: Slow but reliable, many iterations
+2. **GN**: Fast quadratic convergence, may fail far from solution
+3. **LM**: Best of both worlds
+   - Large $\lambda \to$ GD-like (robust)
+   - Small $\lambda \to$ GN-like (fast)
+
+:::
+
+::::
+
+::: {.callout-tip}
+## When to use which?
+- **GD**: When Jacobian is expensive or problem is poorly conditioned
+- **GN**: Well-posed problems with good initial guess
+- **LM**: Default choice for most NLS problems
 :::
 
 

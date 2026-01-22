@@ -15,7 +15,7 @@ execute:
 |Jan 13	    | Course Overview; Motion Tasks				| [Overview](overview.html)		|								| 1	|1			|
 |Jan 15	    | `MuJoCo` Setup							|[`MuJoCo`](mujoco.html)		| [webpage](introduction.html)	|  	| 			|
 |Jan 20	    | Nonlinear Least squares					|[slides](nonlin_lsq.html)      |                             	|  	| 			|
-|Jan 22	    | Scan Matching 							|                               |                             	|  	| 			|
+|Jan 22	    | Scan Matching 							|[scan match](scanmatch.html), [NDT](ndt.html)|                             	|  	| 			|
 |Jan 27	    | Odometry      							|                               |                             	|  	| 			|
 |Jan 29	    | Pose Graph Optimization					|                               |                             	|  	| 			|
 

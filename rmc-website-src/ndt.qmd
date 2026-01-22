@@ -1,0 +1,602 @@
+---
+pagetitle: "Normal Distribution Transform"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "Normal Distribution Transform • <a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+
+execute:
+    freeze: auto
+---
+
+## Normal Distribution Transform {.center .smaller}
+
+<hr>
+
+### A Grid-Based Approach to Scan Matching
+
+<br/>
+
+::: {layout="[120, 60]"}
+__Instructor__: Hasan A. Poonawala<br>
+<br>
+Mechanical and Aerospace Engineering <br>
+University of Kentucky, Lexington, KY, USA
+
+__Topics__: <br>
+NDT Representation <br>
+Gaussian Modeling <br>
+Optimization-Based Alignment <br>
+:::
+
+## Lesson Overview
+
+1. **Motivation**: Why an alternative to ICP?
+2. **NDT Representation**: Discretizing space into Gaussian cells
+3. **Alignment Algorithm**: Optimization over continuous transformation
+4. **Comparison**: NDT vs ICP trade-offs
+
+::: {.fragment}
+**Key insight**: Represent the target as a distribution, not discrete points
+:::
+
+# Motivation
+
+## Limitations of ICP
+
+Recall ICP alternates between:
+
+1. Finding nearest neighbors (discrete correspondences)
+2. Solving for transformation
+
+::: {.fragment}
+**Problems:**
+
+- Nearest neighbor is expensive: $O(nm)$ or $O(n \log m)$
+- Correspondences change discontinuously
+- Cost function is not smooth
+:::
+
+## The NDT Idea
+
+Instead of point-to-point matching:
+
+::: {.fragment}
+**Convert the target point cloud into a probability density**
+:::
+
+::: {.fragment}
+- Divide space into cells (grid)
+- Fit a Gaussian distribution to points in each cell
+- Measure how well transformed source points fit the Gaussians
+:::
+
+::: {.fragment}
+**Result**: Locally smooth cost function amenable to gradient-based optimization
+:::
+
+# NDT Representation
+
+## Step 1: Discretize Space
+
+Overlay a regular grid on the target point cloud:
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| fig-align: center
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+np.random.seed(42)
+
+# Generate target points (room-like environment)
+wall1 = np.vstack([np.linspace(0, 4, 30), np.zeros(30)])
+wall2 = np.vstack([np.zeros(25), np.linspace(0, 3, 25)])
+wall3 = np.vstack([np.linspace(0, 4, 30), 3*np.ones(30)])
+wall4 = np.vstack([4*np.ones(25), np.linspace(0, 3, 25)])
+
+target = np.hstack([wall1, wall2, wall3, wall4])
+target += 0.05 * np.random.randn(*target.shape)
+
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.scatter(target[0], target[1], c='red', s=20, alpha=0.7, label='Target points')
+
+# Draw grid
+cell_size = 0.5
+for x in np.arange(-0.5, 4.5, cell_size):
+    ax.axvline(x, color='gray', alpha=0.3, linewidth=0.5)
+for y in np.arange(-0.5, 3.5, cell_size):
+    ax.axhline(y, color='gray', alpha=0.3, linewidth=0.5)
+
+ax.set_xlim(-0.7, 4.7); ax.set_ylim(-0.7, 3.7)
+ax.set_aspect('equal'); ax.set_title(f'Grid Discretization (cell size = {cell_size}m)')
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+\ 
+
+## Step 2: Compute Cell Statistics
+
+For each cell $k$ containing points $\{p_1, p_2, \ldots, p_n\}$:
+
+::: {.fragment}
+**Mean (centroid):**
+$$
+\mu_k = \frac{1}{n} \sum_{i=1}^{n} p_i
+$$
+:::
+
+::: {.fragment}
+**Covariance matrix:**
+$$
+\Sigma_k = \frac{1}{n-1} \sum_{i=1}^{n} (p_i - \mu_k)(p_i - \mu_k)^T
+$$
+:::
+
+::: {.fragment}
+Each occupied cell now has a 2D Gaussian: $\mathcal{N}(\mu_k, \Sigma_k)$
+:::
+
+## Visualizing the NDT
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| fig-align: center
+from matplotlib.patches import Ellipse
+
+def compute_ndt(points, cell_size, x_range, y_range):
+    """Compute NDT representation of point cloud."""
+    cells = {}
+
+    for i in range(points.shape[1]):
+        x, y = points[:, i]
+        # Determine cell indices
+        cx = int(np.floor((x - x_range[0]) / cell_size))
+        cy = int(np.floor((y - y_range[0]) / cell_size))
+        key = (cx, cy)
+
+        if key not in cells:
+            cells[key] = []
+        cells[key].append(points[:, i])
+
+    # Compute statistics for each cell
+    ndt = {}
+    for key, pts in cells.items():
+        pts = np.array(pts).T  # 2 x n
+        if pts.shape[1] >= 3:  # Need at least 3 points for covariance
+            mean = pts.mean(axis=1)
+            centered = pts - mean.reshape(2, 1)
+            cov = (centered @ centered.T) / (pts.shape[1] - 1)
+            # Add small regularization for numerical stability
+            cov += 0.001 * np.eye(2)
+            ndt[key] = {'mean': mean, 'cov': cov, 'n_points': pts.shape[1]}
+
+    return ndt
+
+def draw_ellipse(ax, mean, cov, n_std=2, **kwargs):
+    """Draw covariance ellipse."""
+    eigenvalues, eigenvectors = np.linalg.eigh(cov)
+    angle = np.degrees(np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0]))
+    width, height = 2 * n_std * np.sqrt(eigenvalues)
+    ellipse = Ellipse(mean, width, height, angle=angle, **kwargs)
+    ax.add_patch(ellipse)
+
+# Compute NDT
+cell_size = 0.5
+ndt = compute_ndt(target, cell_size, (-0.5, 4.5), (-0.5, 3.5))
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# Left: Points with grid
+axes[0].scatter(target[0], target[1], c='red', s=20, alpha=0.7)
+for x in np.arange(-0.5, 4.5, cell_size):
+    axes[0].axvline(x, color='gray', alpha=0.3, linewidth=0.5)
+for y in np.arange(-0.5, 3.5, cell_size):
+    axes[0].axhline(y, color='gray', alpha=0.3, linewidth=0.5)
+axes[0].set_title('Target Point Cloud')
+axes[0].set_aspect('equal')
+
+# Right: NDT representation
+for key, cell in ndt.items():
+    draw_ellipse(axes[1], cell['mean'], cell['cov'], n_std=2,
+                 fill=True, alpha=0.3, color='blue', edgecolor='blue')
+    axes[1].plot(cell['mean'][0], cell['mean'][1], 'b.', markersize=5)
+
+axes[1].set_xlim(-0.7, 4.7); axes[1].set_ylim(-0.7, 3.7)
+axes[1].set_title('NDT Representation (2σ ellipses)')
+axes[1].set_aspect('equal')
+
+plt.tight_layout()
+plt.show()
+```
+
+## The Gaussian Model
+
+Each cell's Gaussian defines a probability density:
+
+$$
+p(x | \mu_k, \Sigma_k) = \frac{1}{2\pi|\Sigma_k|^{1/2}} \exp\left( -\frac{1}{2}(x - \mu_k)^T \Sigma_k^{-1} (x - \mu_k) \right)
+$$
+
+::: {.fragment}
+**Interpretation**: High probability where points are dense, low where sparse
+:::
+
+::: {.fragment}
+A transformed source point "scores" high if it lands near a cell's mean
+:::
+
+# NDT Alignment
+
+## The NDT Cost Function
+
+Given transformation parameters $T = (\theta, t_x, t_y)$:
+
+$$
+L(T) = -\sum_{i=1}^{n} \log p\left( T(p_i) \right)
+$$
+
+::: {.fragment}
+Equivalently (dropping constants):
+$$
+L(T) = \sum_{i=1}^{n} (T(p_i) - \mu_{k(i)})^T \Sigma_{k(i)}^{-1} (T(p_i) - \mu_{k(i)})
+$$
+
+where $k(i)$ is the cell containing transformed point $T(p_i)$
+:::
+
+## Cost Function Properties
+
+**Smooth within each cell**: Quadratic in transformation parameters
+
+::: {.fragment}
+**Discontinuous at cell boundaries**: Cell assignment changes
+:::
+
+::: {.fragment}
+**Solution**:
+
+- Use larger cells (smoother but less precise)
+- Or use overlapping grids
+- Or use soft cell assignment
+:::
+
+## NDT Algorithm: Pseudocode
+
+```
+Input: Source points P, NDT of target (cells with μ, Σ)
+Output: Transformation T = (θ, tx, ty)
+
+Initialize T = (0, 0, 0)
+repeat:
+    # Transform source points
+    P' = apply T to P
+
+    # Compute cost and gradient
+    L = 0, ∇L = 0
+    for each p' in P':
+        cell = find_cell(p')
+        if cell is occupied:
+            L += Mahalanobis_distance(p', μ_cell, Σ_cell)
+            ∇L += gradient_contribution(p', μ_cell, Σ_cell)
+
+    # Update transformation (gradient descent or Newton)
+    T = T - α * ∇L  (or Newton step)
+
+until convergence
+return T
+```
+
+## Computing the Gradient
+
+For a single point $p$ transformed to $p' = R(\theta)p + t$:
+
+$$
+\frac{\partial L}{\partial \theta}, \quad \frac{\partial L}{\partial t_x}, \quad \frac{\partial L}{\partial t_y}
+$$
+
+::: {.fragment}
+**Chain rule**: Need derivatives of:
+
+1. Mahalanobis distance w.r.t. $p'$
+2. Transformed point $p'$ w.r.t. parameters $(\theta, t_x, t_y)$
+:::
+
+## Gradient Derivation
+
+Let $d = p' - \mu$ and cost term $c = d^T \Sigma^{-1} d$
+
+::: {.fragment}
+**Gradient w.r.t. $p'$:**
+$$
+\frac{\partial c}{\partial p'} = 2 \Sigma^{-1} d
+$$
+:::
+
+::: {.fragment}
+**Jacobian of transformation:**
+$$
+\frac{\partial p'}{\partial (\theta, t_x, t_y)} = \begin{bmatrix} -x\sin\theta - y\cos\theta & 1 & 0 \\ x\cos\theta - y\sin\theta & 0 & 1 \end{bmatrix}^T
+$$
+:::
+
+## NDT Implementation
+
+```{python}
+#| echo: true
+#| code-fold: false
+def rotation_matrix(theta):
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([[c, -s], [s, c]])
+
+def transform_points(theta, t, points):
+    """Apply transformation to points (2 x N)."""
+    R = rotation_matrix(theta)
+    return R @ points + t.reshape(2, 1)
+
+def ndt_cost_and_gradient(params, source, ndt, cell_size, x_range, y_range):
+    """Compute NDT cost and gradient."""
+    theta, tx, ty = params
+    t = np.array([tx, ty])
+
+    # Transform source
+    transformed = transform_points(theta, t, source)
+
+    cost = 0.0
+    grad = np.zeros(3)  # [d/dtheta, d/dtx, d/dty]
+
+    for i in range(source.shape[1]):
+        p = source[:, i]
+        p_trans = transformed[:, i]
+
+        # Find cell
+        cx = int(np.floor((p_trans[0] - x_range[0]) / cell_size))
+        cy = int(np.floor((p_trans[1] - y_range[0]) / cell_size))
+        key = (cx, cy)
+
+        if key in ndt:
+            mu = ndt[key]['mean']
+            cov_inv = np.linalg.inv(ndt[key]['cov'])
+
+            d = p_trans - mu
+            cost += d @ cov_inv @ d
+
+            # Gradient
+            grad_p = 2 * cov_inv @ d
+
+            # Jacobian of transformation
+            c, s = np.cos(theta), np.sin(theta)
+            dp_dtheta = np.array([-p[0]*s - p[1]*c, p[0]*c - p[1]*s])
+
+            grad[0] += grad_p @ dp_dtheta
+            grad[1] += grad_p[0]
+            grad[2] += grad_p[1]
+
+    return cost, grad
+```
+
+## NDT Optimization
+
+```{python}
+#| echo: true
+#| code-fold: false
+def ndt_align(source, ndt, cell_size, x_range, y_range,
+              max_iters=100, lr=0.01, tol=1e-6):
+    """Align source to target using NDT."""
+    params = np.array([0.0, 0.0, 0.0])  # theta, tx, ty
+    costs = []
+
+    for _ in range(max_iters):
+        cost, grad = ndt_cost_and_gradient(
+            params, source, ndt, cell_size, x_range, y_range)
+        costs.append(cost)
+
+        # Gradient descent with adaptive step size
+        step = lr * grad / (np.linalg.norm(grad) + 1e-8)
+        params = params - step
+
+        if len(costs) > 1 and abs(costs[-2] - costs[-1]) < tol:
+            break
+
+    return params, costs
+```
+
+## NDT Demo
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| fig-align: center
+np.random.seed(42)
+
+# Create source (subset of target, transformed)
+source_base = target[:, ::3].copy()  # Subsample
+true_theta = np.pi / 8
+true_t = np.array([0.3, 0.2])
+source = rotation_matrix(-true_theta) @ (source_base - true_t.reshape(2, 1))
+
+# Run NDT alignment
+params_est, costs = ndt_align(source, ndt, cell_size, (-0.5, 4.5), (-0.5, 3.5),
+                              max_iters=200, lr=0.05)
+
+# Apply estimated transformation
+aligned = transform_points(params_est[0], params_est[1:], source)
+
+fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+
+# Before
+axes[0].scatter(source[0], source[1], c='blue', s=30, label='Source')
+for key, cell in ndt.items():
+    draw_ellipse(axes[0], cell['mean'], cell['cov'], n_std=1.5,
+                 fill=True, alpha=0.2, color='red', edgecolor='red')
+axes[0].set_title('Before NDT'); axes[0].legend()
+axes[0].set_xlim(-1, 5); axes[0].set_ylim(-1, 4); axes[0].set_aspect('equal')
+
+# After
+axes[1].scatter(aligned[0], aligned[1], c='blue', s=30, label='Aligned')
+for key, cell in ndt.items():
+    draw_ellipse(axes[1], cell['mean'], cell['cov'], n_std=1.5,
+                 fill=True, alpha=0.2, color='red', edgecolor='red')
+axes[1].set_title('After NDT'); axes[1].legend()
+axes[1].set_xlim(-1, 5); axes[1].set_ylim(-1, 4); axes[1].set_aspect('equal')
+
+# Convergence
+axes[2].plot(costs, 'g-o', markersize=3)
+axes[2].set_xlabel('Iteration'); axes[2].set_ylabel('Cost')
+axes[2].set_title('Convergence'); axes[2].grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+print(f"True: θ={np.degrees(true_theta):.1f}°, t={true_t}")
+print(f"Est:  θ={np.degrees(params_est[0]):.1f}°, t={params_est[1:].round(3)}")
+```
+
+# Comparison: NDT vs ICP
+
+## Side-by-Side Comparison {.smaller}
+
+| Aspect | ICP | NDT |
+|--------|-----|-----|
+| Target representation | Point cloud | Gaussian grid |
+| Correspondence | Explicit (nearest neighbor) | Implicit (cell lookup) |
+| Cost function | Sum of distances | Log-likelihood |
+| Smoothness | Discontinuous | Smooth within cells |
+| Computation | $O(n \log m)$ per iteration | $O(n)$ per iteration |
+
+## When to Use Each
+
+**Use ICP when:**
+
+- High accuracy needed
+- Good initialization available
+- Computational resources available
+
+::: {.fragment}
+**Use NDT when:**
+
+- Fast alignment needed
+- Large point clouds
+- Coarse-to-fine strategy
+:::
+
+## Cell Size Trade-off
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| fig-align: center
+fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+cell_sizes = [0.25, 0.5, 1.0]
+
+for ax, cs in zip(axes, cell_sizes):
+    ndt_temp = compute_ndt(target, cs, (-0.5, 4.5), (-0.5, 3.5))
+
+    for key, cell in ndt_temp.items():
+        draw_ellipse(ax, cell['mean'], cell['cov'], n_std=1.5,
+                     fill=True, alpha=0.3, color='blue', edgecolor='blue')
+
+    ax.set_xlim(-0.7, 4.7); ax.set_ylim(-0.7, 3.7)
+    ax.set_aspect('equal')
+    ax.set_title(f'Cell size = {cs}m ({len(ndt_temp)} cells)')
+
+plt.tight_layout()
+plt.show()
+```
+
+::: {.fragment}
+**Small cells**: More accurate, but more discontinuities
+
+**Large cells**: Smoother, but less precise
+:::
+
+## Multi-Resolution NDT
+
+**Strategy**: Start coarse, refine progressively
+
+::: {.fragment}
+1. Large cells → rough alignment
+2. Medium cells → better alignment
+3. Small cells → fine alignment
+:::
+
+::: {.fragment}
+Each stage initializes from previous result
+:::
+
+## Handling Outliers
+
+Both ICP and NDT are sensitive to outliers
+
+::: {.fragment}
+**NDT approach**: Points in empty cells contribute zero to cost
+
+- Acts as implicit outlier rejection
+- Points without nearby target structure are ignored
+:::
+
+::: {.fragment}
+**Additional strategies**:
+
+- Threshold Mahalanobis distance
+- Use robust cost functions (Huber, Cauchy)
+:::
+
+## Practical Considerations
+
+**Grid alignment matters**:
+
+- Axis-aligned grids can miss diagonal features
+- Solution: Use multiple rotated grids or octrees
+
+::: {.fragment}
+**Numerical stability**:
+
+- Covariance matrices can be singular (collinear points)
+- Add small regularization: $\Sigma \leftarrow \Sigma + \epsilon I$
+:::
+
+::: {.fragment}
+**Boundary effects**:
+
+- Points near cell boundaries experience discontinuities
+- Solution: Overlapping grids or interpolation
+:::
+
+## Summary
+
+1. **NDT representation**: Grid of Gaussians captures local structure
+2. **Smooth cost function**: Enables gradient-based optimization
+3. **Fast alignment**: $O(n)$ per iteration vs $O(n \log m)$ for ICP
+4. **Cell size trade-off**: Smoothness vs precision
+5. **Multi-resolution**: Coarse-to-fine for robustness
+
+::: {.fragment}
+NDT is particularly useful for real-time applications with large point clouds
+:::
+
+## References
+
+- Biber, P., & Strasser, W. (2003). *The normal distributions transform: A new approach to laser scan matching*. IROS.
+- Magnusson, M. (2009). *The three-dimensional normal-distributions transform*. PhD thesis.
+- Segal, A., Haehnel, D., & Thrun, S. (2009). *Generalized-ICP*. RSS.
+
+::: {.fragment}
+**For the assignment**: You may implement either ICP, NDT, or compare both!
+:::
