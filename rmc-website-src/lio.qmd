@@ -194,7 +194,7 @@ T^{-1} = T_{A}^{B} = \begin{bmatrix} R^T & -R^T \mathbf{t} \\ \mathbf{0}^T & 1 \
 $$
 :::
 
-## Extrinsic Calibration
+## Extrinsic Calibration {.smaller}
 
 The transformation between rigidly mounted sensors is **constant**:
 
@@ -388,34 +388,31 @@ Move in frame $A$ = reorient by $R$ and then move by $d$ : $Rv+d$
 
 ![](assets/images/trans-v-rigid-3.png){width=100%}
 
-- **Top row:** Coordinate transform $\left(R_B^A\right)^{-1}$ - fixed points in moving frame
-- **Bottom row:** Rigid motion $R_B^A$ - moving points in fixed frame
+- **Top row:** Coordinate transform $\left(R_B^A\right)^{-1}$ - fixed points in $A$ seen by moving frame $B$
+- **Bottom row:** Rigid motion $R_B^A$ - fixed points in moving frame $B$ seen by fixed frame $A$
 
 
-## Special Euclidean Group $\mathrm{SE}(3)$
+## Special Euclidean Group $\mathrm{SE}(3)$ {.smaller}
 
 ::: {.callout-important}
 Coordinates of points in 3D Euclidean space = $p^A \in \mathbb{R}^3$
 
-Coordinates of cartesian frames in 3D Euclidean space = $(d,R) \in \mathbb{R}^3 \times \mathrm{SO}(3)$
+Coordinates of cartesian frames in 3D Euclidean space = $(d,R) \in \mathrm{SE}(3) = \mathbb{R}^3 \times \mathrm{SO}(3)$
 :::
 
 **Points : Euclidean Space  ::  Cartesian Frames : Special Euclidean Group**
 
 
-Affine Space : Euclidean Space :: $G$-Torsor : Special Euclidean Group
+- $G$-Torsor: A group $G$ with an action that maps a group element to another group element
+  
+- No coordinate frame is unique.
+  
+- For $\mathrm{SE}(3)$, a $G$-Torsor, we don't define origin+basis (not a vector space).
+  
+- Instead, we define an identity element (it's a group): the reference coordinate frame.
 
 
-$G$-Torsor: A group $G$ with an action that maps a group element to another group element
-
-
-Again, no coordinate frame is unique.
-
-For a $G$-Torsor, we don't define origin+basis (not a vector space).
-
-Instead, we define an identity element (it's a group): the reference coordinate frame.
-
-
+# Odometry: Sneak Peek
 
 
 ## The Odometry Problem
@@ -515,7 +512,7 @@ ax.plot(noisy_poses[-1, 0], noisy_poses[-1, 1], 'r^', markersize=12)
 ax.annotate('', xy=(noisy_poses[-1, 0], noisy_poses[-1, 1]),
             xytext=(true_poses[-1, 0], true_poses[-1, 1]),
             arrowprops=dict(arrowstyle='<->', color='purple', lw=2))
-ax.text(-0.5, 6.5, 'Accumulated\nError', fontsize=11, color='purple')
+#ax.text(-0.5, 6.5, 'Accumulated\nError', fontsize=11, color='purple')
 
 ax.set_xlabel('x (m)')
 ax.set_ylabel('y (m)')
@@ -566,20 +563,17 @@ $$
 \omega^{meas} = \omega^{true} + b_\omega + n_\omega
 $$
 
-::: {.fragment}
 **Accelerometer** (includes gravity):
 $$
 a^{meas} = R^T(a^{true} - g) + b_a + n_a
 $$
-:::
 
-::: {.fragment}
 where:
 
-- $b$: slowly varying bias
-- $n$: white noise
+- $b_{(\cdot)}$: slowly varying bias
+- $n_{(\cdot)}$: white noise
 - $g$: gravity vector (≈ 9.81 m/s² pointing down)
-:::
+- $R$: Orientation of IMU-fixed frame relative to ground
 
 ## Dead Reckoning with IMU
 
@@ -680,7 +674,7 @@ axes[2].plot(position[:, 0], position[:, 1], 'b-')
 axes[2].plot(0, 0, 'go', markersize=10, label='True position')
 axes[2].set_xlabel('x (m)')
 axes[2].set_ylabel('y (m)')
-axes[2].set_title('Trajectory (robot is stationary!)')
+axes[2].set_title('Estimated Trajectory (robot is stationary!)')
 axes[2].legend()
 axes[2].grid(True, alpha=0.3)
 axes[2].set_aspect('equal')
@@ -798,16 +792,12 @@ $$
 v = \frac{v_R + v_L}{2}
 $$
 
-::: {.fragment}
 **Angular velocity**:
 $$
 \omega = \frac{v_R - v_L}{L}
 $$
-:::
 
-::: {.fragment}
 From encoder ticks: $v = r \cdot \dot{\phi}$ where $\dot{\phi}$ is wheel angular velocity
-:::
 
 ## Wheel Odometry Integration
 
