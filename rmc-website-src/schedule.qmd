@@ -15,9 +15,12 @@ execute:
 |Jan 13	    | Course Overview; Motion Tasks				| [Overview](overview.html)		|								| 1	|1			|
 |Jan 15	    | `MuJoCo` Setup							|[`MuJoCo`](mujoco.html)		| [webpage](introduction.html)	|  	| 			|
 |Jan 20	    | Nonlinear Least squares					|[slides](nonlin_lsq.html)      |                             	|  	| 			|
-|Jan 22	    | Scan Matching 							|[scan match](scanmatch.html), [NDT](ndt.html)|                             	|  	| 			|
-|Jan 27	    | Odometry      							|[odometry](lio.html)           |                             	|  	| 			|
-|Jan 29	    | Pose Graph Optimization					|[pose graph](posegraph.html)   |                             	|  	| 			|
+|Jan 22	    | Scan Matching 							|[scan match](scanmatch.html), [NDT](ndt.html)|                             	|     	| 	    	|
+|-     	    | Frames and Coordinates | [Euclidean Space](https://poonawalalab.github.io/rmc-s21/assets/pdf/04_Euclidean_Space.pdf)|  Ch 1                       	| 3.1 	| 	2.1		|
+|Jan 27	    | Odometry      							|[odometry](lio.html)           |                        	|            	|           |
+| -    	    | Homogenous Coordinates					|  [Homogenous Transformations](https://poonawalalab.github.io/rmc-s21/assets/pdf/05_Cartesian_Coordinates_Homogenous_Transformations.pdf)           |      Ch 1.5            	|   3.3.1    	| 	2.2-2.6		|
+|Jan 29	    | Pose Graph Optimization					|[pose graph](posegraph.html)													|   	|  	| 			|
+| -    	    | Extended Kalman Filter SLAM				| [EKF Slam](https://poonawalalab.github.io/rmc-s21/assets/pdf/25_SLAM.pdf)     |   	|  	| 			|
 
 [^1]: _Robot Modeling and Control_, M. W. Spong, S. Hutchinson, and M. Vidyasagar, John Wiley \& Sons, 2006.
 <!--

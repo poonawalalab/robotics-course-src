@@ -47,6 +47,15 @@ Nonlinear Least Squares Formulation <br>
 3. **Formulation**: Pose graph as nonlinear least squares
 4. **Implementation**: Gauss-Newton on sparse graphs
 
+## Paper: LOAM
+
+{{< video https://www.youtube.com/watch?v=8ezyhTAEyHs width="1067" height="600" >}}
+
+## Paper: Fast-LIO2
+
+{{< video https://www.youtube.com/watch?v=2OvjGnxszf8 width="1067" height="600" >}}
+https://www.youtube.com/watch?v=uVcBa6NXAbk
+
 # Part 1: The Drift Problem
 
 ## Recall: Odometry Drift
