@@ -17,7 +17,7 @@ execute:
 |Jan 20	    | Nonlinear Least squares					|[slides](nonlin_lsq.html)      |                             	|  	| 			|
 |Jan 22	    | Scan Matching 							|[scan match](scanmatch.html), [NDT](ndt.html)|                             	|  	| 			|
 |Jan 27	    | Odometry      							|[odometry](lio.html)           |                             	|  	| 			|
-|Jan 29	    | Pose Graph Optimization					|                               |                             	|  	| 			|
+|Jan 29	    | Pose Graph Optimization					|[pose graph](posegraph.html)   |                             	|  	| 			|
 
 [^1]: _Robot Modeling and Control_, M. W. Spong, S. Hutchinson, and M. Vidyasagar, John Wiley \& Sons, 2006.
 <!--

@@ -1,0 +1,918 @@
+---
+pagetitle: "Pose Graph Optimization"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css
+    controls: true
+    html-math-method: mathjax
+    smaller: false
+    slide-number: true
+    footer: "Pose Graph Optimization • <a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+
+execute:
+    freeze: auto
+---
+
+## Pose Graph Optimization {.center .smaller}
+
+<hr>
+
+### Correcting Odometry Drift with Loop Closures
+
+<br/>
+
+::: {layout="[120, 60]"}
+__Instructor__: Hasan A. Poonawala<br>
+<br>
+Mechanical and Aerospace Engineering <br>
+University of Kentucky, Lexington, KY, USA
+
+__Topics__: <br>
+Odometry Drift Problem <br>
+Graph Structure <br>
+Nonlinear Least Squares Formulation <br>
+:::
+
+## Lesson Overview
+
+1. **Problem**: Odometry drift accumulates over time
+2. **Solution**: Add loop closure constraints and optimize
+3. **Formulation**: Pose graph as nonlinear least squares
+4. **Implementation**: Gauss-Newton on sparse graphs
+
+# Part 1: The Drift Problem
+
+## Recall: Odometry Drift
+
+From scan matching or wheel odometry, we chain relative poses:
+
+$$
+T_{B_{k+1}}^{W} = T_{B_k}^{W} \cdot T_{B_{k+1}}^{B_k}
+$$
+
+::: {.fragment}
+Each relative measurement $T_{B_{k+1}}^{B_k}$ has small errors that **accumulate**.
+:::
+
+## Drift Visualization
+
+```{python}
+#| echo: false
+#| fig-align: center
+import numpy as np
+import matplotlib.pyplot as plt
+
+def make_se2(theta, tx, ty):
+    """Create SE(2) transformation matrix."""
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([[c, -s, tx], [s, c, ty], [0, 0, 1]])
+
+np.random.seed(42)
+
+# Simulate a square path with noisy odometry
+n_steps = 40
+side_length = 5.0
+steps_per_side = n_steps // 4
+
+# True poses: square path
+true_poses = []
+for side in range(4):
+    for step in range(steps_per_side):
+        t = step / steps_per_side
+        if side == 0:  # Right
+            x, y = t * side_length, 0
+        elif side == 1:  # Up
+            x, y = side_length, t * side_length
+        elif side == 2:  # Left
+            x, y = side_length - t * side_length, side_length
+        else:  # Down
+            x, y = 0, side_length - t * side_length
+        theta = side * np.pi / 2
+        true_poses.append([x, y, theta])
+
+# Close the loop: return to start
+true_poses.append([0, 0, 0])
+
+true_poses = np.array(true_poses)
+
+# Simulate noisy odometry
+noisy_poses = [true_poses[0].copy()]
+T_acc = make_se2(true_poses[0, 2], true_poses[0, 0], true_poses[0, 1])
+
+for i in range(1, len(true_poses)):
+    # Compute true relative transform in body frame
+    T_prev = make_se2(true_poses[i-1, 2], true_poses[i-1, 0], true_poses[i-1, 1])
+    T_curr = make_se2(true_poses[i, 2], true_poses[i, 0], true_poses[i, 1])
+    T_rel_true = np.linalg.inv(T_prev) @ T_curr
+
+    # Extract body-frame relative pose and add noise
+    dx_body = T_rel_true[0, 2] + np.random.normal(0, 0.02)
+    dy_body = T_rel_true[1, 2] + np.random.normal(0, 0.02)
+    dtheta = np.arctan2(T_rel_true[1, 0], T_rel_true[0, 0]) + np.random.normal(0, 0.01)-0.005
+
+    # Chain
+    T_rel = make_se2(dtheta, dx_body, dy_body)
+    T_acc = T_acc @ T_rel
+
+    noisy_poses.append([T_acc[0, 2], T_acc[1, 2],
+                        np.arctan2(T_acc[1, 0], T_acc[0, 0])])
+
+noisy_poses = np.array(noisy_poses)
+
+fig, ax = plt.subplots(figsize=(8, 8))
+ax.plot(true_poses[:, 0], true_poses[:, 1], 'g-', linewidth=2, label='Ground Truth')
+ax.plot(noisy_poses[:, 0], noisy_poses[:, 1], 'r-', linewidth=2, label='Odometry')
+ax.plot(true_poses[0, 0], true_poses[0, 1], 'go', markersize=12, label='Start')
+ax.plot(true_poses[-1, 0], true_poses[-1, 1], 'g^', markersize=12)
+ax.plot(noisy_poses[-1, 0], noisy_poses[-1, 1], 'r^', markersize=12)
+
+# Draw error arrow
+ax.annotate('', xy=(noisy_poses[-1, 0], noisy_poses[-1, 1]),
+            xytext=(true_poses[-1, 0], true_poses[-1, 1]),
+            arrowprops=dict(arrowstyle='<->', color='purple', lw=2))
+ax.text(-0.5, -0.5, 'Loop closure\nerror', fontsize=11, color='purple')
+
+ax.set_xlabel('x (m)')
+ax.set_ylabel('y (m)')
+ax.set_aspect('equal')
+ax.grid(True, alpha=0.3)
+ax.legend(loc='upper right')
+ax.set_title('Odometry Drift: Robot Returns to Start but Estimate Drifts')
+plt.tight_layout()
+plt.show()
+```
+\
+
+## Loop Closure
+
+When the robot **revisits** a location, we can detect this by matching scans.
+
+::: {.fragment}
+This gives us a **constraint** between non-sequential poses!
+:::
+
+::: {.fragment}
+::: {.callout-tip}
+## Loop Closure
+A loop closure is a measurement that relates poses far apart in time but close in space.
+:::
+:::
+
+## What Loop Closure Tells Us
+
+If scan matching at time $k$ finds a good match with the scan from time $j$ (where $j \ll k$):
+
+::: {.fragment}
+We obtain an estimate of $T_{B_k}^{B_j}$ — the relative pose between poses $j$ and $k$.
+:::
+
+::: {.fragment}
+**Problem**: This measurement contradicts our odometry chain!
+
+- Odometry says: $T_{B_k}^{B_j} = T_{B_{j+1}}^{B_j} \cdot T_{B_{j+2}}^{B_{j+1}} \cdots T_{B_k}^{B_{k-1}}$
+- Loop closure says: $T_{B_k}^{B_j} \approx \tilde{T}_{B_k}^{B_j}$ (from scan matching)
+:::
+
+## The Optimization Problem
+
+We want to find poses that **best satisfy all constraints**:
+
+::: {.fragment}
+- Sequential constraints from odometry
+- Loop closure constraints from scan matching
+:::
+
+::: {.fragment}
+This is a **nonlinear least squares** problem!
+:::
+
+# Part 2: Graph Structure
+
+## Pose Graph Representation
+
+```{python}
+#| echo: false
+#| fig-align: center
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Node positions (before optimization - with drift)
+nodes = np.array([
+    [0, 0],
+    [2, 0.1],
+    [4, 0.15],
+    [4.2, 2],
+    [4.1, 4],
+    [2, 4.2],
+    [0.3, 4.1],
+    [0.2, 2]
+])
+
+n_nodes = len(nodes)
+
+# Draw sequential edges (blue)
+for i in range(n_nodes - 1):
+    ax.annotate('', xy=nodes[i+1], xytext=nodes[i],
+                arrowprops=dict(arrowstyle='->', color='blue', lw=2))
+
+# Draw loop closure edge (red, dashed)
+ax.annotate('', xy=nodes[0], xytext=nodes[-1],
+            arrowprops=dict(arrowstyle='->', color='red', lw=2, ls='--'))
+
+# Draw nodes
+for i, (x, y) in enumerate(nodes):
+    circle = plt.Circle((x, y), 0.25, color='lightblue', ec='navy', lw=2, zorder=10)
+    ax.add_patch(circle)
+    ax.text(x, y, f'$x_{i}$', ha='center', va='center', fontsize=11, fontweight='bold', zorder=11)
+
+# Legend
+ax.plot([], [], 'b-', lw=2, label='Odometry edges')
+ax.plot([], [], 'r--', lw=2, label='Loop closure edge')
+
+ax.set_xlim(-1, 6)
+ax.set_ylim(-1, 5.5)
+ax.set_aspect('equal')
+ax.legend(loc='upper right', fontsize=11)
+ax.set_title('Pose Graph: Nodes = Poses, Edges = Constraints', fontsize=14)
+ax.axis('off')
+plt.tight_layout()
+plt.show()
+```
+
+## Graph Components
+
+**Nodes** $\mathcal{V} = \{x_0, x_1, \ldots, x_n\}$
+
+- Each node is a robot pose: $x_i = (x_i, y_i, \theta_i) \in SE(2)$
+
+::: {.fragment}
+**Edges** $\mathcal{E} = \{(i, j)\}$
+
+- Each edge represents a **relative pose measurement** $\tilde{T}_{ij}$
+- Sequential edges: $(0,1), (1,2), \ldots$ from odometry
+- Loop closure edges: $(j, k)$ where $k \gg j$, from scan matching
+:::
+
+## Edge Measurement
+
+An edge $(i, j)$ stores:
+
+1. **Measured relative pose**: $\tilde{T}_{ij} = (\tilde{t}_x, \tilde{t}_y, \tilde{\theta})$
+   - "Pose $j$ as seen from pose $i$"
+
+::: {.fragment}
+2. **Information matrix** (optional): $\Omega_{ij}$
+   - Encodes measurement confidence
+   - More confident measurements have larger weight
+:::
+
+# Part 3: Least Squares Formulation
+
+## Residual for an Edge
+
+Given estimated poses $x_i = (x_i, y_i, \theta_i)$ and $x_j = (x_j, y_j, \theta_j)$:
+
+::: {.fragment}
+**Predicted relative pose**:
+$$
+\hat{T}_{ij} = T_i^{-1} \circ T_j
+$$
+:::
+
+::: {.fragment}
+**Residual**: Difference between predicted and measured
+$$
+e_{ij} = \hat{T}_{ij} \ominus \tilde{T}_{ij}
+$$
+:::
+
+## SE(2) Residual Computation {.smaller}
+
+In 2D, the residual has three components:
+
+```{python}
+#| echo: true
+#| code-fold: false
+def pose_to_matrix(x, y, theta):
+    """Convert pose (x, y, theta) to SE(2) matrix."""
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([[c, -s, x], [s, c, y], [0, 0, 1]])
+
+def matrix_to_pose(T):
+    """Extract (x, y, theta) from SE(2) matrix."""
+    return T[0, 2], T[1, 2], np.arctan2(T[1, 0], T[0, 0])
+
+def compute_residual(xi, xj, z_ij):
+    """
+    Compute residual for edge (i, j).
+    xi, xj: poses (x, y, theta)
+    z_ij: measured relative pose (dx, dy, dtheta)
+    Returns: residual vector [ex, ey, etheta]
+
+    Residual: e = [R_i^T @ (p_j - p_i); theta_j - theta_i] - z_ij
+    """
+    x_i, y_i, theta_i = xi[0], xi[1], xi[2]
+    x_j, y_j, theta_j = xj[0], xj[1], xj[2]
+    dx_meas, dy_meas, dtheta_meas = z_ij[0], z_ij[1], z_ij[2]
+
+    c, s = np.cos(theta_i), np.sin(theta_i)
+
+    # Predicted relative position (j in frame i)
+    dx_world = x_j - x_i
+    dy_world = y_j - y_i
+    dx_pred = c * dx_world + s * dy_world
+    dy_pred = -s * dx_world + c * dy_world
+    dtheta_pred = theta_j - theta_i
+
+    # Residual = predicted - measured
+    e = np.array([
+        dx_pred - dx_meas,
+        dy_pred - dy_meas,
+        np.arctan2(np.sin(dtheta_pred - dtheta_meas),
+                   np.cos(dtheta_pred - dtheta_meas))  # Wrap angle
+    ])
+    return e
+```
+
+## Cost Function
+
+The total cost is the sum of squared residuals over all edges:
+
+$$
+F(x) = \sum_{(i,j) \in \mathcal{E}} e_{ij}^T \Omega_{ij} \, e_{ij}
+$$
+
+::: {.fragment}
+where:
+
+- $e_{ij} \in \mathbb{R}^3$ is the residual for edge $(i, j)$
+- $\Omega_{ij} \in \mathbb{R}^{3 \times 3}$ is the information matrix (often $I_3$)
+:::
+
+::: {.fragment}
+::: {.callout-note}
+This is exactly the nonlinear least squares problem from earlier lectures!
+:::
+:::
+
+## Jacobian Structure
+
+The residual $e_{ij}$ depends only on poses $x_i$ and $x_j$.
+
+::: {.fragment}
+**Jacobians**:
+$$
+A_{ij} = \frac{\partial e_{ij}}{\partial x_i} \in \mathbb{R}^{3 \times 3}, \quad
+B_{ij} = \frac{\partial e_{ij}}{\partial x_j} \in \mathbb{R}^{3 \times 3}
+$$
+:::
+
+::: {.fragment}
+The full Jacobian $J$ is **sparse**: most entries are zero!
+:::
+
+## Sparsity Pattern
+
+```{python}
+#| echo: false
+#| fig-align: center
+fig, ax = plt.subplots(figsize=(8, 8))
+
+n = 8  # Number of poses
+n_params = 3 * n  # 3 parameters per pose
+
+# Create sparsity pattern
+sparsity = np.zeros((n_params, n_params))
+
+# Sequential edges: (0,1), (1,2), ..., (n-2, n-1)
+for i in range(n - 1):
+    # Block for pose i
+    sparsity[3*i:3*i+3, 3*i:3*i+3] = 1
+    # Block for pose i+1
+    sparsity[3*i:3*i+3, 3*(i+1):3*(i+1)+3] = 1
+    # Symmetric
+    sparsity[3*(i+1):3*(i+1)+3, 3*i:3*i+3] = 1
+    sparsity[3*(i+1):3*(i+1)+3, 3*(i+1):3*(i+1)+3] = 1
+
+# Loop closure edge: (0, 7)
+i, j = 0, 7
+sparsity[3*i:3*i+3, 3*j:3*j+3] = 2
+sparsity[3*j:3*j+3, 3*i:3*i+3] = 2
+
+# Plot
+cmap = plt.cm.colors.ListedColormap(['white', 'steelblue', 'coral'])
+ax.imshow(sparsity, cmap=cmap, interpolation='nearest')
+
+# Grid lines
+for i in range(n + 1):
+    ax.axhline(3*i - 0.5, color='gray', lw=0.5)
+    ax.axvline(3*i - 0.5, color='gray', lw=0.5)
+
+# Labels
+ax.set_xticks(np.arange(1.5, n_params, 3))
+ax.set_xticklabels([f'$x_{i}$' for i in range(n)])
+ax.set_yticks(np.arange(1.5, n_params, 3))
+ax.set_yticklabels([f'$x_{i}$' for i in range(n)])
+
+ax.set_title('Hessian Sparsity Pattern ($J^T J$)', fontsize=14)
+
+# Legend
+from matplotlib.patches import Patch
+legend_elements = [Patch(facecolor='steelblue', label='Odometry'),
+                   Patch(facecolor='coral', label='Loop closure')]
+ax.legend(handles=legend_elements, loc='upper right')
+
+plt.tight_layout()
+plt.show()
+```
+
+::: {.callout-tip}
+Sparsity is what makes large-scale SLAM tractable!
+:::
+
+## Jacobian for SE(2) Edge {.smaller}
+
+For residual $e_{ij}$ with poses $x_i$ and $x_j$:
+
+```{python}
+#| echo: true
+#| code-fold: false
+def compute_jacobians(xi, xj, z_ij):
+    """
+    Compute Jacobians of residual w.r.t. poses xi and xj.
+    Returns: A (de/dxi), B (de/dxj), both 3x3
+    """
+    theta_i = xi[2]
+    c, s = np.cos(theta_i), np.sin(theta_i)
+    dx = xj[0] - xi[0]
+    dy = xj[1] - xi[1]
+
+    # Jacobian w.r.t. xi
+    A = np.array([
+        [-c, -s,  -s * dx + c * dy],
+        [ s, -c,  -c * dx - s * dy],
+        [ 0,  0,  -1]
+    ])
+
+    # Jacobian w.r.t. xj
+    B = np.array([
+        [ c,  s,  0],
+        [-s,  c,  0],
+        [ 0,  0,  1]
+    ])
+
+    return A, B
+```
+
+## Gauss-Newton Update {.smaller}
+
+Stack all poses into vector $\mathbf{x} \in \mathbb{R}^{3n}$:
+
+$$
+\mathbf{x} = \begin{bmatrix} x_0 \\ y_0 \\ \theta_0 \\ x_1 \\ y_1 \\ \theta_1 \\ \vdots \end{bmatrix}
+$$
+
+::: {.fragment}
+**Gauss-Newton iteration**:
+$$
+H \, \Delta \mathbf{x} = -\mathbf{b}
+$$
+where $H = J^T \Omega J$ (sparse!) and $\mathbf{b} = J^T \Omega \, \mathbf{e}$
+:::
+
+## Building the Linear System
+
+```{python}
+#| echo: true
+#| code-fold: false
+def build_linear_system(poses, edges, measurements):
+    """
+    Build H and b for Gauss-Newton.
+    poses: list of (x, y, theta)
+    edges: list of (i, j) pairs
+    measurements: list of (dx, dy, dtheta) for each edge
+    """
+    n = len(poses)
+    H = np.zeros((3*n, 3*n))
+    b = np.zeros(3*n)
+
+    for (i, j), z_ij in zip(edges, measurements):
+        xi, xj = poses[i], poses[j]
+        e_ij = compute_residual(xi, xj, z_ij)
+        A, B = compute_jacobians(xi, xj, z_ij)
+
+        # Add to H (using Omega = I)
+        H[3*i:3*i+3, 3*i:3*i+3] += A.T @ A
+        H[3*i:3*i+3, 3*j:3*j+3] += A.T @ B
+        H[3*j:3*j+3, 3*i:3*i+3] += B.T @ A
+        H[3*j:3*j+3, 3*j:3*j+3] += B.T @ B
+
+        # Add to b
+        b[3*i:3*i+3] += A.T @ e_ij
+        b[3*j:3*j+3] += B.T @ e_ij
+
+    return H, b
+```
+
+## Fixing the Gauge
+
+The cost function is invariant to rigid transformations of all poses.
+
+::: {.fragment}
+**Problem**: $H$ is rank-deficient (3 degrees of freedom)
+:::
+
+::: {.fragment}
+**Solution**: Fix the first pose $x_0 = (0, 0, 0)$
+
+- Remove rows/columns for $x_0$ from $H$
+- Or add large diagonal entries: $H_{0:3, 0:3} += \lambda I$
+:::
+
+# Part 4: Implementation
+
+## Full Optimization Loop
+
+```{python}
+#| echo: true
+#| code-fold: false
+def optimize_pose_graph(initial_poses, edges, measurements,
+                        n_iter=10, fix_first=True):
+    """
+    Optimize pose graph using Gauss-Newton.
+    """
+    poses = [np.array(p) for p in initial_poses]
+    n = len(poses)
+
+    for iteration in range(n_iter):
+        H, b = build_linear_system(poses, edges, measurements)
+
+        # Fix first pose (add large weight)
+        if fix_first:
+            H[0:3, 0:3] += 1e6 * np.eye(3)
+
+        # Solve
+        dx = np.linalg.solve(H, -b)
+
+        # Update poses
+        for i in range(n):
+            poses[i] = poses[i] + dx[3*i:3*i+3]
+            # Normalize angle
+            poses[i][2] = np.arctan2(np.sin(poses[i][2]),
+                                      np.cos(poses[i][2]))
+
+    return poses
+```
+
+## Example: Square Loop {.smaller}
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| fig-align: center
+np.random.seed(123)
+
+# True poses: square path
+true_poses = [
+    (0, 0, 0),
+    (2, 0, 0),
+    (4, 0, np.pi/2),
+    (4, 2, np.pi/2),
+    (4, 4, np.pi),
+    (2, 4, np.pi),
+    (0, 4, -np.pi/2),
+    (0, 2, -np.pi/2),
+]
+
+# Generate noisy odometry measurements
+edges = [(i, i+1) for i in range(7)]  # Sequential
+edges.append((7, 0))  # Loop closure!
+
+measurements = []
+for i, j in edges:
+    Ti = pose_to_matrix(*true_poses[i])
+    Tj = pose_to_matrix(*true_poses[j])
+    T_rel = np.linalg.inv(Ti) @ Tj
+    z = matrix_to_pose(T_rel)
+    # Add noise (more noise on odometry, less on loop closure)
+    if j == i + 1:  # Odometry
+        noise = np.array([0.1, 0.1, 0.05]) * np.random.randn(3)
+    else:  # Loop closure (often more accurate)
+        noise = np.array([0.05, 0.05, 0.02]) * np.random.randn(3)
+    measurements.append(tuple(np.array(z) + noise))
+
+# Initial poses from chaining odometry (with drift)
+initial_poses = [np.array([0.0, 0.0, 0.0])]
+T_acc = np.eye(3)
+for i in range(7):
+    T_rel = pose_to_matrix(*measurements[i])
+    T_acc = T_acc @ T_rel
+    initial_poses.append(np.array(matrix_to_pose(T_acc)))
+
+# Optimize
+optimized_poses = optimize_pose_graph(initial_poses, edges, measurements, n_iter=20)
+
+# Plot comparison
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# Before optimization
+ax = axes[0]
+init_arr = np.array(initial_poses)
+true_arr = np.array(true_poses)
+ax.plot(true_arr[:, 0], true_arr[:, 1], 'g-o', markersize=8, linewidth=2, label='Ground Truth')
+ax.plot(init_arr[:, 0], init_arr[:, 1], 'r-s', markersize=8, linewidth=2, label='Initial (Odometry)')
+# Draw loop closure gap
+ax.plot([init_arr[-1, 0], init_arr[0, 0]], [init_arr[-1, 1], init_arr[0, 1]],
+        'r--', linewidth=2, alpha=0.5)
+ax.set_xlabel('x (m)')
+ax.set_ylabel('y (m)')
+ax.set_aspect('equal')
+ax.grid(True, alpha=0.3)
+ax.legend()
+ax.set_title('Before Optimization')
+
+# After optimization
+ax = axes[1]
+opt_arr = np.array(optimized_poses)
+ax.plot(true_arr[:, 0], true_arr[:, 1], 'g-o', markersize=8, linewidth=2, label='Ground Truth')
+ax.plot(opt_arr[:, 0], opt_arr[:, 1], 'b-s', markersize=8, linewidth=2, label='Optimized')
+ax.set_xlabel('x (m)')
+ax.set_ylabel('y (m)')
+ax.set_aspect('equal')
+ax.grid(True, alpha=0.3)
+ax.legend()
+ax.set_title('After Optimization')
+
+plt.tight_layout()
+plt.show()
+
+# Print errors
+init_error = np.mean([np.linalg.norm(init_arr[i, :2] - true_arr[i, :2]) for i in range(8)])
+opt_error = np.mean([np.linalg.norm(opt_arr[i, :2] - true_arr[i, :2]) for i in range(8)])
+print(f"Mean position error - Initial: {init_error:.3f} m, Optimized: {opt_error:.3f} m")
+```
+
+## Convergence
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| fig-align: center
+# Track cost over iterations
+def compute_total_cost(poses, edges, measurements):
+    cost = 0
+    for (i, j), z_ij in zip(edges, measurements):
+        e = compute_residual(poses[i], poses[j], z_ij)
+        cost += e @ e
+    return cost
+
+# Re-run optimization tracking cost
+poses = [np.array(p) for p in initial_poses]
+costs = [compute_total_cost(poses, edges, measurements)]
+
+for iteration in range(20):
+    H, b = build_linear_system(poses, edges, measurements)
+    H[0:3, 0:3] += 1e6 * np.eye(3)
+    dx = np.linalg.solve(H, -b)
+    for i in range(len(poses)):
+        poses[i] = poses[i] + dx[3*i:3*i+3]
+        poses[i][2] = np.arctan2(np.sin(poses[i][2]), np.cos(poses[i][2]))
+    costs.append(compute_total_cost(poses, edges, measurements))
+
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.semilogy(costs, 'b-o', markersize=6)
+ax.set_xlabel('Iteration')
+ax.set_ylabel('Cost (log scale)')
+ax.set_title('Gauss-Newton Convergence')
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+```
+
+::: {.callout-note}
+Gauss-Newton converges quickly — typically 5-10 iterations suffice.
+:::
+
+# Part 5: Practical Considerations
+
+## Weighted Edges
+
+Different measurements have different uncertainties.
+
+::: {.fragment}
+**Information matrix** $\Omega_{ij}$:
+
+- Diagonal: $\Omega = \text{diag}(\sigma_x^{-2}, \sigma_y^{-2}, \sigma_\theta^{-2})$
+- More confident measurements → larger $\Omega$ → more influence
+:::
+
+::: {.fragment}
+**Cost function becomes**:
+$$
+F(x) = \sum_{(i,j) \in \mathcal{E}} e_{ij}^T \Omega_{ij} \, e_{ij}
+$$
+:::
+
+## Robust Cost Functions {.smaller}
+
+Loop closure detection can produce **outliers** (false matches).
+
+::: {.fragment}
+Standard least squares is sensitive to outliers!
+:::
+
+::: {.fragment}
+**Solution**: Use robust kernels
+
+| Kernel | Formula | Effect |
+|--------|---------|--------|
+| Squared | $\rho(r) = r^2$ | Standard (sensitive) |
+| Huber | $\rho(r) = \begin{cases} r^2 & |r| \leq k \\ 2k|r| - k^2 & |r| > k \end{cases}$ | Linear growth for outliers |
+| Cauchy | $\rho(r) = \log(1 + r^2)$ | Bounded influence |
+:::
+
+## Robust Cost Visualization 
+
+```{python}
+#| echo: false
+#| fig-align: center
+r = np.linspace(-5, 5, 200)
+
+fig, ax = plt.subplots(figsize=(8, 5))
+
+# Squared
+ax.plot(r, r**2, 'b-', linewidth=2, label='Squared')
+
+# Huber (k=1)
+k = 1
+huber = np.where(np.abs(r) <= k, r**2, 2*k*np.abs(r) - k**2)
+ax.plot(r, huber, 'g-', linewidth=2, label=f'Huber (k={k})')
+
+# Cauchy
+cauchy = np.log(1 + r**2)
+ax.plot(r, cauchy * 5, 'r-', linewidth=2, label='Cauchy (scaled)')
+
+ax.set_xlabel('Residual')
+ax.set_ylabel('Cost')
+ax.set_title('Robust Cost Functions')
+ax.legend()
+ax.grid(True, alpha=0.3)
+ax.set_ylim(0, 15)
+plt.tight_layout()
+plt.show()
+```
+
+## Loop Closure Detection  
+
+We assumed loop closures are given. In practice, detecting them is challenging!
+
+::: {.fragment}
+**Approaches**:
+
+1. **Scan-to-scan matching**: Match current scan against all previous scans
+   - Expensive: $O(n^2)$ comparisons
+
+2. **Scan-to-map matching**: Match against accumulated map
+
+3. **Place recognition**: Use descriptors to find candidate matches
+   - Bag-of-words, learning-based methods
+:::
+
+## Libraries for Pose Graph Optimization {.smaller}
+
+In practice, use optimized libraries:
+
+::: {.fragment}
+**GTSAM** (Georgia Tech Smoothing and Mapping)
+
+- Factor graph formulation
+- Incremental updates (iSAM2)
+- Widely used in robotics research
+:::
+
+::: {.fragment}
+**g2o** (General Graph Optimization)
+
+- C++ library
+- Used in ORB-SLAM, LSD-SLAM
+:::
+
+::: {.fragment}
+**Ceres Solver**
+
+- Google's nonlinear least squares library
+- Very flexible, automatic differentiation
+:::
+
+## Factor Graph View
+
+GTSAM uses "factor graph" terminology:
+
+```{python}
+#| echo: false
+#| fig-align: center
+fig, ax = plt.subplots(figsize=(10, 4))
+
+# Variable nodes (circles)
+var_positions = [(1, 1), (3, 1), (5, 1), (7, 1)]
+for i, (x, y) in enumerate(var_positions):
+    circle = plt.Circle((x, y), 0.3, color='lightblue', ec='navy', lw=2, zorder=10)
+    ax.add_patch(circle)
+    ax.text(x, y, f'$x_{i}$', ha='center', va='center', fontsize=12, fontweight='bold', zorder=11)
+
+# Factor nodes (squares) - between consecutive variables
+factor_positions = [(2, 1), (4, 1), (6, 1)]
+for i, (x, y) in enumerate(factor_positions):
+    square = plt.Rectangle((x-0.2, y-0.2), 0.4, 0.4, color='lightcoral', ec='darkred', lw=2, zorder=10)
+    ax.add_patch(square)
+
+# Prior factor on x0
+prior_pos = (1, 2.2)
+square = plt.Rectangle((prior_pos[0]-0.2, prior_pos[1]-0.2), 0.4, 0.4, color='lightgreen', ec='darkgreen', lw=2, zorder=10)
+ax.add_patch(square)
+ax.plot([1, 1], [1.3, 2], 'k-', lw=2)
+
+# Loop closure factor
+lc_pos = (4, 2.2)
+square = plt.Rectangle((lc_pos[0]-0.2, lc_pos[1]-0.2), 0.4, 0.4, color='lightyellow', ec='darkorange', lw=2, zorder=10)
+ax.add_patch(square)
+ax.plot([1, 4], [1.3, 2], 'k-', lw=2)
+ax.plot([7, 4], [1.3, 2], 'k-', lw=2)
+
+# Edges from factors to variables
+for i, (fx, fy) in enumerate(factor_positions):
+    ax.plot([var_positions[i][0]+0.3, fx-0.2], [1, 1], 'k-', lw=2)
+    ax.plot([fx+0.2, var_positions[i+1][0]-0.3], [1, 1], 'k-', lw=2)
+
+# Legend
+from matplotlib.patches import Patch
+legend_elements = [
+    Patch(facecolor='lightblue', edgecolor='navy', label='Variable (pose)'),
+    Patch(facecolor='lightcoral', edgecolor='darkred', label='Odometry factor'),
+    Patch(facecolor='lightgreen', edgecolor='darkgreen', label='Prior factor'),
+    Patch(facecolor='lightyellow', edgecolor='darkorange', label='Loop closure factor'),
+]
+ax.legend(handles=legend_elements, loc='lower right', fontsize=10)
+
+ax.set_xlim(0, 8)
+ax.set_ylim(0, 3)
+ax.set_aspect('equal')
+ax.axis('off')
+ax.set_title('Factor Graph Representation', fontsize=14)
+plt.tight_layout()
+plt.show()
+```
+
+::: {.callout-note}
+Variables are poses, factors are constraints (measurements). Same math, different visualization!
+:::
+
+## Connection to Your Assignment {.smaller}
+
+Your scan matching assignment involves:
+
+::: {.fragment}
+1. **Sequential scan matching** → odometry edges
+:::
+
+::: {.fragment}
+2. **Long-range scan matching** → loop closure edges
+   - Match scan $k$ against scans $0, 1, \ldots, k-10$ (for example)
+   - If match quality is good, add loop closure edge
+:::
+
+::: {.fragment}
+3. **Pose graph optimization** → correct drift
+   - Build graph with all edges
+   - Optimize to find best poses
+:::
+
+## Summary
+
+1. **Problem**: Odometry drift accumulates; loop closures provide constraints
+
+2. **Graph structure**: Nodes = poses, edges = relative pose measurements
+
+3. **Formulation**: Nonlinear least squares on SE(2) residuals
+
+4. **Key insight**: Jacobian/Hessian is sparse → tractable for large graphs
+
+5. **Practice**: Use robust kernels for outliers, libraries for efficiency
+
+## References
+
+- Grisetti, G., Kummerle, R., Stachniss, C., & Burgard, W. (2010). "A Tutorial on Graph-Based SLAM." IEEE Intelligent Transportation Systems Magazine.
+
+- Dellaert, F., & Kaess, M. (2017). "Factor Graphs for Robot Perception." Foundations and Trends in Robotics.
+
+- Carlone, L., et al. (2025). "Slam handbook: From localization and mapping to spatial intelligence.".
+
+- GTSAM: [https://gtsam.org](https://gtsam.org)
+
+- g2o: [https://github.com/RainerKuemmerle/g2o](https://github.com/RainerKuemmerle/g2o)
