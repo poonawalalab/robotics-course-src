@@ -1,0 +1,291 @@
+---
+pagetitle: "Finite Horizon LQR"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "Optimal Control •<a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+filters:
+  - shinylive
+execute:
+    freeze: auto
+---
+
+## Finite Horizon LQR {.center .smaller}
+<hr>
+
+### Linear Quadratic Regulator
+
+<br/>
+
+::: {layout="[120, 60]"}
+__Instructor__: Hasan A. Poonawala<br>
+<br>
+Mechanical and Aerospace Engineering <br>
+University of Kentucky, Lexington, KY, USA
+
+__Topics__: <br>
+Generalized LQR Setup <br>
+Dynamic Programming <br>
+Backward Riccati Recursion <br>
+Double Integrator Demo <br>
+:::
+
+# Setup
+
+## When Does LQR Apply? {.smaller}
+
+LQR solves optimal control problems where
+
+- time is **discrete**, $t \in \{0, 1, 2, \dots, T\}$
+- the **dynamics are linear** (or affine)
+- the **cost is quadratic** in state and control
+
+::: {.callout-note appearance="minimal"}
+These slides follow [Sergey Levine's formulation](http://rail.eecs.berkeley.edu/deeprlcourse/static/slides/lec-10.pdf), which generalizes naturally to iLQR and connects to reinforcement learning.
+:::
+
+## System and Cost {.smaller}
+
+At each time $t$, the dynamics and cost are:
+
+$$\mathbf{x}_{t+1} = A_t \begin{bmatrix}\mathbf{x}_t \\ \mathbf{u}_t\end{bmatrix} + \mathbf{a}_t$$
+
+$$c_t(\mathbf{x}_t, \mathbf{u}_t) = \frac{1}{2}\begin{bmatrix}\mathbf{x}_t \\ \mathbf{u}_t\end{bmatrix}^{\!T} \mathbf{C}_t \begin{bmatrix}\mathbf{x}_t \\ \mathbf{u}_t\end{bmatrix} + \begin{bmatrix}\mathbf{x}_t \\ \mathbf{u}_t\end{bmatrix}^{\!T} \mathbf{c}_t$$
+
+**Total cost** over the finite horizon:
+
+$$J = \sum_{t=0}^{T} c_t(\mathbf{x}_t, \mathbf{u}_t)$$
+
+::: {.callout-tip appearance="minimal"}
+The terminal cost $c_T(\mathbf{x}_T, \mathbf{u}_T)$ is included in the sum. A typical choice is $c_T = \frac{1}{2}\mathbf{x}_T^T \mathbf{C}_{\mathbf{x}\mathbf{x},T} \mathbf{x}_T$ (no control at final step).
+:::
+
+## Double Integrator: Applying the Notation {.smaller}
+
+A unit-mass particle: $\ddot{p} = u$. State $\mathbf{x}_t = [p_t,\, v_t]^T$, control $\mathbf{u}_t = [a_t]$.
+
+Discrete dynamics (timestep $\Delta t$):
+
+$$A_t = \begin{bmatrix}1 & \Delta t & \tfrac{\Delta t^2}{2} \\ 0 & 1 & \Delta t\end{bmatrix}, \quad \mathbf{a}_t = \mathbf{0}$$
+
+Quadratic cost with no cross terms and $\mathbf{c}_t = \mathbf{0}$:
+
+$$\mathbf{C}_t = \begin{bmatrix} q_p & 0 & 0 \\ 0 & q_v & 0 \\ 0 & 0 & r \end{bmatrix}, \quad \mathbf{C}_T = \begin{bmatrix} q_f & 0 \\ 0 & q_f \end{bmatrix}$$
+
+::: {.callout-note appearance="minimal"}
+$A_t$ maps the **augmented** state $[\mathbf{x}_t;\, \mathbf{u}_t]$ to $\mathbf{x}_{t+1}$. The columns correspond to $[p_t,\, v_t,\, a_t]$.
+:::
+
+# Dynamic Programming
+
+## The Q-Function {.smaller}
+
+Define the **action-value function** (Q-function) at time $t$:
+
+$$\mathbf{Q}_t(\mathbf{x}_t, \mathbf{u}_t) = c_t(\mathbf{x}_t,\mathbf{u}_t) + V_{t+1}^*\!\left(A_t\begin{bmatrix}\mathbf{x}_t\\\mathbf{u}_t\end{bmatrix} + \mathbf{a}_t\right)$$
+
+Since $V_{t+1}^*(\mathbf{x}) = \frac{1}{2}\mathbf{x}^T \mathbf{V}_{t+1} \mathbf{x} + \mathbf{x}^T \mathbf{v}_{t+1}$ is quadratic, $\mathbf{Q}_t$ is also quadratic:
+
+$$\mathbf{Q}_t(\mathbf{x}_t,\mathbf{u}_t) = \mathrm{const} + \frac{1}{2}\begin{bmatrix}\mathbf{x}_t\\\mathbf{u}_t\end{bmatrix}^{\!T}\hat{\mathbf{Q}}_t\begin{bmatrix}\mathbf{x}_t\\\mathbf{u}_t\end{bmatrix} + \begin{bmatrix}\mathbf{x}_t\\\mathbf{u}_t\end{bmatrix}^{\!T}\hat{\mathbf{q}}_t$$
+
+where
+
+$$\hat{\mathbf{Q}}_t = \mathbf{C}_t + A_t^T \mathbf{V}_{t+1} A_t, \qquad \hat{\mathbf{q}}_t = \mathbf{c}_t + A_t^T \mathbf{V}_{t+1} \mathbf{a}_t + A_t^T \mathbf{v}_{t+1}$$
+
+## Optimal Control at Each Step {.smaller}
+
+Minimize $\mathbf{Q}_t$ over $\mathbf{u}_t$. Partition the Q-function matrix:
+
+$$\hat{\mathbf{Q}}_t = \begin{bmatrix} \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{x}} & \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}} \\ \hat{\mathbf{Q}}_{\mathbf{u}\mathbf{x}} & \hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}} \end{bmatrix}, \qquad \hat{\mathbf{q}}_t = \begin{bmatrix} \hat{\mathbf{q}}_{\mathbf{x}} \\ \hat{\mathbf{q}}_{\mathbf{u}} \end{bmatrix}$$
+
+Setting $\nabla_{\mathbf{u}_t} \mathbf{Q}_t = 0$:
+
+$$\boxed{\mathbf{u}_t^* = \mathbf{K}_t \mathbf{x}_t + \mathbf{k}_t}$$
+
+$$\mathbf{K}_t = -\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{x}}, \qquad \mathbf{k}_t = -\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\hat{\mathbf{q}}_{\mathbf{u}}$$
+
+::: {.callout-tip appearance="minimal"}
+The optimal policy is **affine** in state: $\mathbf{u}_t^* = \mathbf{K}_t \mathbf{x}_t + \mathbf{k}_t$. When $\mathbf{c}_t = 0$ and $\mathbf{a}_t = 0$, then $\mathbf{k}_t = 0$ (linear policy).
+:::
+
+## Value Function Update {.smaller}
+
+Substituting $\mathbf{u}_t^*$ back into $\mathbf{Q}_t$ gives the value function:
+
+$$V_t^*(\mathbf{x}_t) = \frac{1}{2}\mathbf{x}_t^T \mathbf{V}_t \mathbf{x}_t + \mathbf{x}_t^T \mathbf{v}_t + \mathrm{const}$$
+
+where
+
+$$\mathbf{V}_t = \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{x}} + \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}}\mathbf{K}_t$$
+
+$$\mathbf{v}_t = \hat{\mathbf{q}}_{\mathbf{x}} + \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}}\mathbf{k}_t$$
+
+This is again quadratic — so the structure repeats at $t-1, t-2, \dots, 0$.
+
+## Algorithm {.smaller}
+
+::: {.callout-tip icon=false}
+### Finite Horizon LQR
+
+**Inputs:** $A_t$, $\mathbf{a}_t$, $\mathbf{C}_t$, $\mathbf{c}_t$ for $t=0\dots T$
+
+**Backward pass** — initialize $\mathbf{V}_T = \mathbf{C}_{\mathbf{x}\mathbf{x},T}$, $\mathbf{v}_T = \mathbf{c}_{\mathbf{x},T}$; for $t = T-1,\dots,0$:
+
+1. $\hat{\mathbf{Q}}_t = \mathbf{C}_t + A_t^T \mathbf{V}_{t+1} A_t$
+2. $\hat{\mathbf{q}}_t = \mathbf{c}_t + A_t^T(\mathbf{V}_{t+1}\mathbf{a}_t + \mathbf{v}_{t+1})$
+3. $\mathbf{K}_t = -\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{x}}$, $\quad\mathbf{k}_t = -\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\hat{\mathbf{q}}_{\mathbf{u}}$
+4. $\mathbf{V}_t = \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{x}} + \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}}\mathbf{K}_t$, $\quad\mathbf{v}_t = \hat{\mathbf{q}}_{\mathbf{x}} + \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}}\mathbf{k}_t$
+
+**Forward pass** — given $\mathbf{x}_0$, for $t = 0,\dots,T-1$:
+
+5. $\mathbf{u}_t^* = \mathbf{K}_t\mathbf{x}_t + \mathbf{k}_t$
+6. $\mathbf{x}_{t+1} = A_t[\mathbf{x}_t;\,\mathbf{u}_t^*] + \mathbf{a}_t$
+:::
+
+# Interactive Demo
+
+## Double Integrator: LQR Control {.smaller}
+
+Set initial conditions $\mathbf{x}_0 = [p_0,\, v_0]^T$ and observe the optimal trajectory.
+
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 580
+
+from shiny import App, render, ui
+import numpy as np
+
+app_ui = ui.page_fluid(
+    ui.h4("Finite Horizon LQR — Double Integrator"),
+    ui.layout_sidebar(
+        ui.sidebar(
+            ui.h6("Initial State x₀"),
+            ui.input_slider("p0", "Position p₀", min=-5.0, max=5.0, value=3.0, step=0.1),
+            ui.input_slider("v0", "Velocity v₀", min=-5.0, max=5.0, value=0.0, step=0.1),
+            ui.hr(),
+            ui.h6("Horizon & Weights"),
+            ui.input_slider("T", "Horizon T", min=5, max=100, value=20, step=5),
+            ui.input_slider("qp", "Position weight qp", min=0.1, max=10.0, value=1.0, step=0.1),
+            ui.input_slider("qv", "Velocity weight qv", min=0.1, max=10.0, value=1.0, step=0.1),
+            ui.input_slider("r",  "Control weight r",   min=0.01, max=5.0, value=1.0, step=0.05),
+            ui.input_slider("qf", "Terminal weight qf", min=1.0, max=50.0, value=10.0, step=1.0),
+            width=280,
+        ),
+        ui.output_plot("lqr_plot"),
+    ),
+)
+
+def server(input, output, session):
+    @render.plot
+    def lqr_plot():
+        import matplotlib.pyplot as plt
+        import matplotlib.gridspec as gridspec
+
+        dt = 0.1
+        T  = input.T()
+        qp, qv, r, qf = input.qp(), input.qv(), input.r(), input.qf()
+        x0 = np.array([input.p0(), input.v0()])
+
+        # Augmented dynamics: x_{t+1} = A_aug @ [x_t; u_t]
+        A_aug = np.array([[1.0, dt, 0.5*dt**2],
+                          [0.0, 1.0, dt]])
+
+        # Cost matrix C_t (3x3 augmented), c_t = 0
+        C = np.diag([qp, qv, r])
+
+        # Terminal value function V_T, v_T
+        V = np.diag([qf, qf])
+        v = np.zeros(2)
+
+        # --- Backward pass ---
+        Ks, ks = [], []
+        for _ in range(T):
+            Q_hat = C + A_aug.T @ V @ A_aug          # 3x3
+            q_hat = A_aug.T @ v                       # 3  (a_t=0, c_t=0)
+            Qxx, Qxu = Q_hat[:2, :2], Q_hat[:2, 2:]
+            Qux, Quu = Q_hat[2:, :2], Q_hat[2:, 2:]
+            qx,  qu  = q_hat[:2],     q_hat[2:]
+            Quu_inv  = np.linalg.inv(Quu)
+            K = -Quu_inv @ Qux                        # 1x2
+            k = -Quu_inv @ qu                         # 1
+            V = Qxx + Qxu @ K
+            v = qx  + Qxu @ k
+            Ks.append(K); ks.append(k)
+        Ks.reverse(); ks.reverse()
+
+        # --- Forward pass ---
+        xs = np.zeros((T + 1, 2))
+        us = np.zeros(T)
+		Js = np.zeros(T+1)
+        xs[0] = x0
+        J = 0.0
+        for t in range(T):
+            u = (Ks[t] @ xs[t] + ks[t]).flatten()
+            us[t] = u[0]
+            z = np.concatenate([xs[t], u])
+            xs[t+1] = A_aug @ z
+            J += 0.5*(z @ C @ z)
+			Js[t] = J
+        J += 0.5*(xs[T] @ np.diag([qf, qf]) @ xs[T])
+		Js[T]=J
+
+        # --- Plot ---
+        time = np.arange(T + 1) * dt
+        fig  = plt.figure(figsize=(8, 6))
+        gs   = gridspec.GridSpec(3, 1, hspace=0.55)
+
+        ax1 = fig.add_subplot(gs[0])
+        ax1.plot(time, Js, 'b-o', markersize=3, lw=1.5)
+        ax1.axhline(0, color='k', lw=0.8, ls='--')
+        ax1.set_ylabel("Cost $J$")
+        ax1.set_title(f"Optimal Trajectory  (J = {J:.3f})", fontsize=10)
+        ax1.grid(True, alpha=0.3)
+
+        ax2 = fig.add_subplot(gs[1])
+		ax2.plot(xs[:,0], xs[:, 1], 'g-o', markersize=3, lw=1.5)
+        ax2.axhline(0, color='k', lw=0.8, ls='--')
+        ax2.set_xlabel("Position $p$")
+        ax2.set_ylabel("Velocity $v$")
+        ax2.grid(True, alpha=0.3)
+
+        ax3 = fig.add_subplot(gs[2])
+        ax3.step(time[:-1], us, 'r-', where='post', lw=1.5)
+        ax3.axhline(0, color='k', lw=0.8, ls='--')
+        ax3.set_ylabel("Control $u$")
+        ax3.set_xlabel("Time (s)")
+        ax3.grid(True, alpha=0.3)
+
+        fig.tight_layout()
+        return fig
+
+app = App(app_ui, server)
+```
+
+# Summary
+
+## Key Points {.smaller}
+
+| Symbol | Meaning |
+|--------|---------|
+| $A_t$, $\mathbf{a}_t$ | Augmented dynamics (maps $[\mathbf{x}_t;\mathbf{u}_t]$ to $\mathbf{x}_{t+1}$) |
+| $\mathbf{C}_t$, $\mathbf{c}_t$ | Quadratic and linear cost parameters |
+| $\mathbf{Q}_t(\mathbf{x}_t,\mathbf{u}_t)$ | Q-function (action-value function) |
+| $\hat{\mathbf{Q}}_t$, $\hat{\mathbf{q}}_t$ | Matrix/vector of Q-function |
+| $\mathbf{V}_t$, $\mathbf{v}_t$ | Matrix/vector of value function $V_t^*$ |
+| $\mathbf{K}_t$, $\mathbf{k}_t$ | Feedback gain and feedforward term |
+
+**Connection to RL:** $\mathbf{Q}_t$ is the Q-function; $V_t^*$ is the value function.
+The backward pass is exactly **policy evaluation + improvement** for LQ systems.
+
+**Next step:** iLQR — linearize nonlinear dynamics at each iteration and re-run LQR.
