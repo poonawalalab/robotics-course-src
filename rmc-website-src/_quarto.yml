@@ -8,6 +8,7 @@ website:
     left:
       - href: index.qmd
         text: Home
+      - schedule.qmd
       - about.qmd
     right: 
       - href: https://uk.instructure.com/courses/2151702
@@ -21,6 +22,8 @@ website:
         - schedule.qmd
         - papers.qmd
         - extras.qmd
+        - text: "Matrix Review (LQR)"
+          href: matrix_review.qmd
 
 format:
   html:

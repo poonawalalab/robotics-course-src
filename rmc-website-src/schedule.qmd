@@ -25,8 +25,8 @@ execute:
 |Feb 05	    | Motion Planning Overview				|[Overview](https://poonawalalab.github.io/rmc-s21/assets/pdf/21_Motion_Planning_0.pdf), [Search](https://poonawalalab.github.io/rmc-s21/assets/pdf/20_Search.pdf)													|  OneNote 	|  10.3	|5		|
 |Feb 10	    | Search-based Motion Planning				|[Search](https://poonawalalab.github.io/rmc-s21/assets/pdf/20_Search.pdf)	|  OneNote 	| 10.3 	| 			|
 |Feb 12	    | Motion Planning RRT, Polynomial Blends   	|[MP1](https://poonawalalab.github.io/rmc-s21/assets/pdf/21_Motion_Planning_I.pdf), [MP2](https://poonawalalab.github.io/rmc-s21/assets/pdf/22_Motion_Planning_II.pdf)													|   OneNote	| 10.3 	| 	5		|	
-|Feb 17	    | Optimal Control   	|[Optimal Control PDF](https://poonawalalab.github.io/rmc-s21/assets/pdf/18_LQR.pdf)|   	| 	| 	|	
-|Feb 19	    | Optimal Control   	|[Optimal Control site](lqr.html)|   	| 	| 	|	
+|Feb 17	    | Optimal Control   	|[Optimal Control PDF](https://poonawalalab.github.io/rmc-s21/assets/pdf/18_LQR.pdf)|   	| 	| 	|
+|Feb 19	    | Optimal Control   	|[Optimal Control site](lqr.html), [Simple LQR](lqr_simple.html)| [Matrix Review](matrix_review.html)	| 	| 	|
 
 [^1]: _Robot Modeling and Control_, M. W. Spong, S. Hutchinson, and M. Vidyasagar, John Wiley \& Sons, 2006.
 <!--
