@@ -1,0 +1,314 @@
+---
+title: "LQR as Optimization: In-Class Activity"
+author-meta: "Hasan A. Poonawala"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+
+execute:
+  freeze: auto
+---
+
+This activity builds on the LQR slides by reframing the problem as a standard quadratic program (QP).
+You will construct the cost matrix and constraint matrix explicitly for a scalar two-step example,
+derive the optimality conditions using Lagrange multipliers, connect the Lagrange multiplier (costate)
+to the value function gradient, and set up the linearization that underlies iLQR.
+
+Work through each exercise before expanding the solution. The solutions show the key steps — your
+scratch work does not need to be as tidy.
+
+---
+
+## Part 1: LQR as a Quadratic Program
+
+**Setup.**
+Consider a scalar system with horizon $N = 2$:
+
+$$x_{t+1} = a x_t + b u_t, \qquad t = 0, 1$$
+
+The initial state $x_0$ is a given constant.
+The decision variables are $z = [x_1,\; x_2,\; u_0,\; u_1]^T \in \mathbb{R}^4$.
+The cost (with $q > 0$, $r > 0$) is
+
+$$J = \frac{1}{2}\bigl(q x_1^2 + q x_2^2 + r u_0^2 + r u_1^2\bigr).$$
+
+::: {.callout-tip appearance="minimal"}
+This is a finite-horizon regulation problem with no terminal weight for simplicity.
+Everything here extends directly to the general $A$, $B$, $W$, $R$, $W_f$ form from the slides once the scalar case is understood.
+:::
+
+---
+
+### Exercise 1 — Build the QP {#sec-ex1}
+
+**(a)** Write $J = \tfrac{1}{2} z^T H z$ for some $4 \times 4$ matrix $H$. What is $H$?
+
+**(b)** The first dynamics step is $x_1 = a x_0 + b u_0$. Rearrange this so all terms involving
+the decision variables $z$ are on the left:
+
+$$-x_1 + b u_0 = -a x_0.$$
+
+Write this as the first row of a matrix equation $Cz = d$, where $C$ is $2 \times 4$ and $d \in \mathbb{R}^2$.
+(Fill in the four coefficients corresponding to $[x_1,\; x_2,\; u_0,\; u_1]$.)
+
+**(c)** The second dynamics step is $x_2 = a x_1 + b u_1$. Rearrange and write it as the second row of $Cz = d$.
+
+**(d)** Write out the complete matrix $C$ and vector $d$ (which depends on the known constant $x_0$).
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 1
+
+**(a)** The cost is a sum of independent squared terms:
+$$J = \frac{1}{2}(q x_1^2 + q x_2^2 + r u_0^2 + r u_1^2) = \frac{1}{2} z^T H z, \qquad
+H = \begin{bmatrix} q & 0 & 0 & 0 \\ 0 & q & 0 & 0 \\ 0 & 0 & r & 0 \\ 0 & 0 & 0 & r \end{bmatrix}.$$
+
+There are no cross-terms because the cost penalizes each variable independently.
+
+**(b)** Rearranging $x_1 = ax_0 + bu_0$:
+$$-x_1 + bu_0 = -ax_0.$$
+
+The row of $C$ corresponding to this constraint has coefficients for $[x_1, x_2, u_0, u_1]$:
+$$\underbrace{[-1,\; 0,\; b,\; 0]}_{\text{row 1 of }C} \begin{bmatrix}x_1 \\ x_2 \\ u_0 \\ u_1\end{bmatrix} = \underbrace{-ax_0}_{d_1}.$$
+
+**(c)** Rearranging $x_2 = ax_1 + bu_1$:
+$$ax_1 - x_2 + bu_1 = 0.$$
+
+The coefficients for $[x_1, x_2, u_0, u_1]$ are $[a, -1, 0, b]$ with right-hand side $0$.
+
+**(d)** Assembling both rows:
+
+$$C = \begin{bmatrix} -1 & 0 & b & 0 \\ a & -1 & 0 & b \end{bmatrix}, \qquad d = \begin{bmatrix} -ax_0 \\ 0 \end{bmatrix}.$$
+
+The full problem is now a QP:
+$$\min_{z}\; \tfrac{1}{2} z^T H z \quad \text{subject to}\quad Cz = d.$$
+
+**The cost is one quadratic term in $z$. The dynamics are one linear equality constraint $Cz = d$.**
+:::
+
+---
+
+### Exercise 2 — Convexity {#sec-ex2}
+
+**(a)** Is $H$ positive definite? Justify briefly. (Hint: look at the diagonal entries.)
+
+**(b)** In the general LQR problem the state weight matrix $W$ and control weight matrix $R$ replace $qI$ and $rI$.
+What requirement on $W$ and $R$ guarantees $H$ is positive semi-definite? Positive definite?
+
+**(c)** Suppose someone sets $r = 0$ to remove the control penalty. What goes wrong mathematically?
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 2
+
+**(a)** $H = \mathrm{diag}(q, q, r, r)$. All diagonal entries are positive (since $q > 0$, $r > 0$), and $H$ has no off-diagonal entries, so all eigenvalues equal the diagonal entries. Therefore $H \succ 0$.
+
+**(b)**
+- $H \succeq 0$ requires $W \succeq 0$ (positive semi-definite) and $R \succeq 0$.
+- $H \succ 0$ requires both $W \succ 0$ and $R \succ 0$.
+
+In practice LQR only requires $W \succeq 0$ (you may not penalize every state direction), but $R \succ 0$ is essential — it appears inverted in both the optimal control formula and the Riccati recursion.
+
+**(c)** With $r = 0$, the control enters the cost only through the state penalty (indirectly via dynamics). The Hessian $H$ becomes positive semi-definite, and the minimization over $u$ may be unbounded: there is no restoring force pushing $u$ toward finite values. The optimal control formula $u^* = -R^{-1}(\cdots)$ requires inverting $R$, which is singular when $r = 0$.
+:::
+
+---
+
+## Part 2: Optimality Conditions and the Costate
+
+The QP from Part 1 can be solved analytically using **KKT conditions** (the optimality conditions for
+constrained optimization). For a QP with linear equality constraints, these are both necessary and sufficient.
+
+The Lagrangian is:
+
+$$\mathcal{L}(z, \lambda) = \frac{1}{2} z^T H z + \lambda^T (Cz - d), \qquad \lambda = \begin{bmatrix}\lambda_1 \\ \lambda_2\end{bmatrix} \in \mathbb{R}^2.$$
+
+Setting $\nabla_z \mathcal{L} = 0$ gives:
+
+$$Hz + C^T \lambda = 0.$$
+
+---
+
+### Exercise 3 — KKT conditions by hand {#sec-ex3}
+
+Using $H$ and $C$ from Exercise 1, write out the equation $Hz + C^T\lambda = 0$ component by component
+(one equation for each of $x_1$, $x_2$, $u_0$, $u_1$).
+
+**(a)** From the $u_0$ equation: solve for $u_0^*$ in terms of $\lambda_1$.
+
+**(b)** From the $x_1$ equation: find the **costate equation** — an expression for $\lambda_1$ in terms of $x_1$ and $\lambda_2$.
+
+**(c)** From the $x_2$ equation: find the **terminal condition** on $\lambda_2$.
+
+::: {.callout-tip appearance="minimal"}
+$C^T$ has shape $4 \times 2$. Its columns are the transposes of the rows of $C$.
+:::
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 3
+
+First compute $C^T$:
+$$C^T = \begin{bmatrix} -1 & a \\ 0 & -1 \\ b & 0 \\ 0 & b \end{bmatrix}.$$
+
+Now expand $Hz + C^T\lambda = 0$ row by row, using $H = \mathrm{diag}(q, q, r, r)$:
+
+| Row (variable) | Equation | Rearranged |
+|---|---|---|
+| $x_1$ | $q x_1 + (-1)\lambda_1 + a\lambda_2 = 0$ | $\lambda_1 = q x_1 + a\lambda_2$ |
+| $x_2$ | $q x_2 + (0)\lambda_1 + (-1)\lambda_2 = 0$ | $\lambda_2 = q x_2$ |
+| $u_0$ | $r u_0 + b\lambda_1 + (0)\lambda_2 = 0$ | $u_0^* = -\dfrac{b}{r}\lambda_1$ |
+| $u_1$ | $r u_1 + (0)\lambda_1 + b\lambda_2 = 0$ | $u_1^* = -\dfrac{b}{r}\lambda_2$ |
+
+**(a)** $u_0^* = -\dfrac{b}{r}\lambda_1$.
+
+**(b)** Costate equation: $\lambda_1 = q x_1 + a\lambda_2$. The costate at time $t$ depends on the current state cost $q x_t$ and the **propagated future costate** $a\lambda_{t+1}$. This is a backward recursion.
+
+**(c)** Terminal condition: $\lambda_2 = q x_2$. The costate at the final time equals the gradient of the terminal cost with respect to the state.
+
+::: {.callout-warning appearance="minimal"}
+Compare to the Riccati slides: the optimal control $u_t^* = -K_t x_t$ is reproduced here
+through $\lambda_t = p_t x_t$, which connects back to the value function.
+See Exercise 4.
+:::
+:::
+
+---
+
+### Exercise 4 — Costate equals gradient of value function {#sec-ex4}
+
+The value function satisfies $V_t^*(x) = \tfrac{1}{2} p_t x^2$ for some scalar $p_t$ (analogous to $P_t$ in the slides).
+We claim that at the optimum $\lambda_t = p_t x_t$ — the Lagrange multiplier equals $\partial V_t^*/\partial x$.
+
+Use $a = b = q = r = 1$ throughout.
+
+**(a)** From Exercise 3(c): what is $\lambda_2$? Identify $p_2$.
+
+**(b)** The optimal control at step 1 is $u_1^* = -b\lambda_2/r = -\lambda_2 = -p_2 x_2$.
+Substitute this into the dynamics $x_2 = ax_1 + bu_1^*$ and solve for $x_2$ in terms of $x_1$ only.
+
+**(c)** Using $\lambda_1 = qx_1 + a\lambda_2 = x_1 + \lambda_2$ and your expression for $x_2$ from (b),
+compute $\lambda_1$ as a multiple of $x_1$. What is $p_1$?
+
+**(d)** The scalar Riccati recursion is $p_t = q + \dfrac{a^2 p_{t+1}}{r + b^2 p_{t+1}}$.
+Verify that your $p_1$ from (c) matches the recursion with $a = b = q = r = 1$ and $p_2 = 1$.
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 4
+
+**(a)** From Exercise 3(c): $\lambda_2 = qx_2 = x_2$ (with $q=1$). So $p_2 = 1$.
+
+**(b)** Substitute $u_1^* = -p_2 x_2 = -x_2$ into the dynamics:
+$$x_2 = ax_1 + bu_1^* = x_1 + (-x_2).$$
+Solve: $2x_2 = x_1$, so $x_2 = \tfrac{1}{2} x_1$.
+
+**(c)** Now compute $\lambda_1$:
+$$\lambda_1 = x_1 + \lambda_2 = x_1 + p_2 x_2 = x_1 + 1 \cdot \tfrac{1}{2}x_1 = \frac{3}{2} x_1.$$
+Therefore $p_1 = \tfrac{3}{2}$.
+
+**(d)** The Riccati recursion with all parameters equal to 1 and $p_2 = 1$:
+$$p_1 = 1 + \frac{1 \cdot 1}{1 + 1 \cdot 1} = 1 + \frac{1}{2} = \frac{3}{2}. \checkmark$$
+
+The Lagrange multiplier approach and the dynamic programming approach give **the same answer**.
+The costate $\lambda_t$ is exactly $\nabla_{x} V_t^*(x_t) = p_t x_t$.
+:::
+
+---
+
+## Part 3: From LQR to iLQR
+
+LQR requires linear dynamics. For a nonlinear system, the idea behind **iLQR** is to
+repeatedly linearize around a nominal trajectory, solve LQR, update the nominal trajectory, and repeat.
+
+---
+
+### Exercise 5 — Linearize a nonlinear system {#sec-ex5}
+
+Consider a pendulum with state $x = [\theta,\; \omega]^T$ (angle, angular velocity) and
+discrete-time dynamics ($\Delta t$ is the timestep):
+
+$$\theta_{t+1} = \theta_t + \Delta t\, \omega_t$$
+$$\omega_{t+1} = \omega_t - \frac{g}{L}\Delta t\, \sin(\theta_t) + \Delta t\, u_t.$$
+
+Write these as $x_{t+1} = f(x_t, u_t)$. Given a nominal point $(\bar{x}, \bar{u}) = (\bar{\theta}, \bar{\omega}, \bar{u})$,
+define the deviations $\delta\theta = \theta - \bar{\theta}$, $\delta\omega = \omega - \bar{\omega}$, $\delta u = u - \bar{u}$.
+
+**(a)** Compute the Jacobian $A_t = \dfrac{\partial f}{\partial x}\Big|_{(\bar{x},\bar{u})}$ (a $2\times 2$ matrix).
+
+**(b)** Compute the Jacobian $B_t = \dfrac{\partial f}{\partial u}\Big|_{(\bar{x},\bar{u})}$ (a $2\times 1$ vector).
+
+**(c)** Write the **linearized dynamics** for the deviations:
+$$\begin{bmatrix}\delta\theta_{t+1} \\ \delta\omega_{t+1}\end{bmatrix} \approx A_t \begin{bmatrix}\delta\theta_t \\ \delta\omega_t\end{bmatrix} + B_t\, \delta u_t.$$
+
+**(d)** Evaluate $A_t$ at the hanging equilibrium $\bar{\theta} = 0$, $\Delta t = 0.1$, $g/L = 10$.
+How does it compare to the double integrator matrix $A$ from the LQR slides?
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 5
+
+**(a)** Differentiate each component of $f$ with respect to $[\theta, \omega]$:
+
+$$A_t = \frac{\partial f}{\partial x}\bigg|_{(\bar{x},\bar{u})} = \begin{bmatrix} \dfrac{\partial f_1}{\partial \theta} & \dfrac{\partial f_1}{\partial \omega} \\[6pt] \dfrac{\partial f_2}{\partial \theta} & \dfrac{\partial f_2}{\partial \omega} \end{bmatrix} = \begin{bmatrix} 1 & \Delta t \\ -\dfrac{g}{L}\Delta t\cos(\bar{\theta}) & 1 \end{bmatrix}.$$
+
+**(b)** Differentiate with respect to $u$:
+
+$$B_t = \frac{\partial f}{\partial u}\bigg|_{(\bar{x},\bar{u})} = \begin{bmatrix} 0 \\ \Delta t \end{bmatrix}.$$
+
+$B_t$ does not depend on $\bar{x}$ or $\bar{u}$ here because $u$ enters linearly.
+
+**(c)** The linearized dynamics:
+
+$$\begin{bmatrix}\delta\theta_{t+1} \\ \delta\omega_{t+1}\end{bmatrix} \approx \begin{bmatrix} 1 & \Delta t \\ -\frac{g}{L}\Delta t\cos(\bar{\theta}) & 1 \end{bmatrix} \begin{bmatrix}\delta\theta_t \\ \delta\omega_t\end{bmatrix} + \begin{bmatrix} 0 \\ \Delta t \end{bmatrix} \delta u_t.$$
+
+**(d)** At $\bar{\theta} = 0$: $\cos(0) = 1$, so
+
+$$A_t = \begin{bmatrix} 1 & 0.1 \\ -1 & 1 \end{bmatrix}, \qquad B_t = \begin{bmatrix}0 \\ 0.1\end{bmatrix}.$$
+
+The double integrator from the slides has $A = \begin{bmatrix}1 & \Delta t \\ 0 & 1\end{bmatrix}$ and $B = \begin{bmatrix}\Delta t^2/2 \\ \Delta t\end{bmatrix}$.
+
+The key difference is the $(2,1)$ entry: the pendulum has $-g\Delta t/L$ (restoring force when displaced), while the double integrator has $0$ (no position-dependent force). At the hanging equilibrium the pendulum is stable, so the linearization has a negative entry in position-to-acceleration. The $B$ matrices also differ because the pendulum input is angular acceleration while the double integrator input is linear acceleration applied to velocity only.
+:::
+
+---
+
+### Exercise 6 — Why iterate? {#sec-ex6}
+
+**(a)** Suppose we linearize the pendulum around a nominal trajectory $\{(\bar{x}_t, \bar{u}_t)\}$,
+solve LQR for the deviation dynamics, and obtain updated controls $\bar{u}_t + \delta u_t^*$.
+If we apply these updated controls to the **nonlinear** pendulum, will the resulting trajectory
+match what the linear model predicted? Explain in one or two sentences.
+
+**(b)** Given your answer to (a), describe what iLQR does in the next iteration. What gets
+recomputed and what stays the same?
+
+**(c)** *Bonus:* At convergence of iLQR, what should be true about the relationship between
+the nominal trajectory and the trajectory predicted by the linearized model?
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 6
+
+**(a)** No. The linearization $A_t$, $B_t$ is only accurate for small deviations $(\delta x, \delta u)$
+around the nominal. Once the controls change significantly, the true nonlinear trajectory diverges
+from the linear prediction. The larger the nonlinearity (e.g., large $\sin(\theta)$ effects away
+from the nominal), the larger the mismatch.
+
+**(b)** After rolling out the updated controls on the **nonlinear** dynamics to get a new trajectory
+$\{(x_t^{\text{new}}, u_t^{\text{new}})\}$, iLQR relinearizes: it recomputes $A_t$, $B_t$ at each
+time step along the new nominal. The cost matrices $H$ (which encode $W$ and $R$) do not change —
+only the linearization changes. Then LQR is solved again on the new linear model.
+
+**(c)** At convergence, the nominal trajectory and the trajectory predicted by the linearized model
+should be consistent: rolling out the nonlinear dynamics with the nominal controls produces
+(approximately) the same trajectory that was used to compute the linearization. There is no
+further improvement to be made by re-linearizing.
+:::
+
+---
+
+## Summary
+
+| Concept | What you did |
+|:--------|:-------------|
+| **LQR as QP** | Stacked $z = [x_1, x_2, u_0, u_1]^T$; cost is $\frac{1}{2}z^T H z$; dynamics are $Cz = d$ |
+| **Convexity** | $H \succ 0$ iff $q > 0$, $r > 0$; guarantees a unique global minimum |
+| **KKT conditions** | $Hz + C^T\lambda = 0$ gives: optimal control $u^* = -(b/r)\lambda_{t+1}$, backward costate $\lambda_t = qx_t + a\lambda_{t+1}$, terminal condition $\lambda_N = qx_N$ |
+| **Costate = $\nabla V^*$** | $\lambda_t = p_t x_t$; substituting into the costate equation recovers the Riccati recursion |
+| **iLQR setup** | Linearize nonlinear dynamics around a nominal $(\bar{x}_t, \bar{u}_t)$; $A_t$, $B_t$ are the Jacobians; relinearize after each LQR solve |

@@ -1,0 +1,268 @@
+---
+pagetitle: "LQR — Simple Form"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "Optimal Control •<a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+filters:
+  - shinylive
+execute:
+    freeze: auto
+---
+
+## Finite Horizon LQR {.center .smaller}
+<hr>
+
+### Standard Form for Regulation
+
+<br/>
+
+::: {layout="[120, 60]"}
+__Instructor__: Hasan A. Poonawala<br>
+<br>
+Mechanical and Aerospace Engineering <br>
+University of Kentucky, Lexington, KY, USA
+
+__Topics__: <br>
+Double Integrator Model <br>
+LQR Cost Function <br>
+Backward Riccati Recursion <br>
+Interactive Demo <br>
+:::
+
+# System Model
+
+## The Double Integrator {.smaller}
+
+A particle with unit mass moving in 1D under applied force $u$:
+
+$$\ddot{p} = u$$
+
+Define state $x = [p,\, v]^T$. Discrete dynamics with timestep $\Delta t$:
+
+$$x_{t+1} = \underbrace{\begin{bmatrix}1 & \Delta t \\ 0 & 1\end{bmatrix}}_{A} x_t + \underbrace{\begin{bmatrix}\tfrac{\Delta t^2}{2} \\ \Delta t\end{bmatrix}}_{B} u_t$$
+
+::: {.callout-tip appearance="minimal"}
+Here $A$ and $B$ are the usual state-transition and input matrices — kept **separate**, unlike the augmented form in the generalized LQR.
+:::
+
+# Optimal Control Problem
+
+## Cost Function {.smaller}
+
+Minimize over $u_0, u_1, \dots, u_{T-1}$:
+
+$$J = \underbrace{x_T^T W_f\, x_T}_{\text{terminal cost}} + \sum_{t=0}^{T-1}\left(\underbrace{x_t^T W x_t}_{\text{state cost}} + \underbrace{u_t^T R\, u_t}_{\text{control cost}}\right)$$
+
+subject to $x_{t+1} = A x_t + B u_t$.
+
+<br>
+
+| Symbol | Role | Requirement |
+|--------|------|-------------|
+| $W \in \mathbb{R}^{n\times n}$ | State cost matrix | $W = W^T \succeq 0$ |
+| $R \in \mathbb{R}^{m\times m}$ | Control cost matrix | $R = R^T \succ 0$ |
+| $W_f \in \mathbb{R}^{n\times n}$ | Terminal cost matrix | $W_f = W_f^T \succeq 0$ |
+
+::: {.callout-note appearance="minimal"}
+We write $W$ (not $Q$) for the state cost to avoid conflict with the Q-function $\mathbf{Q}_t(\cdot)$ used in the generalized formulation.
+:::
+
+# Dynamic Programming
+
+## Value Function {.smaller}
+
+Define the **cost-to-go** from time $t$:
+
+$$V_t(x) = \min_{u_t,\dots,u_{T-1}} \left[x_T^T W_f x_T + \sum_{s=t}^{T-1}(x_s^T W x_s + u_s^T R\, u_s)\right]$$
+
+::: {.fragment fragment-index=1}
+**Terminal condition:**
+$$V_T(x) = x^T W_f\, x = x^T P_T\, x \implies P_T = W_f$$
+:::
+
+::: {.fragment fragment-index=2}
+**Bellman recursion:** for $t = T-1, \dots, 0$:
+$$V_t(x) = \min_u \left[x^T W x + u^T R u + V_{t+1}(Ax + Bu)\right]$$
+:::
+
+## Backward Riccati Recursion {.smaller}
+
+Assume $V_{t+1}(x) = x^T P_{t+1} x$. Expand and minimize over $u$:
+
+$$\frac{\partial}{\partial u}\left[x^T W x + u^T R u + (Ax+Bu)^T P_{t+1}(Ax+Bu)\right] = 0$$
+
+::: {.fragment fragment-index=1}
+$$\implies 2Ru + 2B^T P_{t+1}(Ax + Bu) = 0$$
+
+$$\implies u_t^* = -\underbrace{(R + B^T P_{t+1} B)^{-1} B^T P_{t+1} A}_{K_t}\, x_t$$
+:::
+
+::: {.fragment fragment-index=2}
+Substituting back: $V_t(x) = x^T P_t x$ where
+
+$$\boxed{P_t = W + A^T P_{t+1}(A - BK_t)}$$
+$$\boxed{K_t = (R + B^T P_{t+1} B)^{-1} B^T P_{t+1} A}$$
+:::
+
+## Algorithm {.smaller}
+
+::: {.callout-tip icon=false}
+### Finite Horizon LQR (Standard Form)
+
+**Inputs:** $A$, $B$, $W$, $R$, $W_f$, horizon $T$
+
+**Backward pass** — set $P_T = W_f$; for $t = T-1, \dots, 0$:
+
+1. $K_t = (R + B^T P_{t+1} B)^{-1} B^T P_{t+1} A$
+2. $P_t = W + A^T P_{t+1}(A - BK_t)$
+
+**Forward pass** — given $x_0$, for $t = 0, \dots, T-1$:
+
+3. $u_t^* = -K_t\, x_t$
+4. $x_{t+1} = Ax_t + Bu_t^*$
+:::
+
+::: {.callout-note appearance="minimal"}
+Gains $\{K_t\}$ depend only on $A, B, W, R, W_f, T$ — **not** on $x_0$.
+Cost $J$ scales quadratically with $\|x_0\|$ by linearity.
+:::
+
+# Interactive Demo
+
+## Double Integrator: LQR Control {.smaller}
+
+Set initial conditions $x_0 = [p_0,\, v_0]^T$ and observe the optimal trajectory.
+
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 580
+
+from shiny import App, render, ui
+import numpy as np
+
+app_ui = ui.page_fluid(
+    ui.h4("Finite Horizon LQR — Double Integrator"),
+    ui.layout_sidebar(
+        ui.sidebar(
+            ui.h6("Initial State x₀"),
+            ui.input_slider("p0", "Position p₀", min=-5.0, max=5.0, value=3.0, step=0.1),
+            ui.input_slider("v0", "Velocity v₀", min=-5.0, max=5.0, value=0.0, step=0.1),
+            ui.hr(),
+            ui.h6("Horizon & Weights"),
+            ui.input_slider("T",  "Horizon T",         min=5,    max=60,   value=20,  step=5),
+            ui.input_slider("wp", "State weight wp",   min=0.1,  max=10.0, value=1.0, step=0.1),
+            ui.input_slider("wv", "State weight wv",   min=0.1,  max=10.0, value=1.0, step=0.1),
+            ui.input_slider("r",  "Control weight r",  min=0.01, max=5.0,  value=1.0, step=0.05),
+            ui.input_slider("wf", "Terminal weight wf",min=1.0,  max=50.0, value=10.0,step=1.0),
+            width=280,
+        ),
+        ui.output_plot("lqr_plot"),
+    ),
+)
+
+def server(input, output, session):
+    @render.plot
+    def lqr_plot():
+        import matplotlib.pyplot as plt
+        import matplotlib.gridspec as gridspec
+
+        dt = 0.1
+        T  = input.T()
+        wp, wv, r, wf = input.wp(), input.wv(), input.r(), input.wf()
+        x0 = np.array([input.p0(), input.v0()])
+
+        A = np.array([[1.0, dt], [0.0, 1.0]])
+        B = np.array([[0.5*dt**2], [dt]])
+        W  = np.diag([wp, wv])
+        R  = np.array([[r]])
+        Wf = wf * np.eye(2)
+
+        # --- Backward Riccati pass ---
+        P = Wf.copy()
+        Ks = []
+        for _ in range(T):
+            S  = R + B.T @ P @ B
+            K  = np.linalg.solve(S, B.T @ P @ A)
+            P  = W + A.T @ P @ (A - B @ K)
+            Ks.append(K)
+        Ks.reverse()
+
+        # --- Forward pass ---
+        xs = np.zeros((T + 1, 2))
+        us = np.zeros(T)
+        xs[0] = x0
+        J = 0.0
+        for t in range(T):
+            u = -(Ks[t] @ xs[t])
+            us[t] = u[0]
+            xs[t+1] = A @ xs[t] + B.flatten() * us[t]
+            J += xs[t] @ W @ xs[t] + r * us[t]**2
+        J += xs[T] @ Wf @ xs[T]
+
+        # --- Plot ---
+        time = np.arange(T + 1) * dt
+        fig  = plt.figure(figsize=(8, 6))
+        gs   = gridspec.GridSpec(3, 1, hspace=0.55)
+
+        ax1 = fig.add_subplot(gs[0])
+        ax1.plot(time, xs[:, 0], 'b-o', markersize=3, lw=1.5)
+        ax1.axhline(0, color='k', lw=0.8, ls='--')
+        ax1.set_ylabel("Position $p$")
+        ax1.set_title(f"Optimal Trajectory  (J = {J:.3f})", fontsize=10)
+        ax1.grid(True, alpha=0.3)
+
+        ax2 = fig.add_subplot(gs[1])
+        ax2.plot(time, xs[:, 1], 'g-o', markersize=3, lw=1.5)
+        ax2.axhline(0, color='k', lw=0.8, ls='--')
+        ax2.set_ylabel("Velocity $v$")
+        ax2.grid(True, alpha=0.3)
+
+        ax3 = fig.add_subplot(gs[2])
+        ax3.step(time[:-1], us, 'r-', where='post', lw=1.5)
+        ax3.axhline(0, color='k', lw=0.8, ls='--')
+        ax3.set_ylabel("Control $u$")
+        ax3.set_xlabel("Time (s)")
+        ax3.grid(True, alpha=0.3)
+
+        fig.tight_layout()
+        return fig
+
+app = App(app_ui, server)
+```
+
+# Summary
+
+## Summary {.smaller}
+
+**Backward Riccati recursion** — initialize $P_T = W_f$; repeat for $t = T-1,\dots,0$:
+
+$$K_t = (R + B^T P_{t+1} B)^{-1} B^T P_{t+1} A, \qquad P_t = W + A^T P_{t+1}(A - BK_t)$$
+
+**Optimal control** at runtime: $u_t^* = -K_t x_t$
+
+<br>
+
+**Trade-offs to explore:**
+
+| Change | Effect |
+|--------|--------|
+| Increase $r$ | Less aggressive control, slower convergence |
+| Increase $w_f$ | State forced closer to 0 at $t = T$ |
+| Increase $T$ | Smoother trajectories, gains converge toward $K_\infty$ |
+| Large $x_0$ | Cost $J$ grows quadratically — gains unchanged |
+
+::: {.callout-note appearance="minimal"}
+See `lqr.qmd` for the generalized formulation with augmented $[\mathbf{x}_t;\mathbf{u}_t]$ cost matrices and the explicit Q-function, which extends to iLQR.
+:::

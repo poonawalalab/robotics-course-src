@@ -1,0 +1,364 @@
+---
+title: "Vector and Matrix Skills for LQR"
+author-meta: "Hasan A. Poonawala"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+
+execute:
+  freeze: auto
+---
+
+This page builds the mathematical skills needed to set up LQR cost functions.
+The goal is to be comfortable writing costs like $\sum_k \|x_{k+1} - x_k\|^2$ as quadratic forms $v^T C\, v$, so that the matrices $Q$, $R$, and $C$ required by the LQR algorithm can be read off directly.
+
+Work through each section in order. Attempt each exercise before expanding the solution.
+
+---
+
+## 1. The Norm Squared
+
+The **Euclidean norm** of a vector $v \in \mathbb{R}^n$ is
+$$\|v\| = \sqrt{v_1^2 + v_2^2 + \cdots + v_n^2}.$$
+
+We almost always work with the **norm squared**, which removes the square root:
+$$\|v\|^2 = v_1^2 + v_2^2 + \cdots + v_n^2.$$
+
+**Key fact:** the norm squared equals the dot product of $v$ with itself.
+
+$$\boxed{\|v\|^2 = v^T v}$$
+
+::: {.callout-tip appearance="minimal"}
+**Why?** $v^T$ is a $1\times n$ row vector and $v$ is an $n\times 1$ column vector, so
+$$v^T v = [v_1,\; v_2,\; \ldots,\; v_n]\begin{bmatrix}v_1 \\ v_2 \\ \vdots \\ v_n\end{bmatrix} = v_1^2 + v_2^2 + \cdots + v_n^2.$$
+:::
+
+**Example.**  Let $v = [3,\; 4]^T$.
+
+- Direct:  $\|v\|^2 = 3^2 + 4^2 = 9 + 16 = 25$.
+- Matrix form:  $v^T v = [3,\;4]\begin{bmatrix}3\\4\end{bmatrix} = 3\cdot 3 + 4\cdot 4 = 9+16 = 25$. $\checkmark$
+
+**Difference of two vectors.** For $e = x - y$,
+$$\|x - y\|^2 = (x-y)^T(x-y) = x^T x - 2x^T y + y^T y.$$
+
+---
+
+## 2. Quadratic Forms
+
+A **quadratic form** is an expression $v^T Q v$ where $Q \in \mathbb{R}^{n\times n}$ is a symmetric matrix.
+It produces a scalar.
+
+For a $2\times 2$ symmetric $Q$:
+$$v^T Q v = [v_1,\; v_2]\begin{bmatrix}Q_{11} & Q_{12} \\ Q_{12} & Q_{22}\end{bmatrix}\begin{bmatrix}v_1 \\ v_2\end{bmatrix}
+= Q_{11}v_1^2 + 2Q_{12}v_1 v_2 + Q_{22}v_2^2.$$
+
+::: {.callout-warning appearance="minimal"}
+**Off-diagonal factor of 2.** The entry $Q_{12}$ appears twice (from both the upper and lower triangle of the symmetric matrix), so the coefficient of the cross-term $v_1 v_2$ in $v^T Q v$ is $2Q_{12}$, not $Q_{12}$.
+:::
+
+**The norm squared is a special case:** $\|v\|^2 = v^T I v$, where $I$ is the identity matrix.
+
+**Diagonal $Q$ — independent penalties:**
+$$v^T \begin{bmatrix}q_1 & 0 \\ 0 & q_2\end{bmatrix} v = q_1 v_1^2 + q_2 v_2^2.$$
+
+This is the most common cost in LQR: penalize each component separately with its own weight.
+
+**Working backwards.** Given a scalar expression like $3p^2 - 2pv + 5v^2$, you can read off the entries of $Q$ for $[p,\;v]^T$:
+
+- coefficient of $p^2$: $Q_{11} = 3$
+- coefficient of $v^2$: $Q_{22} = 5$
+- coefficient of $pv$: $2Q_{12} = -2$, so $Q_{12} = -1$
+
+$$Q = \begin{bmatrix}3 & -1 \\ -1 & 5\end{bmatrix}.$$
+
+---
+
+## 3. Stacking Vectors
+
+In LQR we often combine the state $x \in \mathbb{R}^n$ and control $u \in \mathbb{R}^m$ into a single **augmented vector**:
+
+$$z = \begin{bmatrix}x \\ u\end{bmatrix} \in \mathbb{R}^{n+m}.$$
+
+A cost involving both $x$ and $u$ can then be written as a single quadratic form $z^T C\, z$.
+
+**Block-diagonal $C$ — no coupling between $x$ and $u$.**
+If the cost is $x^T W x + u^T R\, u$ with no cross-terms, the matrix $C$ is block diagonal:
+
+$$z^T \begin{bmatrix}W & 0 \\ 0 & R\end{bmatrix} z
+= \begin{bmatrix}x \\ u\end{bmatrix}^T \begin{bmatrix}W & 0 \\ 0 & R\end{bmatrix} \begin{bmatrix}x \\ u\end{bmatrix}
+= x^T W x + u^T R\, u.$$
+
+**Reading block structure.** Partition $C$ as
+$$C = \begin{bmatrix}C_{xx} & C_{xu} \\ C_{ux} & C_{uu}\end{bmatrix}$$
+where $C_{xx}$ is $n\times n$ (state-state), $C_{uu}$ is $m\times m$ (control-control), and $C_{xu}$ is $n\times m$ (cross terms). Most standard LQR costs have $C_{xu} = 0$.
+
+The same idea applies to stacking **two consecutive states**. If the cost involves $x_k$ and $x_{k+1}$, stack them:
+$$w = \begin{bmatrix}x_k \\ x_{k+1}\end{bmatrix} \in \mathbb{R}^{2n}.$$
+
+---
+
+## 4. The Key Identity
+
+This is the workhorse for translating costs into matrix form:
+
+$$\boxed{\|Mv\|^2 = v^T M^T M\, v}$$
+
+**Derivation:**
+$$\|Mv\|^2 = (Mv)^T(Mv) = v^T M^T M\, v.$$
+
+So if you can write your cost as $\|Mv\|^2$, the quadratic-form matrix is immediately $C = M^T M$.
+
+**Weighted version.** For a positive-definite weight matrix $W \succ 0$,
+$$\|Mv\|_W^2 := (Mv)^T W (Mv) = v^T (M^T W M)\, v, \qquad C = M^T W M.$$
+
+**Example.** Let $v = [x_1,\; x_2]^T$ and $M = [1,\; -1]$ (a $1\times 2$ matrix).
+
+$$Mv = x_1 - x_2, \qquad \|Mv\|^2 = (x_1 - x_2)^2.$$
+
+$$C = M^T M = \begin{bmatrix}1 \\ -1\end{bmatrix}[1,\; -1] = \begin{bmatrix}1 & -1 \\ -1 & 1\end{bmatrix}.$$
+
+**Check:** $v^T C v = [x_1,\; x_2]\begin{bmatrix}1 & -1 \\ -1 & 1\end{bmatrix}\begin{bmatrix}x_1 \\ x_2\end{bmatrix} = x_1^2 - 2x_1 x_2 + x_2^2 = (x_1 - x_2)^2$. $\checkmark$
+
+::: {.callout-note appearance="minimal"}
+If the cost is a sum of independent terms, the $C$ matrices add:
+$$\|v\|^2 + r\,u^2 = z^T C_{\text{tot}}\, z, \qquad C_{\text{tot}} = I + \begin{bmatrix}0 & 0 \\ 0 & r\end{bmatrix}.$$
+:::
+
+---
+
+## Exercises
+
+### Exercise 1 — Reading off the quadratic form matrix {#sec-ex1}
+
+Let $z = [p,\; v,\; u]^T$. For each scalar cost below, find a symmetric matrix $C$ such that $c = z^T C\, z$.
+
+**(a)** $c = 2p^2 + 5v^2 + u^2$.
+
+**(b)** $c = (p - v)^2 + u^2$.
+
+**(c)** $c = p^2 + pv + v^2$ &nbsp;&nbsp; (Hint: what is $2C_{12}$?)
+
+::: {.callout-note collapse="true"}
+## Solutions — Exercise 1
+
+**(a)** Each term involves a single variable squared, so $C$ is diagonal.
+
+$$C = \begin{bmatrix}2 & 0 & 0 \\ 0 & 5 & 0 \\ 0 & 0 & 1\end{bmatrix}$$
+
+**(b)** Expand: $(p-v)^2 + u^2 = p^2 - 2pv + v^2 + u^2$.
+
+Match coefficients using $z^T C\, z = C_{11}p^2 + C_{22}v^2 + C_{33}u^2 + 2C_{12}pv + 2C_{13}pu + 2C_{23}vu$:
+
+- $C_{11} = 1$, $C_{22} = 1$, $C_{33} = 1$
+- $2C_{12} = -2 \;\Rightarrow\; C_{12} = -1$
+- $C_{13} = 0$, $C_{23} = 0$
+
+$$C = \begin{bmatrix}1 & -1 & 0 \\ -1 & 1 & 0 \\ 0 & 0 & 1\end{bmatrix}$$
+
+Alternatively: $(p-v)^2 + u^2 = \|Mz\|^2$ with $M = \begin{bmatrix}1 & -1 & 0 \\ 0 & 0 & 1\end{bmatrix}$, giving $C = M^T M$ — same result.
+
+**(c)** Match $p^2 + pv + v^2$ to $C_{11}p^2 + 2C_{12}pv + C_{22}v^2$:
+
+- $C_{11} = 1$, $C_{22} = 1$
+- $2C_{12} = 1 \;\Rightarrow\; C_{12} = \tfrac{1}{2}$
+
+$$C = \begin{bmatrix}1 & \tfrac{1}{2} & 0 \\ \tfrac{1}{2} & 1 & 0 \\ 0 & 0 & 0\end{bmatrix}$$
+
+(The $u$ row and column are all zero because $u$ does not appear in the cost.)
+:::
+
+---
+
+### Exercise 2 — Verifying the key identity {#sec-ex2}
+
+For each case below, verify $\|Mv\|^2 = v^T M^T M\, v$ by:
+(i) computing $Mv$ and squaring it out by hand, then
+(ii) computing $M^T M$ and evaluating $v^T M^T M\, v$, then
+(iii) confirming the two expressions match.
+
+**(a)** $M = [2,\; 1]$, $\;v = [3,\; 1]^T$.
+
+**(b)** $M = \begin{bmatrix}1 & 0 \\ 0 & 1 \\ 0 & 1\end{bmatrix}$, $\;v = [v_1,\; v_2]^T$ (leave the answer in terms of $v_1, v_2$).
+
+::: {.callout-note collapse="true"}
+## Solutions — Exercise 2
+
+**(a)**
+
+*(i)* $Mv = 2(3) + 1(1) = 7$, so $\|Mv\|^2 = 49$.
+
+*(ii)*
+$$M^T M = \begin{bmatrix}2\\1\end{bmatrix}[2,\;1] = \begin{bmatrix}4 & 2 \\ 2 & 1\end{bmatrix}$$
+$$v^T M^T M v = [3,\;1]\begin{bmatrix}4 & 2 \\ 2 & 1\end{bmatrix}\begin{bmatrix}3\\1\end{bmatrix} = [3,\;1]\begin{bmatrix}14\\7\end{bmatrix} = 42 + 7 = 49.$$
+
+*(iii)* Both equal 49. $\checkmark$
+
+---
+
+**(b)**
+
+*(i)* $Mv = \begin{bmatrix}v_1 \\ v_2 \\ v_2\end{bmatrix}$, so $\|Mv\|^2 = v_1^2 + v_2^2 + v_2^2 = v_1^2 + 2v_2^2$.
+
+*(ii)*
+$$M^T M = \begin{bmatrix}1 & 0 & 0 \\ 0 & 1 & 1\end{bmatrix}\begin{bmatrix}1 & 0 \\ 0 & 1 \\ 0 & 1\end{bmatrix} = \begin{bmatrix}1 & 0 \\ 0 & 2\end{bmatrix}$$
+$$v^T M^T M v = v_1^2 + 2v_2^2.$$
+
+*(iii)* Both equal $v_1^2 + 2v_2^2$. $\checkmark$
+:::
+
+---
+
+### Exercise 3 — Smoothness cost as a quadratic form {#sec-ex3}
+
+Let $x_k, x_{k+1} \in \mathbb{R}^2$ be consecutive states (treated here as free variables).
+Stack them into $w = [x_k;\; x_{k+1}] \in \mathbb{R}^4$.
+
+**(a)** Write $x_{k+1} - x_k$ as $Mw$ for some $2 \times 4$ matrix $M$. &nbsp;&nbsp;
+(Hint: $x_{k+1} - x_k = [-I \;\; I]\begin{bmatrix}x_k \\ x_{k+1}\end{bmatrix}$.)
+
+**(b)** Compute $C = M^T M$ (a $4 \times 4$ matrix) and confirm $\|x_{k+1} - x_k\|^2 = w^T C\, w$.
+
+**(c)** Expand $C$ in $2\times 2$ block form:
+$$C = \begin{bmatrix}C_{aa} & C_{ab} \\ C_{ba} & C_{bb}\end{bmatrix}$$
+where each block is $2\times 2$. Identify $C_{aa}$, $C_{ab}$, and $C_{bb}$.
+
+::: {.callout-note collapse="true"}
+## Solutions — Exercise 3
+
+**(a)** The difference $x_{k+1} - x_k = -x_k + x_{k+1}$ can be written as:
+$$x_{k+1} - x_k = \underbrace{[-I \quad I]}_{M} \underbrace{\begin{bmatrix}x_k \\ x_{k+1}\end{bmatrix}}_{w} = Mw, \qquad M = [-I,\; I] \in \mathbb{R}^{2\times 4}.$$
+
+**(b)**
+$$C = M^T M = \begin{bmatrix}-I \\ I\end{bmatrix}[-I,\; I] = \begin{bmatrix}I & -I \\ -I & I\end{bmatrix}.$$
+
+Check: for scalar $n=1$, $w = [x_k,\; x_{k+1}]^T$ and
+$$w^T C\, w = [x_k,\; x_{k+1}]\begin{bmatrix}1 & -1 \\ -1 & 1\end{bmatrix}\begin{bmatrix}x_k \\ x_{k+1}\end{bmatrix} = x_k^2 - 2x_k x_{k+1} + x_{k+1}^2 = (x_{k+1} - x_k)^2. \checkmark$$
+
+**(c)** Reading off the $2\times 2$ blocks:
+
+$$C_{aa} = I, \qquad C_{ab} = -I, \qquad C_{bb} = I.$$
+
+The block structure shows: $x_k$ is penalized by $I$, $x_{k+1}$ is penalized by $I$, and the cross term between them is $-I$ (the off-diagonal blocks). This is the same pattern regardless of the dimension of $x$.
+:::
+
+---
+
+### Exercise 4 — The global smoothness matrix {#sec-ex4}
+
+Exercise 3 handled one step at a time. Here we stack the **decision variables** and find the single matrix that represents the entire sum.
+
+**Setup.** The boundary states $x_0$ and $x_{T+1}$ are fixed constants. The variables are
+$$X = \begin{bmatrix}x_1 \\ \vdots \\ x_T\end{bmatrix} \in \mathbb{R}^T,$$
+and the cost is $J = \sum_{k=0}^{T}\|x_{k+1} - x_k\|^2$ ($T+1$ terms, each involving one or two variables).
+
+For concreteness take $T = 3$ and scalar states, so $X = [x_1,\, x_2,\, x_3]^T$ with constants $x_0$ and $x_4$.
+
+**Step 1 — Separate variable and constant parts.**
+
+Each difference $x_{k+1} - x_k$ is **affine** in $X$: a linear part $DX$ plus a constant offset $d$ from the boundary values.
+
+$$DX + d = \begin{bmatrix}x_1 - x_0 \\ x_2 - x_1 \\ x_3 - x_2 \\ x_4 - x_3\end{bmatrix},
+\quad
+D = \begin{bmatrix}1 & 0 & 0 \\ -1 & 1 & 0 \\ 0 & -1 & 1 \\ 0 & 0 & -1\end{bmatrix} \in \mathbb{R}^{4\times 3},
+\quad
+d = \begin{bmatrix}-x_0 \\ 0 \\ 0 \\ x_{T+1}\end{bmatrix}.$$
+
+**Step 2 — Apply the key identity.**
+
+$$J = \|DX + d\|^2 = X^T \underbrace{D^T D}_{Q}\, X + 2\underbrace{d^T D}_{q^T}\, X + \|d\|^2.$$
+
+The **quadratic** part is governed by $Q = D^T D$; the **linear** part $2q^T X$ depends on the boundary values; the **constant** $\|d\|^2$ does not affect the minimizer.
+
+**Step 3 — Compute $Q = D^T D$.**
+
+The columns of $D$ are $c_1 = [1,-1,0,0]^T$, $c_2 = [0,1,-1,0]^T$, $c_3 = [0,0,1,-1]^T$.
+
+| | $c_1$ | $c_2$ | $c_3$ |
+|---|---|---|---|
+| $c_1$ | $2$ | $-1$ | $0$ |
+| $c_2$ | $-1$ | $2$ | $-1$ |
+| $c_3$ | $0$ | $-1$ | $2$ |
+
+$$\boxed{Q = \begin{bmatrix}2 & -1 & 0 \\ -1 & 2 & -1 \\ 0 & -1 & 2\end{bmatrix}}$$
+
+**Why are all diagonal entries 2?** Every variable $x_k$ ($1 \le k \le T$) appears in exactly *two* differences — one on each side — contributing $x_k^2$ twice. The boundary states $x_0$ and $x_{T+1}$ are constants, so they do not appear as rows/columns of $Q$.
+
+**Step 4 — Compute the linear term $q = D^T d$.**
+
+$$q = D^T d = \begin{bmatrix}1 & -1 & 0 & 0 \\ 0 & 1 & -1 & 0 \\ 0 & 0 & 1 & -1\end{bmatrix}\begin{bmatrix}-x_0 \\ 0 \\ 0 \\ x_{T+1}\end{bmatrix} = \begin{bmatrix}-x_0 \\ 0 \\ -x_{T+1}\end{bmatrix}.$$
+
+The full cost is therefore:
+$$J = X^T Q\, X - 2x_0\, x_1 - 2x_{T+1}\, x_T + x_0^2 + x_{T+1}^2.$$
+
+Only the first and last variables are shifted by the boundary conditions; interior variables are unaffected.
+
+**General pattern** for any $T$ (scalar states), $Q \in \mathbb{R}^{T\times T}$:
+$$Q = \begin{bmatrix}2 & -1 & & \\ -1 & 2 & -1 & \\ & \ddots & \ddots & \ddots \\ & & -1 & 2\end{bmatrix}.$$
+
+**Block form** for vector states $x_k \in \mathbb{R}^n$ — replace each scalar entry by the corresponding multiple of $I_n$:
+$$Q = \begin{bmatrix}2I & -I & & \\ -I & 2I & -I & \\ & \ddots & \ddots & \ddots \\ & & -I & 2I\end{bmatrix} \in \mathbb{R}^{nT\times nT}.$$
+
+**Self-check.** Verify the $T=3$ result by expanding $J$ directly.
+
+::: {.callout-note collapse="true"}
+## Self-check worked out
+
+Expand the four squared differences:
+$$(x_1-x_0)^2 + (x_2-x_1)^2 + (x_3-x_2)^2 + (x_4-x_3)^2$$
+$$= x_1^2 - 2x_0 x_1 + x_0^2$$
+$$\quad + x_2^2 - 2x_1 x_2 + x_1^2$$
+$$\quad + x_3^2 - 2x_2 x_3 + x_2^2$$
+$$\quad + x_4^2 - 2x_4 x_3 + x_3^2.$$
+
+Collecting terms in the variables $x_1, x_2, x_3$:
+$$= 2x_1^2 + 2x_2^2 + 2x_3^2 - 2x_1 x_2 - 2x_2 x_3 - 2x_0 x_1 - 2x_4 x_3 + x_0^2 + x_4^2.$$
+
+Compare with $X^T Q X + 2q^T X + \text{const}$:
+
+- Quadratic part: $2x_1^2 + 2x_2^2 + 2x_3^2 - 2x_1 x_2 - 2x_2 x_3$ matches $X^T Q X$ with $Q = \begin{bmatrix}2&-1&0\\-1&2&-1\\0&-1&2\end{bmatrix}$. $\checkmark$
+- Linear part: $-2x_0 x_1 - 2x_4 x_3$ matches $2q^T X$ with $q = [-x_0,\, 0,\, -x_4]^T$. $\checkmark$
+- Constant: $x_0^2 + x_4^2$. $\checkmark$
+:::
+
+---
+
+### Exercise 5 — Standard LQR cost for the double integrator {#sec-ex5}
+
+The double integrator has state $x_k = [p_k,\; v_k]^T$ and scalar control $u_k$.
+Let $z_k = [p_k,\; v_k,\; u_k]^T$.
+
+The standard LQR regulation cost per step is:
+$$c_k = x_k^T W x_k + r\,u_k^2, \qquad W = \begin{bmatrix}w_p & 0 \\ 0 & w_v\end{bmatrix}.$$
+
+Write $c_k = z_k^T C_{\text{std}}\, z_k$ and identify $C_{\text{std}}$ as an explicit $3\times 3$ matrix in terms of $w_p$, $w_v$, and $r$.
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 5
+
+Separate the two costs and embed each into the full $z_k$ space:
+
+$$x_k^T W x_k = z_k^T \begin{bmatrix}W & 0 \\ 0 & 0\end{bmatrix} z_k = z_k^T \begin{bmatrix}w_p & 0 & 0 \\ 0 & w_v & 0 \\ 0 & 0 & 0\end{bmatrix} z_k.$$
+
+$$r\,u_k^2 = z_k^T \begin{bmatrix}0 & 0 & 0 \\ 0 & 0 & 0 \\ 0 & 0 & r\end{bmatrix} z_k.$$
+
+Adding:
+$$C_{\text{std}} = \begin{bmatrix}w_p & 0 & 0 \\ 0 & w_v & 0 \\ 0 & 0 & r\end{bmatrix}.$$
+
+This is the cost matrix used in the LQR slides: the diagonal entries are the weights on position, velocity, and control, and there are no cross-terms.
+:::
+
+---
+
+## Summary
+
+| Goal | Method |
+|:-----|:-------|
+| Write $\|v\|^2$ as a quadratic form | $\|v\|^2 = v^T I\, v$ |
+| Find $C$ from a scalar expression | Match coefficients; off-diagonal: $C_{ij} = \frac{1}{2}(\text{coeff of }z_i z_j)$ |
+| Write $\|Mv\|^2$ as a quadratic form | $C = M^T M$ |
+| Stack consecutive states | $w = [x_k;\; x_{k+1}]$, then $\|x_{k+1}-x_k\|^2 = w^T C\, w$ with $C = M^T M$, $M = [-I,\; I]$ |
+| Stack variables globally ($x_0$, $x_{T+1}$ fixed) | $X = [x_1;\ldots;x_T]$, $J = X^T Q X + 2q^T X + \text{const}$; $Q = D^T D$ is tridiagonal with all 2s on diagonal, $-1$s off-diagonal; $q = D^T d$ encodes boundary values |
+| Add independent cost terms | Add the $C$ matrices |
+
+These operations are sufficient to express any quadratic cost in the form required by the backward Riccati recursion.

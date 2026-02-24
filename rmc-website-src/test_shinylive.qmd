@@ -1,0 +1,83 @@
+---
+pagetitle: "Shinylive Test"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "Shinylive Test • <a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+filters:
+  - shinylive
+execute:
+    freeze: false
+---
+
+## Interactive Demo: Mass-Spring-Damper {.center .smaller}
+
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 600
+
+from shiny import App, render, ui
+import numpy as np
+
+app_ui = ui.page_fluid(
+    ui.h4("Damped Second-Order System Response"),
+    ui.layout_sidebar(
+        ui.sidebar(
+            ui.input_slider("wn", "Natural frequency (rad/s)", min=0.5, max=10.0, value=2.0, step=0.1),
+            ui.input_slider("zeta", "Damping ratio", min=0.0, max=2.0, value=0.3, step=0.05),
+            ui.input_slider("tf", "Simulation time (s)", min=1.0, max=20.0, value=10.0, step=0.5),
+        ),
+        ui.output_plot("response_plot"),
+    ),
+)
+
+def server(input, output, session):
+    @render.plot
+    def response_plot():
+        import matplotlib.pyplot as plt
+
+        wn = input.wn()
+        zeta = input.zeta()
+        tf = input.tf()
+        t = np.linspace(0, tf, 500)
+
+        if zeta < 1.0:
+            wd = wn * np.sqrt(1 - zeta**2)
+            y = 1 - np.exp(-zeta * wn * t) * (
+                np.cos(wd * t) + (zeta * wn / wd) * np.sin(wd * t)
+            )
+            label = f"Underdamped ($\\zeta$={zeta:.2f})"
+        elif zeta == 1.0:
+            y = 1 - (1 + wn * t) * np.exp(-wn * t)
+            label = f"Critically damped ($\\zeta$=1.00)"
+        else:
+            s1 = -wn * (zeta - np.sqrt(zeta**2 - 1))
+            s2 = -wn * (zeta + np.sqrt(zeta**2 - 1))
+            y = 1 + (s1 * np.exp(s2 * t) - s2 * np.exp(s1 * t)) / (s2 - s1)
+            label = f"Overdamped ($\\zeta$={zeta:.2f})"
+
+        fig, ax = plt.subplots(figsize=(7, 4))
+        ax.plot(t, y, linewidth=2, label=label)
+        ax.axhline(y=1.0, color="gray", linestyle="--", alpha=0.5)
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Step Response")
+        ax.set_title(f"$\\omega_n$={wn:.1f} rad/s, $\\zeta$={zeta:.2f}")
+        ax.set_ylim(-0.1, 2.0)
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        fig.tight_layout()
+        return fig
+
+app = App(app_ui, server)
+```
