@@ -1,0 +1,279 @@
+---
+title: "Simultaneous Localization and Mapping"
+pagetitle: "SLAM"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "SLAM • <a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+
+execute:
+    freeze: auto
+---
+
+## Simultaneous Localization and Mapping {.center .smaller}
+
+<hr>
+
+### SLAM Fundamentals
+
+<br/>
+
+::: {layout="[120, 60]"}
+__Instructor__: Hasan A. Poonawala<br>
+<br>
+Mechanical and Aerospace Engineering <br>
+University of Kentucky, Lexington, KY, USA
+
+__Topics__: <br>
+SLAM Problem Formulation <br>
+Kalman Filter for SLAM <br>
+Extended Kalman Filter <br>
+:::
+
+## The Localization Problem
+
+A robot is typically unable to measure its position.
+
+::: {.fragment}
+Instead, it can measure its position **in relation to objects** in the world.
+:::
+
+::: {.fragment}
+::: {.callout-warning}
+## The Fundamental Challenge
+Can't use Kalman Filter directly to estimate location when we don't have a map of objects in the world.
+:::
+:::
+
+::: {.fragment}
+Without a map, we don't know what to expect as measurement in a state (no sensor model).
+:::
+
+# Background
+
+## Motivation for SLAM
+
+::: {.callout-note}
+## Supplementary Material
+See additional slides on SLAM motivation and applications (instructor materials)
+:::
+
+::: {.fragment}
+**Key insight**: If we don't have a map, we need to build one while simultaneously figuring out where we are.
+:::
+
+## SLAM: The Core Idea
+
+SLAM tries to **simultaneously** make sense of:
+
+- Where we think we are (**localization**)
+- What we think we should be seeing (**mapping**)
+
+::: {.fragment}
+**Basic idea**: Make the map a part of the state.
+:::
+
+::: {.fragment}
+We can build measurement and motion models for this expanded state.
+:::
+
+# 2D SLAM: Non-rotating Robot
+
+## State Definition
+
+The robot at $(x_r, y_r)$ measures the location of landmarks $l_i = (l_{ix}, l_{iy})$ in its frame of reference, which is aligned with the world axis.
+
+::: {.fragment}
+**State vector:**
+$$
+x = \begin{bmatrix} x_r \\ y_r \\ l_{1x} \\ l_{1y} \\ l_{2x} \\ l_{2y} \\ \vdots \\ l_{n_l x} \\ l_{n_l y} \end{bmatrix}
+$$
+
+where there are $n_l$ landmarks.
+:::
+
+## Motion Model
+
+The landmarks are assumed stationary, with robot moving according to:
+$$
+\begin{bmatrix} x_r \\ y_r \end{bmatrix}_{t+1} = \begin{bmatrix} x_r \\ y_r \end{bmatrix}_{t} + u_t + v_t
+$$
+
+::: {.fragment}
+**System matrices:**
+
+$A$ is $(2 + 2n_l) \times (2 + 2n_l)$, the only non-zero elements being:
+$$A_{1,1} = 1, \quad A_{2,2} = 1$$
+:::
+
+::: {.fragment}
+$B$ is $(2 + 2n_l) \times 2$, the only non-zero elements being:
+$$B_{1,1} = 1, \quad B_{2,2} = 1$$
+:::
+
+## Measurement Model
+
+If the robot sees all landmarks in its frame, its measurement is:
+$$
+y = \begin{bmatrix} l_{1x} - x_r \\ l_{1y} - y_r \\ l_{2x} - x_r \\ l_{2y} - y_r \\ \vdots \end{bmatrix}
+$$
+
+## Measurement Matrix
+
+$C$ is $2n_l \times (2 + 2n_l)$:
+
+$$
+C = \begin{bmatrix}
+-1 & 0 & 1 & 0 & 0 & 0 & \dots & 0 & 0 \\
+0 & -1 & 0 & 1 & 0 & 0 & \dots & 0 & 0 \\
+-1 & 0 & 0 & 0 & 1 & 0 & \dots & 0 & 0 \\
+0 & -1 & 0 & 0 & 0 & 1 & \dots & 0 & 0 \\
+\vdots & \vdots & & & & & \vdots & & \\
+-1 & 0 & 0 & 0 & 0 & 0 & \dots & 1 & 0 \\
+0 & -1 & 0 & 0 & 0 & 0 & \dots & 0 & 1
+\end{bmatrix}
+$$
+
+## Performance Analysis
+
+Performance when robot always sees all landmarks:
+
+::: {.fragment}
+- The estimated mean position of each landmark is quite close to the actual landmark position, **relative to other landmarks**
+:::
+
+::: {.fragment}
+- The uncertainty in the landmark position is identical to the uncertainty in initial position, in the long run
+  - The robot can treat the landmark as lying within the $3\sigma$ ellipse of the landmark mean
+  - To avoid collision with high probability, the $3\sigma$ ellipse corresponding to its position should lie outside the landmark's ellipse
+:::
+
+::: {.fragment}
+- The difference between the robot's true and estimated location depends on **sensor accuracy**
+:::
+
+# Extended Kalman Filter
+
+## Nonlinear Systems
+
+For **linear systems** with Gaussian additive noise, the Kalman filter provides the least uncertain estimate.
+
+::: {.fragment}
+When the system is **nonlinear**:
+$$
+\begin{aligned}
+x_{t+1} &= f(x_t, u_t) + v_t \\
+y_t &= h(x_t) + w_t
+\end{aligned}
+$$
+:::
+
+## Linearization Approach
+
+Use linearization:
+
+$$
+A_t = \left. \frac{\partial f}{\partial x} \right|_{x = \mu_t}, \quad
+B_t = \left. \frac{\partial f}{\partial u} \right|_{u = u_t}, \quad
+C_t = \left. \frac{\partial h}{\partial x} \right|_{x = \mu_t^{pred}}
+$$
+
+::: {.fragment}
+A blind application of Kalman filter updates using $A_t$, $B_t$, and $C_t$ is **not guaranteed to work** but often does well in practice.
+:::
+
+# 2D SLAM: Rotating Robot
+
+## Motion Model
+
+The inputs are the speed $s$ of the robot along its current heading direction, and the angular velocity $\omega$:
+$$
+u_t = \begin{bmatrix} s_t \\ \omega_t \end{bmatrix}
+$$
+
+::: {.fragment}
+The motion model is now **nonlinear**:
+$$
+\begin{bmatrix} x_r \\ y_r \\ \theta_r \end{bmatrix}_{t+1} = \begin{bmatrix} x_r \\ y_r \\ \theta_r \end{bmatrix}_{t} + \begin{bmatrix} s_t \cos \theta_r \\ s_t \sin \theta_r \\ \omega_t \end{bmatrix} + v_t = f(x_t, u_t)
+$$
+:::
+
+## Linearized Motion Model
+
+We linearize to get part of the $A$ and $B$ matrices:
+
+$$
+\begin{bmatrix} x_r \\ y_r \\ \theta_r \end{bmatrix}_{t+1} = \begin{bmatrix} 1 & 0 & -\sin \theta_r \, s_t \\ 0 & 1 & \cos \theta_r \, s_t \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} x_r \\ y_r \\ \theta_r \end{bmatrix}_{t} + \begin{bmatrix} \cos \theta_r & 0 \\ \sin \theta_r & 0 \\ 0 & 1 \end{bmatrix} u_t + v_t
+$$
+
+## Measurement Model
+
+The position of a landmark $l_i$ in the robot's frame becomes:
+
+$$
+y_i = \begin{bmatrix} \cos \theta_r & -\sin \theta_r \\ \sin \theta_r & \cos \theta_r \end{bmatrix} \begin{bmatrix} l_{ix} - x_r \\ l_{iy} - y_r \end{bmatrix}
+$$
+
+::: {.fragment}
+The full measurement $y$ corresponds to stacking the $y_i$s.
+:::
+
+## Nonlinear Measurement
+
+The measurement model is **nonlinear**: $y = h(x) \neq Cx$ for any matrix $C$.
+
+::: {.fragment}
+As mentioned earlier, we linearize:
+$$
+C = \left. \frac{\partial h}{\partial x} \right|_{x = \mu_t^{pred}}
+$$
+:::
+
+# Practical Considerations
+
+## Limited Sensing
+
+We've assumed that we can see all landmarks at once.
+
+::: {.fragment}
+In practice, we can only see **nearby landmarks**.
+:::
+
+::: {.fragment}
+::: {.callout-warning}
+## Data Association Problem
+This limitation creates a **data association problem** when landmarks look similar to each other. For example, the entry to an office cubicle.
+:::
+:::
+
+## Advanced Topics
+
+::: {.callout-note}
+## Supplementary Material
+See additional slides covering:
+
+- Loop closure detection
+- Graph-based SLAM
+- Particle filter approaches
+- Modern SLAM systems
+:::
+
+## Summary
+
+1. **SLAM Problem**: Simultaneously estimate robot location AND map
+2. **State Augmentation**: Include landmark positions in state vector
+3. **Linear Case**: Non-rotating robot with aligned frame
+4. **EKF Extension**: Linearize nonlinear motion/measurement models
+5. **Rotating Robot**: Full SE(2) motion requires Jacobians
+6. **Practical Challenges**: Limited sensing, data association

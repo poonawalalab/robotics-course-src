@@ -1,0 +1,350 @@
+---
+pagetitle: "Model Predictive Control"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "Optimal Control •<a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+execute:
+    freeze: auto
+---
+
+## Model Predictive Control {.center .smaller}
+<hr>
+
+### Receding Horizon, Constraints, and Stability
+
+<br/>
+
+::: {layout="[120, 60]"}
+__Instructor__: Hasan A. Poonawala<br>
+<br>
+Mechanical and Aerospace Engineering <br>
+University of Kentucky, Lexington, KY, USA
+
+__Topics__: <br>
+Receding horizon idea <br>
+From iLQR/LQR to MPC <br>
+Constraints <br>
+Asymptotic stability <br>
+:::
+
+# The Core Idea
+
+## One-Shot vs. Receding Horizon {.smaller}
+
+**iLQR / LQR:** solve once offline for a fixed initial state $x_0$.
+
+::: {.fragment fragment-index=1}
+**What if the real state drifts from the plan?** Disturbances, model mismatch, new information.
+
+The feedback gain $K_k$ handles small deviations — but what about large ones, or problems with constraints?
+:::
+
+::: {.fragment fragment-index=2}
+**Model Predictive Control (MPC):** re-solve the finite-horizon optimal control problem at *every* timestep, from the *current* measured state.
+:::
+
+::: {.fragment fragment-index=3}
+```
+At time t:
+  1. Measure current state  x_t
+  2. Solve OCP over horizon [t, t+N]:  min J(x_t, u_{t:t+N-1})
+  3. Apply only the first control:  u_t = u_0*
+  4. Advance:  t ← t + 1,  repeat
+```
+:::
+
+## Receding Horizon Diagram {.smaller}
+
+At each timestep, the planning window shifts forward by one step.
+
+```
+t=0:  [●━━━━━━━━━━━━━━━━━━━━●]         solve, apply u_0*
+t=1:    [●━━━━━━━━━━━━━━━━━━━━●]       solve, apply u_1*
+t=2:      [●━━━━━━━━━━━━━━━━━━━━●]     solve, apply u_2*
+           ↑ current state              ↑ horizon end
+```
+
+::: {.fragment fragment-index=1}
+**Key properties:**
+
+- The horizon always looks $N$ steps into the future (same length each time)
+- Only $u_0^*$ is ever applied — the rest of the plan is discarded and recomputed
+- The re-solve at $t+1$ can be **warm-started** from the shifted solution at $t$
+:::
+
+::: {.fragment fragment-index=2}
+::: {.callout-note appearance="minimal"}
+Discarding and recomputing seems wasteful. The payoff: the plan always reflects the *current* state, handles constraints, and adapts to disturbances.
+:::
+:::
+
+# From iLQR/LQR to MPC
+
+## Linear MPC {.smaller}
+
+If dynamics are linear and cost is quadratic — no constraints:
+
+$$x_{k+1} = Ax_k + Bu_k, \qquad J = x_N^T P_f x_N + \sum_{k=0}^{N-1}(x_k^T Q x_k + u_k^T R u_k)$$
+
+::: {.fragment fragment-index=1}
+**Offline LQR:** compute gains $K_0, K_1, \dots, K_{N-1}$ once. At runtime: $u_t^* = -K_0 x_t$ (time-varying) or $u_t^* = -K_\infty x_t$ (infinite horizon). Cost: $\mathcal{O}(1)$ per timestep.
+:::
+
+::: {.fragment fragment-index=2}
+**Linear MPC:** solve the same problem online at each $t$ from $x_t$.
+
+Without constraints: **LQR and MPC give the identical control** — MPC adds no benefit, just cost.
+:::
+
+::: {.fragment fragment-index=3}
+::: {.callout-tip appearance="minimal"}
+**MPC earns its keep when:**
+
+1. **Constraints** on $u$ or $x$ must be enforced
+2. **Time-varying reference** (track a trajectory, not just regulate to origin)
+3. **Nonlinear dynamics** (re-linearize online → Nonlinear MPC)
+4. **Model mismatch** (re-solve corrects for real-world drift)
+:::
+:::
+
+## Nonlinear MPC via iLQR {.smaller}
+
+At each timestep $t$:
+
+1. **Warm-start:** shift the previous solution forward by one step, append a guess for the new last control
+2. **Run iLQR** (a few iterations, not necessarily to convergence)
+3. **Apply** $\hat{u}_0$ to the real system; measure $x_{t+1}$
+
+::: {.fragment fragment-index=1}
+```
+previous solution:  ū₀, ū₁, ū₂, ..., ū_{N-1}   (from time t)
+warm-start at t+1:  ū₁, ū₂, ..., ū_{N-1}, ū_{N-1}   (shifted + hold last)
+                     ↑ already near-optimal for new problem
+```
+:::
+
+::: {.fragment fragment-index=2}
+**Real-Time Iteration (RTI):** one backward pass + one forward pass per timestep, regardless of convergence. Works well when the problem changes slowly between steps.
+:::
+
+::: {.fragment fragment-index=3}
+::: {.callout-note appearance="minimal"}
+**Solve time budget** governs the number of iLQR iterations, not convergence. Horizon length $N$ is a design parameter: longer $N$ gives better plans but costs more to solve.
+:::
+:::
+
+# Constraints
+
+## Why Constraints Matter {.smaller}
+
+Unconstrained iLQR / LQR ignores physical limits. Real systems have:
+
+| Constraint type | Example |
+|-----------------|---------|
+| **Input limits** | Motor torque saturation, voltage bounds: $|u_k| \leq u_{\max}$ |
+| **State limits** | Joint angle limits, speed limits: $x_k \in \mathcal{X}$ |
+| **Safety / obstacle** | Keep state outside a forbidden region |
+| **Terminal** | Reach a target set at $k = N$ |
+
+::: {.fragment}
+::: {.callout-warning appearance="minimal"}
+Ignoring an active constraint (e.g., clipping the control post-hoc) invalidates the optimality of the LQR/iLQR solution. The optimal unconstrained $u^*$ can violate limits by large margins.
+:::
+:::
+
+## Handling Constraints in MPC {.smaller}
+
+**Input constraints** $u_k \in \mathcal{U}$ (convex, e.g., box $|u| \leq u_{\max}$):
+
+::: {.fragment fragment-index=1}
+- **Linear MPC:** the constrained problem is a **Quadratic Program (QP)** — efficient solvers (OSQP, qpOASES) solve it in milliseconds
+- **Nonlinear MPC with iLQR:** project the feedforward onto $\mathcal{U}$ during the backward pass, or add a barrier/penalty term
+:::
+
+::: {.fragment fragment-index=2}
+**State constraints** $x_k \in \mathcal{X}$ (harder — couples across timesteps):
+
+- **Augmented Lagrangian (AL-iLQR):** add $\lambda^T c(x_k) + \frac{\rho}{2}\|c(x_k)\|^2$ to the cost; alternate between iLQR and Lagrange multiplier updates
+- **Barrier / interior-point:** add $-\mu \log(-c(x_k))$ to keep iterates feasible; anneal $\mu \to 0$
+:::
+
+::: {.fragment fragment-index=3}
+::: {.callout-note appearance="minimal"}
+Handling constraints is the primary engineering challenge in MPC. Constraint satisfaction is exact at convergence; the number of iLQR iterations needed may increase.
+:::
+:::
+
+# Stability
+
+## The Finite-Horizon Trap {.smaller}
+
+A finite horizon $N$ creates a problem: **the optimizer doesn't care what happens after step $N$**.
+
+::: {.fragment fragment-index=1}
+**Pathological example:** to minimize cost over $[0, N]$, the optimizer might drive the state to a large value at $k = N$ — exploiting the fact that the cost is zero beyond the horizon.
+
+```
+horizon:   [x₀ ――――――――――――→ x_N]  |  (nothing after here)
+optimizer: reaches goal cheaply ...  |  then blows up
+```
+:::
+
+::: {.fragment fragment-index=2}
+**Consequence:** MPC with a naive terminal cost $V_f = 0$ may be **unstable** even when each individual solve is "optimal."
+:::
+
+::: {.fragment fragment-index=3}
+::: {.callout-warning appearance="minimal"}
+Stability of MPC is *not* automatic. It requires careful design of the terminal cost and/or terminal constraint.
+:::
+:::
+
+## Fix 1: Terminal Cost {.smaller}
+
+**Choose $V_f(x_N) = x_N^T P_\infty x_N$**, where $P_\infty$ is the infinite-horizon LQR solution:
+
+$$P_\infty = Q + A^T P_\infty A - A^T P_\infty B(R + B^T P_\infty B)^{-1} B^T P_\infty A$$
+
+::: {.fragment fragment-index=1}
+**Intuition:** $x_N^T P_\infty x_N$ is the optimal cost-to-go for the *unconstrained* infinite-horizon problem from $x_N$.
+
+The finite-horizon cost plus this terminal cost approximates the full infinite-horizon cost:
+
+$$J_N(x_0, \mathbf{u}) + V_f(x_N) \approx J_\infty(x_0, \mathbf{u}^*_\infty)$$
+:::
+
+::: {.fragment fragment-index=2}
+**Effect:** the optimizer is penalized for leaving $x_N$ far from the origin — it accounts for the "cost tail" beyond the horizon, rather than ignoring it.
+:::
+
+::: {.fragment fragment-index=3}
+::: {.callout-tip appearance="minimal"}
+For **linear systems without constraints**, this makes MPC exactly equivalent to infinite-horizon LQR, regardless of horizon length $N$. The terminal cost absorbs the truncation error completely.
+:::
+:::
+
+## Fix 2: Terminal Constraint {.smaller}
+
+**Require $x_N \in \mathcal{X}_f$**, where $\mathcal{X}_f$ is a **positively invariant set** under a local controller $u = Kx$:
+
+$$x \in \mathcal{X}_f \implies Ax + BKx \in \mathcal{X}_f$$
+
+::: {.fragment fragment-index=1}
+**Common choice:** $\mathcal{X}_f = \{x : x^T P_\infty x \leq c\}$ (an ellipsoid where the LQR gain $K_\infty$ keeps the state inside).
+
+- Inside $\mathcal{X}_f$: the LQR controller is feasible and stabilizing
+- The MPC trajectory must reach $\mathcal{X}_f$ by step $N$
+:::
+
+::: {.fragment fragment-index=2}
+**Strictest case:** $\mathcal{X}_f = \{0\}$, i.e., $x_N = 0$ (equality constraint). Guarantees stability but drastically reduces the feasible set — requires large $N$.
+:::
+
+::: {.fragment fragment-index=3}
+::: {.callout-note appearance="minimal"}
+Terminal cost and terminal constraint are often used together: the terminal set $\mathcal{X}_f$ ensures that $V_f$ is a valid Lyapunov function within the set, and the constraint ensures the state reaches the set.
+:::
+:::
+
+## Why This Gives Stability {.smaller}
+
+**Claim:** With terminal cost $V_f$ satisfying $V_f(Ax + BKx) \leq V_f(x) - \ell(x, Kx)$ for $x \in \mathcal{X}_f$, the MPC value function $J^*(x_t)$ is a **Lyapunov function**.
+
+::: {.fragment fragment-index=1}
+**Key inequality** (shifting argument):
+
+At time $t$: optimal cost is $J^*(x_t) = \ell(x_t, u_0^*) + \cdots + V_f(x_N^*)$
+
+At time $t{+}1$: use the *suboptimal* shifted sequence $u_1^*, \dots, u_{N-1}^*, K x_N^*$.
+Its cost is at most:
+
+$$J^*(x_{t+1}) \leq J^*(x_t) - \ell(x_t, u_0^*)$$
+:::
+
+::: {.fragment fragment-index=2}
+Since $\ell(x_t, u_t^*) \geq 0$ with equality only at $x_t = 0$:
+
+$$J^*(x_{t+1}) \leq J^*(x_t) - \ell(x_t, u_0^*) < J^*(x_t) \quad \text{for } x_t \neq 0$$
+
+$J^*$ decreases at each timestep → **asymptotic stability** of the origin.
+:::
+
+::: {.fragment fragment-index=3}
+::: {.callout-note appearance="minimal"}
+This is the standard Lyapunov stability proof for MPC. It requires: (1) terminal cost condition, (2) terminal constraint ensures the shifted sequence is feasible.
+:::
+:::
+
+# Practical MPC
+
+## Design Choices {.smaller}
+
+| Parameter | Effect | Typical guidance |
+|-----------|--------|-----------------|
+| Horizon $N$ | Longer → better plans, better stability margins | Start with $N \approx 10$–$50$; increase until performance plateaus |
+| Terminal cost $V_f$ | $P_\infty$ from LQR is the principled choice | Always include it; $V_f = 0$ is asking for trouble |
+| Terminal constraint | Guarantees stability with shorter $N$ | Use when $N$ is short and stability matters |
+| Sample time $\Delta t$ | Shorter → more accurate, more solves needed | Match to fastest relevant dynamics |
+| Iterations per step | More → closer to optimal; limited by solve time | RTI (1 iteration) often works well warm-started |
+
+## Warm-Starting {.smaller}
+
+The previous solution is nearly optimal for the next problem (state has moved only one step).
+
+::: {.fragment fragment-index=1}
+**Shift and hold:**
+$$\bar{u}_{t+1} = [u_1^*, u_2^*, \dots, u_{N-1}^*, u_{N-1}^*]$$
+
+The last control is repeated (held) as a placeholder for the new horizon end.
+:::
+
+::: {.fragment fragment-index=2}
+**Why it works:** the optimal solution is a continuous function of $x_t$ (in smooth problems). A small change in $x_t$ → small change in the optimal plan → warm-start is close to the new optimum → very few iLQR iterations needed.
+:::
+
+::: {.fragment fragment-index=3}
+::: {.callout-tip appearance="minimal"}
+**Real-Time Iteration (RTI):** one iLQR backward pass + one forward pass per MPC step, no convergence check. Widely used in fast MPC applications (automotive, drone control). Stability analysis is more involved but tractable.
+:::
+:::
+
+# Summary
+
+## LQR → iLQR → MPC {.smaller}
+
+::: {.fragment fragment-index=1}
+| Method | Dynamics | Constraints | When solved | Stability |
+|--------|----------|-------------|-------------|-----------|
+| **LQR** | Linear | None | Once, offline | Guaranteed (infinite horizon) |
+| **iLQR** | Nonlinear | None | Once, offline | Trajectory-local |
+| **Linear MPC** | Linear | Yes | Online, every step | Guaranteed with terminal cost |
+| **Nonlinear MPC** | Nonlinear | Yes | Online, every step | Guaranteed with terminal cost/constraint |
+:::
+
+::: {.fragment fragment-index=2}
+**The receding horizon principle:**
+
+- Re-solve from the current state → robust to disturbances and model error
+- Apply only $u_0^*$ → plan adapts at every step
+- Discard and recompute → no commitment to a fixed trajectory
+:::
+
+::: {.fragment fragment-index=3}
+**Stability requires design effort:**
+
+$$\text{Terminal cost } V_f = x^T P_\infty x \quad + \quad \text{Terminal constraint } x_N \in \mathcal{X}_f$$
+
+$\implies$ MPC value function $J^*(x_t)$ is a Lyapunov function $\implies$ asymptotic stability
+:::

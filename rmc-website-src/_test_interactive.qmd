@@ -1,0 +1,63 @@
+---
+title: "ME 310"
+pagetitle: "Lecture 1 MCQ"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css	  
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "<a href=\"index.html\">Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+	
+execute:
+    freeze: auto
+---
+
+
+
+## OJS Interactive 
+```{ojs}
+data = FileAttachment("assets/palmer-penguins.csv").csv({ typed: true })
+```
+```{ojs}
+viewof bill_length_min = Inputs.range(
+  [32, 50], 
+  {value: 35, step: 1, label: "Bill length (min):"}
+)
+viewof islands = Inputs.checkbox(
+  ["Torgersen", "Biscoe", "Dream"], 
+  { value: ["Torgersen", "Biscoe"], 
+    label: "Islands:"
+  }
+)
+```
+```{ojs}
+filtered = data.filter(function(penguin) {
+  return bill_length_min < penguin.bill_length_mm &&
+         islands.includes(penguin.island);
+})
+```
+```{ojs}
+Plot.rectY(filtered, 
+  Plot.binX(
+    {y: "count"}, 
+    {x: "body_mass_g", fill: "species", thresholds: 20}
+  ))
+  .plot({
+    facet: {
+      data: filtered,
+      x: "sex",
+      y: "species",
+      marginRight: 80
+    },
+    marks: [
+      Plot.frame(),
+    ]
+  }
+)
+```

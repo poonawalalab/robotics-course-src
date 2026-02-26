@@ -1,0 +1,533 @@
+---
+title: "Homogenous Coordinate Transformations"
+subtitle: "ME/AER 676 Robot Modeling & Control"
+author: "Hasan A. Poonawala"
+institute: "Department of Mechanical Engineering, University of Kentucky"
+format:
+  revealjs:
+    theme: default
+    slide-number: true
+    chalkboard: true
+    preview-links: auto
+    footer: "ME/AER 676 Robot Modeling & Control"
+    html-math-method: mathjax
+filter:
+  - tikz
+tikz:
+  fig-align: center
+  cache: true
+  additional-packages: |
+    \usetikzlibrary{arrows,decorations.pathmorphing,positioning,fit,trees,shapes,patterns,automata,calc,intersections,decorations.markings}
+---
+
+## Same Vector Space, Different Bases
+
+![](assets/images/homogtrans-1.png){width=50%}
+
+::: {.callout-note}
+A basis and an origin together form a **coordinate frame** or **reference frame**.
+:::
+
+---
+
+## Change Of Basis
+
+The coordinate $(1,0)$ will produce different points under different bases.
+
+. . .
+
+When we use a different basis, the coordinates assigned to a point must change, in order to correctly regenerate that point using the new basis.
+
+. . .
+
+Let $A$, $B$, $C$, $\dots$ be different coordinate frames.
+
+A point $p$ then has coordinates $p^A$, $p^B$, $p^C\dots$ corresponding to each basis.
+
+---
+
+## Change Of Vector Space Basis {.smaller}
+
+Given $p^A$, what is $p^B$, or $p^C$?
+
+**Answer:**
+$$p^B = \left(T_B^A\right)^{-1} p^A,$$
+
+where
+$$T_B^A = \begin{bmatrix} \left(e^1_B\right)^A & \left(e^2_B\right)^A  & \cdots & \left(e^n_B\right)^A\end{bmatrix},$$
+
+and $\left(e^i_B\right)^A$ is the coordinates in frame $A$ of the $i^{\mathrm{th}}$ basis vector of frame $B$.
+
+---
+
+## Example
+
+::: {.columns}
+::: {.column width="50%"}
+**Problem:** Find $p^B$ if $p^A = (1,1)$.
+
+**Solution:** From the diagram,
+$$\begin{aligned}
+e_B^1 &= e_A^1 \\
+e_B^2 &= e_A^1+e_A^2\\
+\implies T_B^A &= \begin{bmatrix}1 & 1 \\ 0 & 1\end{bmatrix}
+\end{aligned}$$
+
+Apply the formula:
+$$\begin{aligned}
+p^B &= \left(T_B^A\right)^{-1} p^A\\
+& = T_A^B p^A=\begin{bmatrix} 0\\1\end{bmatrix}
+\end{aligned}$$
+:::
+
+::: {.column width="50%"}
+![](assets/images/homogtrans-2.png){width=50%}
+
+The columns of $T_B^A$ tell us how to draw the basis of $B$ in $A$
+:::
+:::
+
+---
+
+## Change Of Vector Space Basis: Derivation
+
+The vector $e_B^i$ has coordinates  $\left(e_B^i\right)^A = (T_{1i}, T_{2i}, \dots, T_{ni} )$ in frame $A$.
+
+. . .
+
+Let the coordinates of $p$ in frame $A$ be $p^A = (\alpha_1^A,\alpha_2^A,\dots, \alpha_n^A)$,  so that the point $p$ can be expressed as
+$$ p \iff  \sum_j^n \alpha_j^A e^j_A $$
+
+. . .
+
+Note that $p$ is an abstract point equivalent to the coordinate-given combination of the basis $\{e_A^1,e_A^2,\dots,e_A^n \}$.
+
+. . .
+
+Similarly, if $p^B = (\beta_1^B,\beta_2^B,\dots, \beta_n^B)$, then
+$$ p \iff \sum_i^n \beta_i^B e^i_B $$
+
+---
+
+## Change Of Vector Space Basis (cont.)
+
+So, we can write
+$$e_B^i = \sum_i^n T_{ji} e^i_A ;\quad  p \iff \sum_i^n \beta_i^B e^i_B ;\quad p \iff  \sum_j^n \alpha_j^A e^j_A$$ {#eq-basisexpressions}
+
+. . .
+
+Combining the first and second equation, we get
+$$\begin{aligned}
+p &\iff \sum_i^n \beta_i^B e^i_B = \sum_i^n \beta_i^B \left( \sum_j^n T_{ji} e^j_A\right) \\
+& \iff \sum_j^n \left(\sum_i^n \left(\beta_i^B  T_{ji}\right) \right) e^j_A
+\end{aligned}$$ {#eq-basisrewritten}
+
+Comparing to the third equation, we get
+$$ \alpha_j^A = \sum_i^n \left(\beta_i^B  T_{ji}\right).$$
+
+---
+
+## Change Of Vector Space Basis (cont.)
+
+The expression
+$$ \alpha_j^A = \sum_i^n \left(\beta_i^B  T_{ji}\right)$$
+represents a linear transformation of the coordinates of a point.
+
+. . .
+
+$$ p \iff \begin{bmatrix}e^1_A & e^2_A  & \cdots & e^n_A\end{bmatrix}\begin{bmatrix}\alpha_1^A \\ \alpha_2^A  \\ \vdots \\  \alpha_n^A \end{bmatrix}= \begin{bmatrix}e^1_B & e^2_B  & \cdots & e^n_B\end{bmatrix}\begin{bmatrix}\beta_1^B \\ \beta_2^B  \\ \vdots \\  \beta_n^B \end{bmatrix}$$
+
+. . .
+
+The coordinates of $e^i_B$ in frame $A$ give:
+$$ e_B^1 = \begin{bmatrix}e^1_A & \cdots & e^n_A\end{bmatrix}\begin{bmatrix}T_{11} \\ \vdots \\  T_{n1} \end{bmatrix}, \quad e_B^2 = \begin{bmatrix}e^1_A & \cdots & e^n_A\end{bmatrix}\begin{bmatrix}T_{12} \\ \vdots \\  T_{n2} \end{bmatrix},  \dots $$
+
+---
+
+## Change Of Vector Space Basis (cont.)
+
+We can collect these expressions for point $e^i_B$ as
+$$\begin{bmatrix}e^1_B & e^2_B & \cdots & e^n_B\end{bmatrix} = \begin{bmatrix}e^1_A & e^2_A  & \cdots & e^n_A\end{bmatrix} \begin{bmatrix}T_{11} & T_{12} & \cdots &  T_{1n}  \\ T_{21} & T_{22} & \cdots &  T_{2n}\\ \vdots &  \vdots & \ddots & \vdots \\ T_{n1} & T_{n2} & \cdots &  T_{nn}  \end{bmatrix}$$
+
+So that:
+$$ \begin{bmatrix}e^1_B & e^2_B  & \cdots & e^n_B\end{bmatrix}\begin{bmatrix}\beta_1^B \\ \beta_2^B  \\ \vdots \\  \beta_n^B \end{bmatrix} = \begin{bmatrix}e^1_A & e^2_A  & \cdots & e^n_A\end{bmatrix} \begin{bmatrix}T_{11} & T_{12} & \cdots &  T_{1n}  \\ T_{21} & T_{22} & \cdots &  T_{2n}\\ \vdots &  \vdots & \ddots & \vdots \\ T_{n1} & T_{n2} & \cdots &  T_{nn}  \end{bmatrix} \begin{bmatrix}\beta_1^B \\ \beta_2^B  \\ \vdots \\  \beta_n^B \end{bmatrix}$$
+
+---
+
+## Change Of Vector Space Basis: Summary {#sec-def-t}
+
+Since $$p = \begin{bmatrix}e^1_A & e^2_A  & \cdots & e^n_A\end{bmatrix}\begin{bmatrix}\alpha_1^A \\ \alpha_2^A  \\ \vdots \\  \alpha_n^A \end{bmatrix}, $$
+
+we find that transforming coordinates is a linear operation represented by matrix operations:
+$$ \begin{bmatrix}\alpha_1^A \\ \alpha_2^A  \\ \vdots \\  \alpha_n^A \end{bmatrix} = \begin{bmatrix}T_{11} & T_{12} & \cdots &  T_{1n}  \\ T_{21} & T_{22} & \cdots &  T_{2n}\\ \vdots &  \vdots & \ddots & \vdots \\ T_{n1} & T_{n2} & \cdots &  T_{nn}  \end{bmatrix}  \begin{bmatrix}\beta_1^B \\ \beta_2^B  \\ \vdots \\  \beta_n^B \end{bmatrix}$$
+
+More compactly: $p^B = \left(T_B^A\right)^{-1} p^A$, where
+$$T_B^A = \begin{bmatrix} \left(e^1_B\right)^A & \left(e^2_B\right)^A  & \cdots & \left(e^n_B\right)^A\end{bmatrix}.$$
+
+---
+
+## Change Of Origin
+
+::: {.columns}
+::: {.column width="50%"}
+Suppose points $p$, $q$ have coordinates $p^A$, $q^A$ in a frame $A$.
+
+Consider frame $B$ whose origin is at $p$, with the same basis elements for its vector space as the frame $A$.
+
+What is $q^B$?
+:::
+
+::: {.column width="50%"}
+
+![](assets/images/homogtrans-3.png){width=50%}
+:::
+
+:::
+
+. . .
+
+The coordinates of $q$ in frame $B$ is the same as coordinates of the vector $v = q - p$ in the basis common to both frame $A$ and $B$.
+
+. . .
+
+Precisely because vectors are free, the coordinates of $v$ in frame $B$ will be the same as that in frame $A$.
+
+. . .
+
+So, $q^B = q^A - p^A$.
+
+In general, $q^B = q^A - \left( \text{coordinates of origin of  } B \text{ in } A \right)$
+
+---
+
+## Change Of Frames
+
+Combining previous discussions, we get that to map coordinates from one frame to another we :
+
+1. express the coordinates of the basis vectors of one frame in the other (through, say, matrix $T_B^A$),
+
+2. express the coordinates of the origin of one frame in another (through, say coordinate vector $o_B^A$),
+
+3. use the map $$ p^B = \left(T_B^A\right)^{-1} ( p^A -  o_B^A) $$
+
+---
+
+## Checkpoint
+
+::: {.incremental}
+- We relate points by picking an origin and using a vector space
+- Coordinates of vectors, given a basis, become coordinates of points
+- These coordinates correspond to a frame: origin + basis
+- All coordinates are $n$-tuples, we can't say anything about the basis from the coordinates.
+- If we know the bases and origins, we can transform coordinates from one frame to another.
+:::
+
+. . .
+
+::: {.callout-warning}
+If all bases for the plane give us two numbers, what's special about a basis where the two elements are at $90$ degrees, and have the same 'length'?
+:::
+
+---
+
+## Norms and Distances
+
+Let's reconsider our earlier example:
+$$ T_B^A = \begin{bmatrix}1 &1 \\ 0 &1\end{bmatrix}; \quad q^A = \begin{bmatrix}1\\1\end{bmatrix} \implies q^B = \left(T_B^A\right)^{-1} q^A =  \begin{bmatrix}0 \\ 1\end{bmatrix}.$$
+
+. . .
+
+**REMEMBER:** We're talking about the same two points in Euclidean space.
+
+. . .
+
+$\lVert q^A \rVert_A = \sqrt{2}$. $\lVert q^B \rVert_B = 1$. **What gives?**
+
+. . .
+
+Note that $\lVert q^B \rVert_B  = \lVert \left(T_B^A\right)^{-1} q^A \rVert_A.$
+
+::: {.callout-important}
+**Q:** What kinds of matrices preserve the norms of the vectors they act upon?
+:::
+
+---
+
+## Special Orthogonal Group in Three Dimensions
+
+If $T_B^A  \in SO(3)$, then we'd have norm-preservation.
+
+::: {.callout-note}
+## Definition: $SO(3)$
+The Special Orthogonal Group $SO(3)$ is the set of matrices  $R \in \mathbb{R}^{3 \times 3}$ such that
+$$R^TR = I, \text{ and } \det R = 1$$
+:::
+
+$SO(3)$ is known as the orientation group **and** the rotation group.
+
+---
+
+## Example: Norm Preservation (Case 1) {#sec-ex-two}
+
+::: {.columns}
+::: {.column width="50%"}
+**Problem:** Find $p^B$ if $p^A = (1,1)$.
+
+**Case 1:** Non-orthogonal basis
+$$\begin{aligned}
+e_B^1 &= e_A^1 \\
+e_B^2 &= e_A^1+e_A^2\\
+\implies T_B^A &= \begin{bmatrix}1 & 1 \\ 0 & 1\end{bmatrix}
+\end{aligned}$$
+
+$$p^B = \left(T_B^A\right)^{-1} p^A = \begin{bmatrix} 0\\1\end{bmatrix}$$
+
+Not norm-preserving: $\left(T_A^B\right)^{T} T_A^B = \begin{bmatrix}1&-1\\-1&2\end{bmatrix}$
+:::
+
+::: {.column width="50%"}
+```{tikz}
+%| fig-width: 3
+\begin{tikzpicture}
+\def\arrlen{1.5}
+\draw[fill =red] (\arrlen,\arrlen) circle (0.08) node[right] {$p$};
+\draw[thick,>=stealth',blue,->] (0,0) -- ++(0:\arrlen) node[below] {$e_A^1$};
+\draw[thick,>=stealth',blue,->]  (0,0) -- ++(90:\arrlen) node[left] {$e_A^2$};
+\draw[thick,>=stealth',red,->] (0,0.02) -- ++(0:\arrlen) node[below] {\hspace{7ex} $=e_B^1$};
+\draw[thick,>=stealth',red,->]  (0,0) -- ++(45:1.414*\arrlen)  node[above] {$e_B^2$};
+\end{tikzpicture}
+```
+
+The columns of $T_B^A$ tell us how to draw the basis of $B$ in $A$
+:::
+:::
+
+---
+
+## Example: Norm Preservation (Case 2)
+
+::: {.columns}
+::: {.column width="50%"}
+**Case 2:** Orthonormal basis
+$$\begin{aligned}
+e_B^1 &= \frac{1}{\sqrt{2}} e_A^1-\frac{1}{\sqrt{2}} e_A^2 \\
+e_B^2 &= \frac{1}{\sqrt{2}} e_A^1+ \frac{1}{\sqrt{2}} e_A^2\\
+\implies T_B^A &= \begin{bmatrix}\frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \\ -\frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}}\end{bmatrix}
+\end{aligned}$$
+
+$$p^B = \left(T_B^A\right)^{-1} p^A = \begin{bmatrix} 0\\\sqrt{2}\end{bmatrix}$$
+:::
+
+::: {.column width="50%"}
+```{tikz}
+%| fig-width: 3
+\begin{tikzpicture}
+\def\arrlen{1.5}
+\draw[fill =red] (\arrlen,\arrlen) circle (0.08) node[right] {$p$};
+\draw[thick,>=stealth',blue,->] (0,0) -- ++(0:\arrlen) node[below] {$e_A^1$};
+\draw[thick,>=stealth',blue,->]  (0,0) -- ++(90:\arrlen) node[left] {$e_A^2$};
+\draw[thick,>=stealth',red,->] (0,0.02) -- ++(-45:\arrlen) node[below] { $e_B^1$};
+\draw[thick,>=stealth',red,->]  (0,0) -- ++(45:1*\arrlen)  node[above] {$e_B^2$};
+\end{tikzpicture}
+```
+
+**Norm-preserving!**
+$$\left(T_A^B\right)^{T} T_A^B = \begin{bmatrix}1&0\\0&1\end{bmatrix}$$
+:::
+:::
+
+---
+
+## Orthonormal Vectors
+
+We have seen that
+$$T_B^A = \begin{bmatrix} \left(e^1_B\right)^A & \left(e^2_B\right)^A  & \cdots & \left(e^n_B\right)^A\end{bmatrix}.$$
+
+Therefore,
+$$\begin{aligned}
+\left(T_B^A\right)^T T_B^A &= \begin{bmatrix} \left(\left(e^1_B\right)^A\right)^T \\ \left(\left(e^2_B\right)^A\right)^T  \\ \vdots \\ \left(\left(e^n_B\right)^A\right)^T\end{bmatrix} \begin{bmatrix} \left(e^1_B\right)^A & \left(e^2_B\right)^A  & \cdots & \left(e^n_B\right)^A\end{bmatrix}
+\end{aligned}$$
+
+---
+
+## Orthonormal Vectors (cont.)
+
+$$\left(T_B^A\right)^T T_B^A =
+\begin{bmatrix}
+\left(e^1_B\right)^T \left(e^1_B\right) &\left(e^1_B\right)^T\left(e^2_B\right)  & \cdots &\left(e^1_B\right)^T  \left(e^n_B\right) \\
+\left(e^2_B\right)^T \left(e^1_B\right) &\left(e^2_B\right)^T\left(e^2_B\right)  & \cdots &\left(e^2_B\right)^T  \left(e^n_B\right) \\
+\vdots &\vdots  & \ddots &\vdots \\
+\left(e^n_B\right)^T \left(e^1_B\right) &\left(e^n_B\right)^T\left(e^2_B\right)  & \cdots &\left(e^n_B\right)^T  \left(e^n_B\right)
+\end{bmatrix}$$
+
+$$ = \begin{bmatrix}1&0&\cdots&0\\ 0&1&\cdots&0\\ \vdots &\vdots  & \ddots &\vdots \\ 0&0&\cdots&1\end{bmatrix} = I$$
+
+Effectively, the coordinates of basis vectors of $B$ in frame $A$ are unit length and perpendicular to each other.
+
+---
+
+## Checkpoint
+
+::: {.incremental}
+- Frames are origin+basis
+- Frames define vector coordinates for points in Euclidean space, relative to the frame
+- Can transform vector coordinates of a point in different frames using an affine map
+- To preserve distance, the linear part of the affine map must be in SO$(3)$
+- $T_B^A \in \text{SO}(3)$ when basis vectors are all unit length, mutually perpendicular.
+- The coordinate transformation is then $p^B = \left(R_B^A\right)^{-1} \left(p^A - o_B^A\right)$
+:::
+
+---
+
+## Coordinate Transformation Vs Rigid Motion
+
+![](assets/images/trans-v-rigid.png){width=100%}
+
+Consider a robot with a center, a camera in 'front', and two wheels to the side.
+
+. . .
+
+Whenever we move the robot, the distances between these points don't change.
+
+. . .
+
+As the robot moves, we can take a snapshot of these points, and they each define a coordinate frame for Euclidean space.
+
+---
+
+## Coordinate Transformation Vs Rigid Motion (cont.)
+
+**Q1:** How would the robot compare observations of either purple point over time?
+
+**A1:** Coordinate transformations
+
+. . .
+
+**Q2:** How do we keep track of all the points on the robots?
+
+**A2:** Coordinate transformations, **but reinterpreted.**
+
+---
+
+## Coordinate Transformation Vs Rigid Motion (cont.)
+
+We know how to express all points in the robot's frame in any other frame: Use a distance-preserving coordinate transformation.
+
+. . .
+
+This **transformation itself** becomes a representative for all points on the robot.
+
+. . .
+
+We have seen that
+$$p^B = \left(T_B^A\right)^{-1} \left(p^A - o_B^A\right)$$
+
+Let $d = o_B^A$ and $R = T_B^A$.
+
+. . .
+
+From this, we can derive
+$$\begin{aligned}
+p^B & = {R}^{-1} \left(p^A - d\right) \\
+ p^{A} &= R\ p^{B} + d
+\end{aligned}$$
+
+---
+
+## Rigid Body Pose
+
+We refer to the pair $(d,R)$ as the **pose** -- relative to frame $A$ -- of the rigid body to which frame $B$ is attached.
+
+. . .
+
+Let's reinterpret the two affine transformations associated with $(d,R)$. Consider vector $v$ in frame $A$:
+
+$$\begin{aligned}
+\color{orange}{u_1} & = {R}^{-1} \left(v - d\right)  & \text{ (Change of Basis)}\\
+\color{green}{u_2} &= R\ v + d & \text{ (Rigid motion)}
+\end{aligned}$$
+
+---
+
+## Rigid Body Pose: Visualization
+
+![](assets/images/trans-v-rigid-2.png){width=50%}
+
+- If we view $u_1$ as coordinates in frame $B$, we've changed coordinates of $v$ from world to body frame.
+- If we view $u_2$ as coordinates in frame $A$, we've moved the point $o_A \oplus v$ relative to frame $A$.
+
+---
+
+## Rigid Body Pose (cont.)
+
+The pair $(d,R) \in \mathbb{R}^3 \times \mathrm{SO}(3)$ tells us how to move points in frame $A$ to achieve the same coordinates in frame $B$.
+
+. . .
+
+$d$ is a vector, the coordinates of origin of frame $B$, and $R$ is a matrix containing the coordinates of axes of $B$, both relative to $A$
+
+. . .
+
+Move in frame $A$ = reorient by $R$ and then move by $d$ : $Rv+d$
+
+---
+
+## Example: Coordinate Transform vs Rigid Motion
+
+![](assets/images/trans-v-rigid-3.png){width=100%}
+
+- **Top row:** Coordinate transform $\left(R_B^A\right)^{-1}$ - fixed points in moving frame
+- **Bottom row:** Rigid motion $R_B^A$ - moving points in fixed frame
+
+---
+
+## Special Euclidean Group $\mathrm{SE}(3)$
+
+::: {.callout-important}
+Coordinates of points in 3D Euclidean space = $p^A \in \mathbb{R}^3$
+
+Coordinates of cartesian frames in 3D Euclidean space = $(d,R) \in \mathbb{R}^3 \times \mathrm{SO}(3)$
+:::
+
+**Points : Euclidean Space  ::  Cartesian Frames : Special Euclidean Group**
+
+. . .
+
+Affine Space : Euclidean Space :: $G$-Torsor : Special Euclidean Group
+
+. . .
+
+$G$-Torsor: A group $G$ with an action that maps a group element to another group element
+
+. . .
+
+Again, no coordinate frame is unique.
+
+For a $G$-Torsor, we don't define origin+basis (not a vector space).
+
+Instead, we define an identity element (it's a group): the reference coordinate frame.
+
+---
+
+## Homogenous Transformations
+
+We can convert the affine map between two Euclidean spaces of dimension $3$ into a linear map between two subsets of $\mathbb{R}^4$.
+
+Define a homogenization $h \colon \mathbb{R}^3 \mapsto \mathbb{R}^4$ as:
+$$h\left(p^A\right) = \begin{bmatrix}p^A\\1\end{bmatrix}$$
+
+If $p^A = R p^B + d$, then
+$$h \left(p^A\right) = \begin{bmatrix}R & d \\ 0 & 1\end{bmatrix}	h \left( p^B\right)$$
+
+The matrix $\begin{bmatrix}R & d \\ 0 & 1\end{bmatrix}$ represents a **homogenous transformation**, and forms a group.
+
+---
+
+## Final Checkpoint
+
+::: {.incremental}
+- The coordinate transformation is $p^B = \left(R_B^A\right)^{-1} \left(p^A - o_B^A\right)$
+- **Norm-preserving coordinate transformation = rigid motion of points within the same coordinate frame.**
+- Set of rigid body poses/rigid motions forms a group: $\mathrm{SE}(3)$
+- After choosing a reference frame, we assign coordinates -- aka rigid body pose -- $(d,R)$ to frame (Torsor structure)
+:::

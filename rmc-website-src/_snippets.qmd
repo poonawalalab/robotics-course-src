@@ -1,0 +1,58 @@
+---
+title: "Snippets"
+format: 
+  html:
+    standalone: false
+    self-contained: false
+
+execute: 
+  echo: false
+  freeze: auto
+---
+
+## Links
+
+See [this guide](https://docs.python.org/3/using/windows.html) or [this guide](https://www.digitalocean.com/community/tutorials/install-python-windows-10) to using `python` on Windows. 
+
+## Code 
+
+Display:
+
+```python
+print("Hello World")
+```
+
+
+Run:
+
+```{python}
+print("Hello World")
+```
+
+Subprocess: 
+
+```python
+import subprocess
+import sys
+
+def run_mujoco_visualization():
+    try:
+        # Run the mjpython command
+        result = subprocess.run([
+            sys.executable, '-m', 'mujoco.viewer'
+        ], capture_output=True, text=True, check=True)
+        
+        print("Output:", result.stdout)
+        return result.stdout
+        
+    except subprocess.CalledProcessError as e:
+        print(f"Error running MuJoCo visualization: {e}")
+        print(f"Error output: {e.stderr}")
+        return None
+    except FileNotFoundError:
+        print("mjpython not found. Make sure MuJoCo is installed and in PATH.")
+        return None
+
+# Usage
+run_mujoco_visualization()
+```

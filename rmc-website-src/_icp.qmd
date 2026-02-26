@@ -1,0 +1,191 @@
+---
+title: "ICP Algorithm for 2D LiDAR Scan Matching"
+format: 
+  revealjs:
+    theme: simple
+    highlight-style: github
+    slide-number: true
+    center: true
+    toc: true
+    toc-title: "Table of Contents"
+    transition: fade
+    width: 1200
+    height: 800
+---
+
+# Introduction
+
+## What is ICP?
+
+The Iterative Closest Point (ICP) algorithm is a fundamental technique for aligning 2D point clouds, particularly in LiDAR-based localization and mapping.
+
+## Why 2D LiDAR Scan Matching?
+
+- **Robot Navigation**: Aligning sensor data with map data
+- **SLAM**: Simultaneous Localization and Mapping
+- **Autonomous Driving**: Precise vehicle positioning
+- **Industrial Robotics**: Object positioning and manipulation
+
+# Problem Statement
+
+## The Challenge
+
+Given two 2D point clouds:
+- **Source cloud**: Current LiDAR scan
+- **Target cloud**: Reference map or previous scan
+
+**Goal**: Find the optimal transformation (rotation + translation) to align source to target.
+
+## Mathematical Formulation
+
+We want to minimize the distance between corresponding points:
+
+$$
+\min_{T} \sum_{i=1}^{n} \| T(p_i) - q_i \|^2
+$$
+
+Where:
+- $p_i$ = points in source cloud
+- $q_i$ = corresponding points in target cloud
+- $T$ = transformation matrix
+
+# Algorithm Overview
+
+## Step-by-Step Process
+
+1. **Initialization**: Start with an initial guess of transformation
+2. **Correspondence**: Find closest points between source and target
+3. **Transformation**: Compute optimal transformation from correspondences
+4. **Iteration**: Apply transformation and repeat until convergence
+
+## Key Components
+
+- **Point-to-point distance**: Direct distance between corresponding points
+- **Point-to-plane distance**: Distance to tangent plane (more robust)
+- **Error metric**: Sum of squared distances
+- **Optimization**: Least squares solution for transformation
+
+# Detailed Algorithm
+
+## Algorithm Steps
+
+1. **Initialize**: Set $T^{(0)} = I$ (identity transformation)
+2. **Iterate** until convergence:
+   - **Find correspondences**: For each point in source, find closest point in target
+   - **Compute transformation**: Solve for optimal $T^{(k+1)}$
+   - **Update**: $T^{(k+1)} = T^{(k)} \cdot T^{(k+1)}$
+   - **Check convergence**: If $\|T^{(k+1)} - T^{(k)}\| < \epsilon$, stop
+
+## Finding Correspondences
+
+```python
+# Pseudocode for correspondence finding
+for each point p_i in source:
+    find q_i = argmin_{q_j in target} ||p_i - q_j||^2
+```
+
+## Transformation Computation
+
+For point-to-point ICP:
+
+$$
+T = \begin{bmatrix}
+\cos\theta & -\sin\theta & t_x \\
+\sin\theta & \cos\theta & t_y \\
+0 & 0 & 1
+\end{bmatrix}
+$$
+
+Where:
+- $\theta$ = rotation angle
+- $t_x, t_y$ = translation components
+
+# Implementation Considerations
+
+## Practical Challenges
+
+- **Initial alignment**: Poor initial guess leads to local minima
+- **Noise**: Sensor noise affects correspondence finding
+- **Outliers**: Misaligned points can corrupt the solution
+- **Computational complexity**: Large point clouds require optimization
+
+## Optimization Techniques
+
+- **KD-tree**: Efficient nearest neighbor search
+- **Sampling**: Use subset of points for computation
+- **Robust statistics**: Handle outliers with RANSAC
+- **Multi-resolution**: Start with coarse alignment
+
+# Visualization
+
+## Typical Results
+
+```mermaid
+graph LR
+    A[Source Scan] --> B{ICP}
+    B --> C[Aligned Scan]
+    C --> D[Target Map]
+```
+
+## Convergence Behavior
+
+- **Fast initial convergence**: Large alignment errors
+- **Slow final convergence**: Fine alignment adjustments
+- **Stable solution**: When transformation changes little between iterations
+
+# Applications
+
+## Robotics
+
+- **SLAM systems**: Real-time localization
+- **Autonomous navigation**: Path planning and obstacle avoidance
+- **Warehouse automation**: Precise robot positioning
+
+## Mapping
+
+- **Mobile mapping**: Building accurate 2D maps
+- **Lidar mapping**: High-precision geospatial data
+- **Urban navigation**: GPS-denied environments
+
+# Limitations
+
+## Common Issues
+
+- **Local minima**: Algorithm may get stuck in suboptimal alignment
+- **Convergence speed**: Can be slow for large point clouds
+- **Noise sensitivity**: Performance degrades with high noise
+- **Featureless environments**: Lack of distinctive points
+
+## Solutions
+
+- **Multiple initializations**: Try different starting poses
+- **Hierarchical approach**: Multi-scale alignment
+- **Feature extraction**: Use distinctive points for matching
+- **Sensor fusion**: Combine with other sensors (IMU, odometry)
+
+# Conclusion
+
+## Summary
+
+The ICP algorithm provides an effective method for 2D LiDAR scan matching through iterative optimization. It's widely used in robotics and mapping applications due to its simplicity and effectiveness.
+
+## Key Takeaways
+
+1. ICP is a fundamental technique for point cloud registration
+2. Requires good initial alignment for optimal results
+3. Can be extended with robust statistics and multi-resolution approaches
+4. Essential for modern autonomous systems requiring precise localization
+
+## Future Directions
+
+- **Deep learning integration**: Neural networks for correspondence finding
+- **Real-time optimization**: Hardware acceleration for faster processing
+- **3D extensions**: Generalization to 3D point clouds
+- **Sensor fusion**: Integration with other sensor modalities
+
+# References
+
+1. Besl, P. J., & McKay, N. D. (1992). A method for registration of 3-D shapes. *IEEE Transactions on Pattern Analysis and Machine Intelligence*, 14(2), 239-256.
+2. Choy, C. G., et al. (2019). 3D semantic parsing with scene-level reasoning. *arXiv preprint arXiv:1904.02524*.
+3. Zhang, Z. (2000). Iterative point matching for registration of free-form curves and surfaces. *International Journal of Computer Vision*, 42(1), 5-24.
+4. Thrun, S., et al. (2005). *Probabilistic Robotics*. MIT Press.
