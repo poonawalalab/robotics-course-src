@@ -43,19 +43,19 @@ Full algorithm <br>
 
 ## The Setup {.smaller}
 
-Nominal trajectory $\bar{x}_0, \bar{u}_0, \dots, \bar{x}_{T-1}, \bar{u}_{T-1}, \bar{x}_{T}$ satisfies the true nonlinear dynamics.
+Nominal trajectory $\bar{x}_0, \bar{u}_0, \dots, \bar{x}_{T-1}, \bar{u}_{T-1}, \bar{x}_{T}, \bar{u}_{T-1}, \bar{x}_{T}$ satisfies the true nonlinear dynamics.
 
 Define deviations: $\delta x_{t} = x_{t} - \bar{x}_{t}$, $\quad \delta u_{t} = u_{t} - \bar{u}_{t}$.
 
 **Linearized error dynamics** around the nominal:
 $$\delta x_{t+1} \approx A_{t}\,\delta x_{t} + B_{t}\,\delta u_{t}, \qquad A_{t} = \left.\frac{\partial f}{\partial x}\right|_{\bar{x}_{t},\bar{u}_{t}}, \quad B_{t} = \left.\frac{\partial f}{\partial u}\right|_{\bar{x}_{t},\bar{u}_{t}}$$
 
-**Quadraticized cost** (second-order Taylor expansion of $\ell_{t}$ around nominal):
+**Quadratic cost** (second-order Taylor expansion of $c_{t}$ around nominal):
 
-$$\ell_{t} \approx \bar{\ell}_{t} + \begin{bmatrix}\ell_{k,x} \\ \ell_{k,u}\end{bmatrix}^{\!T} \begin{bmatrix}\delta x \\ \delta u\end{bmatrix} + \frac{1}{2}\begin{bmatrix}\delta x \\ \delta u\end{bmatrix}^{\!T} \begin{bmatrix}\ell_{k,xx} & \ell_{k,xu} \\ \ell_{k,ux} & \ell_{k,uu}\end{bmatrix}\begin{bmatrix}\delta x \\ \delta u\end{bmatrix}$$
+$$c_{t} \approx \bar{c}_{t} + \begin{bmatrix}q_{t} \\ r_{t}\end{bmatrix}^{\!T} \begin{bmatrix}\delta x \\ \delta u\end{bmatrix} + \frac{1}{2}\begin{bmatrix}\delta x \\ \delta u\end{bmatrix}^{\!T} \begin{bmatrix} Q_t^{cost} & S_t^{\!T} \\ S_t & R_t\end{bmatrix}\begin{bmatrix}\delta x \\ \delta u\end{bmatrix}$$
 
 ::: {.callout-note appearance="minimal"}
-Unlike LQR, the **linear terms** $\ell_{k,x}$ and $\ell_{k,u}$ are generally **nonzero** — the nominal is not yet optimal.
+Unlike LQR, the **linear terms** $q_t$ and $r_t$ are generally **nonzero** — the nominal is not yet optimal.
 :::
 
 ## Backward Pass: Q-function {.smaller}
@@ -64,10 +64,11 @@ The Q-function for the deviation problem:
 
 $$\tilde{Q}_{t}(\delta x, \delta u) \approx \text{const} + \begin{bmatrix}Q_x \\ Q_u\end{bmatrix}^{\!T} \begin{bmatrix}\delta x \\ \delta u\end{bmatrix} + \frac{1}{2}\begin{bmatrix}\delta x \\ \delta u\end{bmatrix}^{\!T} \begin{bmatrix}Q_{xx} & Q_{xu} \\ Q_{ux} & Q_{uu}\end{bmatrix}\begin{bmatrix}\delta x \\ \delta u\end{bmatrix}$$
 
-Backward recursion (initialize $V_{T,x} = \ell_{T,x}$, $V_{T,xx} = \ell_{T,xx}$):
+Backward recursion (initialize $V_{T,x} = c_{T,x}$, $V_{T,xx} = c_{T,xx}$):
 
-$$Q_x = \ell_{k,x} + A_{t}^T V_{k+1,x}, \qquad Q_u = \ell_{k,u} + B_{t}^T V_{k+1,x}$$
-$$Q_{xx} = \ell_{k,xx} + A_{t}^T V_{k+1,xx} A_{t}, \quad Q_{uu} = \ell_{k,uu} + B_{t}^T V_{k+1,xx} B_{t}, \quad Q_{ux} = \ell_{k,ux} + B_{t}^T V_{k+1,xx} A_{t}$$
+$$Q_x = q_t + A_{t}^T V_{t+1,x}, \qquad Q_u = r_t + B_{t}^T V_{t+1,x}$$
+$$Q_{xx} = c_{t,xx} + A_{t}^T V_{t+1,xx} A_{t}, \quad Q_{uu} = c_{t,uu} + B_{t}^T V_{t+1,xx} B_{t}, \quad Q_{ux} = c_{t,ux} + B_{t}^T V_{t+1,xx} A_{t}$$
+$$Q_{xx} = Q_t^{cost} + A_{t}^T V_{t+1,xx} A_{t}, \quad Q_{uu} = R_t + B_{t}^T V_{t+1,xx} B_{t}, \quad Q_{ux} = S_t + B_{t}^T V_{t+1,xx} A_{t}$$
 
 ## Backward Pass: Optimal Gains {.smaller}
 
@@ -84,12 +85,12 @@ $$\implies \delta u_{t}^* = \underbrace{-Q_{uu}^{-1} Q_u}_{k_{t}} + \underbrace{
 | $k_{t} \in \mathbb{R}^m$ | $-Q_{uu}^{-1} Q_u$ | **Feedforward** — optimization step |
 | $K_{t} \in \mathbb{R}^{m \times n}$ | $-Q_{uu}^{-1} Q_{ux}$ | **Feedback** — state-dependent correction |
 
-Value function updated as: $V_{k,x} = Q_x + Q_{xu} k_{t}$, $\quad V_{k,xx} = Q_{xx} + Q_{xu} K_{t}$
+Value function updated as: $V_{t,x} = Q_x + Q_{xu} k_{t}$, $\quad V_{t,xx} = Q_{xx} + Q_{xu} K_{t}$
 :::
 
 ::: {.fragment fragment-index=3}
 ::: {.callout-note appearance="minimal"}
-At the optimum $Q_u = \ell_{k,u} + B_{t}^T V_{k+1,x} = 0$, so $k_{t} = 0$ — identical to LQR.
+At the optimum $Q_u = r_t + B_{t}^T V_{t+1,x} = 0$, so $k_{t} = 0$ — identical to LQR.
 :::
 :::
 
@@ -97,7 +98,7 @@ At the optimum $Q_u = \ell_{k,u} + B_{t}^T V_{k+1,x} = 0$, so $k_{t} = 0$ — id
 
 ## The Forward Pass Update {.smaller}
 
-Starting from $\hat{x}_0 = \bar{x}_0$, for $k = 0, 1, \dots, T-1$:
+Starting from $\hat{x}_0 = \bar{x}_0$, for $t = 0, 1, \dots, T-1$:
 
 $$\boxed{\hat{u}_{t} = \bar{u}_{t} + \alpha\, k_{t} + K_{t}\underbrace{(\hat{x}_{t} - \bar{x}_{t})}_{\delta x_{t}}}$$
 $$\hat{x}_{t+1} = f\!\left(\hat{x}_{t},\; \hat{u}_{t}\right) \qquad \leftarrow \text{true nonlinear dynamics}$$
@@ -121,6 +122,7 @@ Both $k_{t}$ and $K_{t} \delta x_{t}$ arise from minimizing $\tilde{Q}_{t}$ — 
 **Connection to LQR:** In LQR the full optimal policy is $u_t^* = -K_t x_t$ — the feedback gain IS the solution, not a correction. iLQR adds the feedforward $k_t$ only because $Q_u \neq 0$ off the optimum; at convergence $k_t \to 0$ and only the feedback remains.
 :::
 
+## Why $\alpha$ Scales Only $k_{t}$ {.smaller}
 ::: {.fragment fragment-index=1}
 **Why $\alpha$ does not multiply $K_{t} \delta x_{t}$:**
 
@@ -150,7 +152,7 @@ Forward pass: $\hat{u}_{t} = \bar{u}_{t} + \alpha\, k_{t} + K_{t}(\hat{x}_{t} - 
 :::
 
 ::: {.fragment fragment-index=3}
-**At $k = 0$:** $\hat{x}_0 = \bar{x}_0$ always, so $\delta x_0 = 0$.
+**At $t = 0$:** $\hat{x}_0 = \bar{x}_0$ always, so $\delta x_0 = 0$.
 
 - The feedback plays **no role at the first step** regardless of $\alpha$
 - Only $\alpha k_0$ changes the control there
@@ -175,13 +177,18 @@ Near convergence, linearization error $\to 0$ and the two approaches become equi
 :::
 :::
 
+
+## Demo: Nonlinear vs. Linearized 
+
+```{python}
+{{< include ../code/ilqr_comparison.py >}}
+```
+\ 
+
 ## Demo: Nonlinear vs. Linearized {.smaller}
 
-Pendulum swing-up: $\theta_0 = 2.5$ rad, $T = 100$, zero-control initialization.
 
-```
-python3 code/ilqr_comparison.py
-```
+Pendulum swing-up: $\theta_0 = 2.5$ rad, $T = 100$, zero-control initialization.
 
 Three-panel figure:
 
@@ -215,10 +222,10 @@ Three-panel figure:
 ```python
 alpha = 1.0
 for _ in range(50):
-    for k in range(T):
-        delta_u = K[k] @ (x_new[k] - x_nom[k]) + alpha * k_ff[k]
-        u_new[k] = u_nom[k] + delta_u
-        x_new[k+1] = f(x_new[k], u_new[k])   # nonlinear step
+    for t in range(T):
+        delta_u = K[t] @ (x_new[t] - x_nom[t]) + alpha * k_ff[t]
+        u_new[t] = u_nom[t] + delta_u
+        x_new[t+1] = f(x_new[t], u_new[t])   # nonlinear step
     if new_cost < current_cost:
         break
     alpha *= 0.5
@@ -249,7 +256,7 @@ Actual decrease must be at least a fraction $\gamma$ of the quadratic model's pr
 
 At convergence, $k_{t} = -Q_{uu}^{-1} Q_u \to 0$, which means:
 
-$$Q_u = \ell_{k,u} + B_{t}^T V_{k+1,x} = 0 \quad \text{for all } k$$
+$$Q_u = r_t + B_{t}^T V_{t+1,x} = 0 \quad \text{for all } t$$
 
 ::: {.fragment fragment-index=1}
 **Question:** Write out what this says in terms of the original cost and dynamics.  What classical optimality condition does it correspond to?
@@ -258,7 +265,7 @@ $$Q_u = \ell_{k,u} + B_{t}^T V_{k+1,x} = 0 \quad \text{for all } k$$
 ::: {.fragment fragment-index=2}
 **Answer:** This is the discrete-time **Pontryagin Maximum Principle** stationarity condition:
 
-$$\frac{\partial \ell_{t}}{\partial u_{t}} + B_{t}^T \lambda_{t+1} = 0, \qquad \lambda_{t+1} = V_{k+1,x}$$
+$$\frac{\partial c_{t}}{\partial u_{t}} + B_{t}^T \lambda_{t+1} = 0, \qquad \lambda_{t+1} = V_{t+1,x}$$
 
 where $\lambda_{t}$ is the **costate** (adjoint variable). iLQR converges precisely when the KKT conditions are satisfied.
 :::
@@ -270,18 +277,18 @@ where $\lambda_{t}$ is the **costate** (adjoint variable). iLQR converges precis
 ::: {.callout-tip icon=false}
 ### iLQR
 
-**Input:** initial controls $\bar{u}_{0:T-1}$, dynamics $f_{t}$, costs $\ell_{t}$, $\ell_{T}$
+**Input:** initial controls $\bar{u}_{0:T-1}$, dynamics $f_{t}$, costs $c_{t}$, $c_{T}$
 
 **1. Rollout:** simulate $\bar{x}_{t+1} = f_{t}(\bar{x}_{t}, \bar{u}_{t})$ to obtain the nominal trajectory.
 
 **2. Repeat until convergence:**
 
-**2a. Backward pass** — init $V_{T,x} = \ell_{T,x}$, $V_{T,xx} = \ell_{T,xx}$; for $k = T-1, \dots, 0$:
+**2a. Backward pass** — init $V_{T,x} = c_{T,x}$, $V_{T,xx} = c_{T,xx}$; for $t = T-1, \dots, 0$:
 
 - Compute Jacobians $A_{t}, B_{t}$ and cost derivatives at $(\bar{x}_{t}, \bar{u}_{t})$
 - Compute $Q_x, Q_u, Q_{xx}, Q_{uu}, Q_{ux}$ via the recursion
 - Gains: $k_{t} = -Q_{uu}^{-1} Q_u$, $\quad K_{t} = -Q_{uu}^{-1} Q_{ux}$
-- Update: $V_{k,x} = Q_x + Q_{xu} k_{t}$, $\quad V_{k,xx} = Q_{xx} + Q_{xu} K_{t}$
+- Update: $V_{t,x} = Q_x + Q_{xu} k_{t}$, $\quad V_{t,xx} = Q_{xx} + Q_{xu} K_{t}$
 
 **2b. Forward pass** — from $\hat{x}_0 = \bar{x}_0$, simulate with $\hat{u}_{t} = \bar{u}_{t} + \alpha k_{t} + K_{t}(\hat{x}_{t} - \bar{x}_{t})$
 
@@ -296,7 +303,7 @@ where $\lambda_{t}$ is the **costate** (adjoint variable). iLQR converges precis
 |----------|-----|---------------------|
 | Dynamics | $A_{t} x_{t} + B_{t} u_{t}$ | $\bar{x}_{t+1} + A_{t} \delta x_{t} + B_{t} \delta u_{t}$ |
 | Cost | Quadratic in $(x, u)$ | Quadratic in $(\delta x, \delta u)$; linear terms nonzero |
-| $Q_{uu}$ | $R + B^T P B$ | $\ell_{uu} + B^T V_{xx} B$ |
+| $Q_{uu}$ | $R + B^T P B$ | $c_{uu} + B^T V_{xx} B$ |
 | Optimal control | $u^* = -K x$ | $\delta u^* = k + K \delta x$ |
 | Feedforward | None ($Q_u = 0$ at optimum) | $k = -Q_{uu}^{-1} Q_u$ (drives improvement) |
 | Hessian recursion | Discrete Riccati equation | Same Schur complement form |
@@ -309,12 +316,16 @@ The backward pass is **structurally identical to LQR** applied to the deviation 
 
 # Convergence
 
-## Demo: Iterates {.smaller}
-
-
+## Demo: Iterates 
 ```{python}
 {{< include ../code/ilqr_iterates.py >}}
 ```
+\ 
+
+
+## Demo: Iterates {.smaller}
+
+
 
 Pendulum swing-up from $\theta_0 = 3.0$ rad, $T = 200$ steps.
 Snapshots at iterations 0, 1, 2, 4, 8, 15, 25, 50, 100 (darker = later).
@@ -342,15 +353,15 @@ Snapshots at iterations 0, 1, 2, 4, 8, 15, 25, 50, 100 (darker = later).
 
 iLQR uses only first-order Jacobians of $f_{t}$. DDP adds second-order terms:
 
-$$Q_{xx} \mathrel{+}= \sum_i (V_{k+1,x})^{(i)} f_{k,xx}^{(i)}, \quad Q_{uu} \mathrel{+}= \cdots, \quad Q_{ux} \mathrel{+}= \cdots$$
+$$Q_{xx} \mathrel{+}= \sum_i (V_{t+1,x})^{(i)} f_{t,xx}^{(i)}, \quad Q_{uu} \mathrel{+}= \cdots, \quad Q_{ux} \mathrel{+}= \cdots$$
 
 ::: {.fragment fragment-index=1}
-- Terms scale as $\mathcal{O}(\|V_{k+1,x}\|)$ — vanish near the optimum where $V_{k+1,x} \to 0$
+- Terms scale as $\mathcal{O}(\|V_{t+1,x}\|)$ — vanish near the optimum where $V_{t+1,x} \to 0$
 - Better convergence rate far from the optimum; expensive and rarely used in practice
 - iLQR is sometimes called **Gauss-Newton DDP**
 :::
 
-::: {.fragment fragment-index=2}
+## Beyond iLQR {.smaller}
 **Natural extensions:**
 
 | Extension | Idea |
@@ -358,7 +369,6 @@ $$Q_{xx} \mathrel{+}= \sum_i (V_{k+1,x})^{(i)} f_{k,xx}^{(i)}, \quad Q_{uu} \mat
 | Constrained iLQR | Handle $u_{t} \in \mathcal{U}$ via augmented Lagrangian (AL-iLQR) |
 | MPC | Re-solve at each timestep with a receding horizon |
 | Warm-starting | Initialize next solve from the shifted previous solution |
-:::
 
 # Summary
 
@@ -368,8 +378,8 @@ $$Q_{xx} \mathrel{+}= \sum_i (V_{k+1,x})^{(i)} f_{k,xx}^{(i)}, \quad Q_{uu} \mat
 $$\hat{u}_{t} = \bar{u}_{t} + \alpha\, k_{t} + K_{t}(\hat{x}_{t} - \bar{x}_{t}), \qquad \hat{x}_{t+1} = f(\hat{x}_{t}, \hat{u}_{t})$$
 
 ::: {.fragment fragment-index=1}
-- $\alpha$ scales only $k_{t}$ — the Newton search direction
-- $K_{t} \delta x_{t}$ corrects for nonlinear drift; it is not a search direction
+- $\alpha$ scales only $k_{t}$ — the Newton search direction in $u$
+- $K_{t} \delta x_{t}$ corrects for nonlinear drift; it is not a search direction unless dynamics are linear
 - Using nonlinear dynamics keeps the trajectory **feasible** at every iteration
 :::
 
@@ -381,7 +391,8 @@ $$\hat{u}_{t} = \bar{u}_{t} + \alpha\, k_{t} + K_{t}(\hat{x}_{t} - \bar{x}_{t}),
 **DDP vs. iLQR:** dynamics Hessian terms improve convergence rate but are rarely worth the cost
 :::
 
-::: {.fragment fragment-index=3}
+## Summary {.smaller}
+
 **Computational complexity per iteration:**
 
 | Step | Cost |
@@ -389,4 +400,3 @@ $$\hat{u}_{t} = \bar{u}_{t} + \alpha\, k_{t} + K_{t}(\hat{x}_{t} - \bar{x}_{t}),
 | Backward pass | $\mathcal{O}(T(n^3 + m^3))$ — matrix inversions dominate |
 | Forward pass (per line-search trial) | $\mathcal{O}(T \cdot \text{cost of } f)$ |
 | Iterations to convergence | Typically 10–100 for smooth problems |
-:::

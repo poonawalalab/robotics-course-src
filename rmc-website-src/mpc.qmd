@@ -59,7 +59,7 @@ The feedback gain $K_k$ handles small deviations — but what about large ones, 
 ```
 At time t:
   1. Measure current state  x_t
-  2. Solve OCP over horizon [t, t+N]:  min J(x_t, u_{t:t+N-1})
+  2. Solve OCP over horizon [t, t+T]:  min J(x_t, u_{t:t+T-1})
   3. Apply only the first control:  u_t = u_0*
   4. Advance:  t ← t + 1,  repeat
 ```
@@ -79,7 +79,7 @@ t=2:      [●━━━━━━━━━━━━━━━━━━━━●]  
 ::: {.fragment fragment-index=1}
 **Key properties:**
 
-- The horizon always looks $N$ steps into the future (same length each time)
+- The horizon always looks $T$ steps into the future (same length each time)
 - Only $u_0^*$ is ever applied — the rest of the plan is discarded and recomputed
 - The re-solve at $t+1$ can be **warm-started** from the shifted solution at $t$
 :::
@@ -96,10 +96,10 @@ Discarding and recomputing seems wasteful. The payoff: the plan always reflects 
 
 If dynamics are linear and cost is quadratic — no constraints:
 
-$$x_{k+1} = Ax_k + Bu_k, \qquad J = x_N^T P_f x_N + \sum_{k=0}^{N-1}(x_k^T Q x_k + u_k^T R u_k)$$
+$$x_{k+1} = Ax_k + Bu_k, \qquad J = x_T^T P_f x_T + \sum_{k=0}^{T-1}(x_k^T Q x_k + u_k^T R u_k)$$
 
 ::: {.fragment fragment-index=1}
-**Offline LQR:** compute gains $K_0, K_1, \dots, K_{N-1}$ once. At runtime: $u_t^* = -K_0 x_t$ (time-varying) or $u_t^* = -K_\infty x_t$ (infinite horizon). Cost: $\mathcal{O}(1)$ per timestep.
+**Offline LQR:** compute gains $K_0, K_1, \dots, K_{T-1}$ once. At runtime: $u_t^* = -K_0 x_t$ (time-varying) or $u_t^* = -K_\infty x_t$ (infinite horizon). Cost: $\mathcal{O}(1)$ per timestep.
 :::
 
 ::: {.fragment fragment-index=2}
@@ -129,8 +129,8 @@ At each timestep $t$:
 
 ::: {.fragment fragment-index=1}
 ```
-previous solution:  ū₀, ū₁, ū₂, ..., ū_{N-1}   (from time t)
-warm-start at t+1:  ū₁, ū₂, ..., ū_{N-1}, ū_{N-1}   (shifted + hold last)
+previous solution:  ū₀, ū₁, ū₂, ..., ū_{T-1}   (from time t)
+warm-start at t+1:  ū₁, ū₂, ..., ū_{T-1}, ū_{T-1}   (shifted + hold last)
                      ↑ already near-optimal for new problem
 ```
 :::
@@ -141,7 +141,7 @@ warm-start at t+1:  ū₁, ū₂, ..., ū_{N-1}, ū_{N-1}   (shifted + hold last
 
 ::: {.fragment fragment-index=3}
 ::: {.callout-note appearance="minimal"}
-**Solve time budget** governs the number of iLQR iterations, not convergence. Horizon length $N$ is a design parameter: longer $N$ gives better plans but costs more to solve.
+**Solve time budget** governs the number of iLQR iterations, not convergence. Horizon length $T$ is a design parameter: longer $T$ gives better plans but costs more to solve.
 :::
 :::
 
@@ -156,7 +156,7 @@ Unconstrained iLQR / LQR ignores physical limits. Real systems have:
 | **Input limits** | Motor torque saturation, voltage bounds: $|u_k| \leq u_{\max}$ |
 | **State limits** | Joint angle limits, speed limits: $x_k \in \mathcal{X}$ |
 | **Safety / obstacle** | Keep state outside a forbidden region |
-| **Terminal** | Reach a target set at $k = N$ |
+| **Terminal** | Reach a target set at $k = T$ |
 
 ::: {.fragment}
 ::: {.callout-warning appearance="minimal"}
@@ -190,13 +190,13 @@ Handling constraints is the primary engineering challenge in MPC. Constraint sat
 
 ## The Finite-Horizon Trap {.smaller}
 
-A finite horizon $N$ creates a problem: **the optimizer doesn't care what happens after step $N$**.
+A finite horizon $T$ creates a problem: **the optimizer doesn't care what happens after step $T$**.
 
 ::: {.fragment fragment-index=1}
-**Pathological example:** to minimize cost over $[0, N]$, the optimizer might drive the state to a large value at $k = N$ — exploiting the fact that the cost is zero beyond the horizon.
+**Pathological example:** to minimize cost over $[0, T]$, the optimizer might drive the state to a large value at $k = T$ — exploiting the fact that the cost is zero beyond the horizon.
 
 ```
-horizon:   [x₀ ――――――――――――→ x_N]  |  (nothing after here)
+horizon:   [x₀ ――――――――――――→ x_T]  |  (nothing after here)
 optimizer: reaches goal cheaply ...  |  then blows up
 ```
 :::
@@ -213,31 +213,31 @@ Stability of MPC is *not* automatic. It requires careful design of the terminal 
 
 ## Fix 1: Terminal Cost {.smaller}
 
-**Choose $V_f(x_N) = x_N^T P_\infty x_N$**, where $P_\infty$ is the infinite-horizon LQR solution:
+**Choose $V_f(x_T) = x_T^T P_\infty x_T$**, where $P_\infty$ is the infinite-horizon LQR solution:
 
 $$P_\infty = Q + A^T P_\infty A - A^T P_\infty B(R + B^T P_\infty B)^{-1} B^T P_\infty A$$
 
 ::: {.fragment fragment-index=1}
-**Intuition:** $x_N^T P_\infty x_N$ is the optimal cost-to-go for the *unconstrained* infinite-horizon problem from $x_N$.
+**Intuition:** $x_T^T P_\infty x_T$ is the optimal cost-to-go for the *unconstrained* infinite-horizon problem from $x_T$.
 
 The finite-horizon cost plus this terminal cost approximates the full infinite-horizon cost:
 
-$$J_N(x_0, \mathbf{u}) + V_f(x_N) \approx J_\infty(x_0, \mathbf{u}^*_\infty)$$
+$$J_T(x_0, \mathbf{u}) + V_f(x_T) \approx J_\infty(x_0, \mathbf{u}^*_\infty)$$
 :::
 
 ::: {.fragment fragment-index=2}
-**Effect:** the optimizer is penalized for leaving $x_N$ far from the origin — it accounts for the "cost tail" beyond the horizon, rather than ignoring it.
+**Effect:** the optimizer is penalized for leaving $x_T$ far from the origin — it accounts for the "cost tail" beyond the horizon, rather than ignoring it.
 :::
 
 ::: {.fragment fragment-index=3}
 ::: {.callout-tip appearance="minimal"}
-For **linear systems without constraints**, this makes MPC exactly equivalent to infinite-horizon LQR, regardless of horizon length $N$. The terminal cost absorbs the truncation error completely.
+For **linear systems without constraints**, this makes MPC exactly equivalent to infinite-horizon LQR, regardless of horizon length $T$. The terminal cost absorbs the truncation error completely.
 :::
 :::
 
 ## Fix 2: Terminal Constraint {.smaller}
 
-**Require $x_N \in \mathcal{X}_f$**, where $\mathcal{X}_f$ is a **positively invariant set** under a local controller $u = Kx$:
+**Require $x_T \in \mathcal{X}_f$**, where $\mathcal{X}_f$ is a **positively invariant set** under a local controller $u = Kx$:
 
 $$x \in \mathcal{X}_f \implies Ax + BKx \in \mathcal{X}_f$$
 
@@ -245,11 +245,11 @@ $$x \in \mathcal{X}_f \implies Ax + BKx \in \mathcal{X}_f$$
 **Common choice:** $\mathcal{X}_f = \{x : x^T P_\infty x \leq c\}$ (an ellipsoid where the LQR gain $K_\infty$ keeps the state inside).
 
 - Inside $\mathcal{X}_f$: the LQR controller is feasible and stabilizing
-- The MPC trajectory must reach $\mathcal{X}_f$ by step $N$
+- The MPC trajectory must reach $\mathcal{X}_f$ by step $T$
 :::
 
 ::: {.fragment fragment-index=2}
-**Strictest case:** $\mathcal{X}_f = \{0\}$, i.e., $x_N = 0$ (equality constraint). Guarantees stability but drastically reduces the feasible set — requires large $N$.
+**Strictest case:** $\mathcal{X}_f = \{0\}$, i.e., $x_T = 0$ (equality constraint). Guarantees stability but drastically reduces the feasible set — requires large $T$.
 :::
 
 ::: {.fragment fragment-index=3}
@@ -260,23 +260,23 @@ Terminal cost and terminal constraint are often used together: the terminal set 
 
 ## Why This Gives Stability {.smaller}
 
-**Claim:** With terminal cost $V_f$ satisfying $V_f(Ax + BKx) \leq V_f(x) - \ell(x, Kx)$ for $x \in \mathcal{X}_f$, the MPC value function $J^*(x_t)$ is a **Lyapunov function**.
+**Claim:** With terminal cost $V_f$ satisfying $V_f(Ax + BKx) \leq V_f(x) - c(x, Kx)$ for $x \in \mathcal{X}_f$, the MPC value function $J^*(x_t)$ is a **Lyapunov function**.
 
 ::: {.fragment fragment-index=1}
 **Key inequality** (shifting argument):
 
-At time $t$: optimal cost is $J^*(x_t) = \ell(x_t, u_0^*) + \cdots + V_f(x_N^*)$
+At time $t$: optimal cost is $J^*(x_t) = c(x_t, u_0^*) + \cdots + V_f(x_T^*)$
 
-At time $t{+}1$: use the *suboptimal* shifted sequence $u_1^*, \dots, u_{N-1}^*, K x_N^*$.
+At time $t{+}1$: use the *suboptimal* shifted sequence $u_1^*, \dots, u_{T-1}^*, K x_T^*$.
 Its cost is at most:
 
-$$J^*(x_{t+1}) \leq J^*(x_t) - \ell(x_t, u_0^*)$$
+$$J^*(x_{t+1}) \leq J^*(x_t) - c(x_t, u_0^*)$$
 :::
 
 ::: {.fragment fragment-index=2}
-Since $\ell(x_t, u_t^*) \geq 0$ with equality only at $x_t = 0$:
+Since $c(x_t, u_t^*) \geq 0$ with equality only at $x_t = 0$:
 
-$$J^*(x_{t+1}) \leq J^*(x_t) - \ell(x_t, u_0^*) < J^*(x_t) \quad \text{for } x_t \neq 0$$
+$$J^*(x_{t+1}) \leq J^*(x_t) - c(x_t, u_0^*) < J^*(x_t) \quad \text{for } x_t \neq 0$$
 
 $J^*$ decreases at each timestep → **asymptotic stability** of the origin.
 :::
@@ -293,9 +293,9 @@ This is the standard Lyapunov stability proof for MPC. It requires: (1) terminal
 
 | Parameter | Effect | Typical guidance |
 |-----------|--------|-----------------|
-| Horizon $N$ | Longer → better plans, better stability margins | Start with $N \approx 10$–$50$; increase until performance plateaus |
+| Horizon $T$ | Longer → better plans, better stability margins | Start with $T \approx 10$–$50$; increase until performance plateaus |
 | Terminal cost $V_f$ | $P_\infty$ from LQR is the principled choice | Always include it; $V_f = 0$ is asking for trouble |
-| Terminal constraint | Guarantees stability with shorter $N$ | Use when $N$ is short and stability matters |
+| Terminal constraint | Guarantees stability with shorter $T$ | Use when $T$ is short and stability matters |
 | Sample time $\Delta t$ | Shorter → more accurate, more solves needed | Match to fastest relevant dynamics |
 | Iterations per step | More → closer to optimal; limited by solve time | RTI (1 iteration) often works well warm-started |
 
@@ -305,7 +305,7 @@ The previous solution is nearly optimal for the next problem (state has moved on
 
 ::: {.fragment fragment-index=1}
 **Shift and hold:**
-$$\bar{u}_{t+1} = [u_1^*, u_2^*, \dots, u_{N-1}^*, u_{N-1}^*]$$
+$$\bar{u}_{t+1} = [u_1^*, u_2^*, \dots, u_{T-1}^*, u_{T-1}^*]$$
 
 The last control is repeated (held) as a placeholder for the new horizon end.
 :::
@@ -344,7 +344,7 @@ The last control is repeated (held) as a placeholder for the new horizon end.
 ::: {.fragment fragment-index=3}
 **Stability requires design effort:**
 
-$$\text{Terminal cost } V_f = x^T P_\infty x \quad + \quad \text{Terminal constraint } x_N \in \mathcal{X}_f$$
+$$\text{Terminal cost } V_f = x^T P_\infty x \quad + \quad \text{Terminal constraint } x_T \in \mathcal{X}_f$$
 
 $\implies$ MPC value function $J^*(x_t)$ is a Lyapunov function $\implies$ asymptotic stability
 :::
