@@ -62,43 +62,42 @@ Unlike LQR, the **linear terms** $q_t$ and $r_t$ are generally **nonzero** — t
 
 The Q-function for the deviation problem:
 
-$$\tilde{Q}_{t}(\delta x, \delta u) \approx \text{const} + \begin{bmatrix}Q_x \\ Q_u\end{bmatrix}^{\!T} \begin{bmatrix}\delta x \\ \delta u\end{bmatrix} + \frac{1}{2}\begin{bmatrix}\delta x \\ \delta u\end{bmatrix}^{\!T} \begin{bmatrix}Q_{xx} & Q_{xu} \\ Q_{ux} & Q_{uu}\end{bmatrix}\begin{bmatrix}\delta x \\ \delta u\end{bmatrix}$$
+$$\tilde{Q}_{t}(\delta x, \delta u) \approx \text{const} + \begin{bmatrix}\hat{q}_x \\ \hat{q}_u\end{bmatrix}^{\!T} \begin{bmatrix}\delta x \\ \delta u\end{bmatrix} + \frac{1}{2}\begin{bmatrix}\delta x \\ \delta u\end{bmatrix}^{\!T} \begin{bmatrix}\hat{Q}_{xx} & \hat{Q}_{xu} \\ \hat{Q}_{ux} & \hat{Q}_{uu}\end{bmatrix}\begin{bmatrix}\delta x \\ \delta u\end{bmatrix}$$
 
-Backward recursion (initialize $V_{T,x} = c_{T,x}$, $V_{T,xx} = c_{T,xx}$):
+Backward recursion (initialize $\mathbf{v}_{T} = \mathbf{c}_{T}$, $\mathbf{V}_{T} = \mathbf{C}_{T}$):
 
-$$Q_x = q_t + A_{t}^T V_{t+1,x}, \qquad Q_u = r_t + B_{t}^T V_{t+1,x}$$
-$$Q_{xx} = c_{t,xx} + A_{t}^T V_{t+1,xx} A_{t}, \quad Q_{uu} = c_{t,uu} + B_{t}^T V_{t+1,xx} B_{t}, \quad Q_{ux} = c_{t,ux} + B_{t}^T V_{t+1,xx} A_{t}$$
-$$Q_{xx} = Q_t^{cost} + A_{t}^T V_{t+1,xx} A_{t}, \quad Q_{uu} = R_t + B_{t}^T V_{t+1,xx} B_{t}, \quad Q_{ux} = S_t + B_{t}^T V_{t+1,xx} A_{t}$$
+$$\hat{q}_x = q_t + A_{t}^T \mathbf{v}_{t+1}, \qquad \hat{q}_u = r_t + B_{t}^T \mathbf{v}_{t+1}$$
+$$\hat{Q}_{xx} = Q_t^{cost} + A_{t}^T \mathbf{V}_{t+1} A_{t}, \quad \hat{Q}_{uu} = R_t + B_{t}^T \mathbf{V}_{t+1} B_{t}, \quad \hat{Q}_{ux} = S_t + B_{t}^T \mathbf{V}_{t+1} A_{t}$$
 
 ## Backward Pass: Optimal Gains {.smaller}
 
 Minimize $\tilde{Q}_{t}$ over $\delta u$ (holding $\delta x$ fixed):
-$$\frac{\partial \tilde{Q}_{t}}{\partial \,\delta u} = Q_u + Q_{uu}\,\delta u + Q_{ux}\,\delta x = 0$$
+$$\frac{\partial \tilde{Q}_{t}}{\partial \,\delta u} = \hat{q}_u + \hat{Q}_{uu}\,\delta u + \hat{Q}_{ux}\,\delta x = 0$$
 
 ::: {.fragment fragment-index=1}
-$$\implies \delta u_{t}^* = \underbrace{-Q_{uu}^{-1} Q_u}_{k_{t}} + \underbrace{(-Q_{uu}^{-1} Q_{ux})}_{K_{t}}\,\delta x_{t}$$
+$$\implies \delta u_{t}^* = \underbrace{-\hat{Q}_{uu}^{-1} \hat{q}_u}_{k_{t}} + \underbrace{(-\hat{Q}_{uu}^{-1} \hat{Q}_{ux})}_{K_{t}}\,\delta x_{t}$$
 :::
 
 ::: {.fragment fragment-index=2}
 | Gain | Expression | Role |
 |------|-----------|------|
-| $k_{t} \in \mathbb{R}^m$ | $-Q_{uu}^{-1} Q_u$ | **Feedforward** — optimization step |
-| $K_{t} \in \mathbb{R}^{m \times n}$ | $-Q_{uu}^{-1} Q_{ux}$ | **Feedback** — state-dependent correction |
+| $k_{t} \in \mathbb{R}^m$ | $-\hat{Q}_{uu}^{-1} \hat{q}_u$ | **Feedforward** — optimization step |
+| $K_{t} \in \mathbb{R}^{m \times n}$ | $-\hat{Q}_{uu}^{-1} \hat{Q}_{ux}$ | **Feedback** — state-dependent correction |
 
-Value function updated as: $V_{t,x} = Q_x + Q_{xu} k_{t}$, $\quad V_{t,xx} = Q_{xx} + Q_{xu} K_{t}$
+Value function updated as: $\mathbf{v}_{t} = \hat{q}_x + \hat{Q}_{xu} k_{t}$, $\quad \mathbf{V}_{t} = \hat{Q}_{xx} + \hat{Q}_{xu} K_{t}$
 :::
 
 ::: {.fragment fragment-index=3}
 ::: {.callout-note appearance="minimal"}
-At the optimum $Q_u = r_t + B_{t}^T V_{t+1,x} = 0$, so $k_{t} = 0$ — identical to LQR.
+At the optimum $\hat{q}_u = r_t + B_{t}^T \mathbf{v}_{t+1} = 0$, so $k_{t} = 0$ — identical to LQR.
 :::
 :::
 
 # Forward Pass
 
-## The Forward Pass Update {.smaller}
+## The Forward Pass Update 
 
-Starting from $\hat{x}_0 = \bar{x}_0$, for $t = 0, 1, \dots, T-1$:
+Starting from $\hat{x}_0 = \bar{x}_0$[^11], for $t = 0, 1, \dots, T-1$:
 
 $$\boxed{\hat{u}_{t} = \bar{u}_{t} + \alpha\, k_{t} + K_{t}\underbrace{(\hat{x}_{t} - \bar{x}_{t})}_{\delta x_{t}}}$$
 $$\hat{x}_{t+1} = f\!\left(\hat{x}_{t},\; \hat{u}_{t}\right) \qquad \leftarrow \text{true nonlinear dynamics}$$
@@ -109,17 +108,20 @@ $$\hat{x}_{t+1} = f\!\left(\hat{x}_{t},\; \hat{u}_{t}\right) \qquad \leftarrow \
 **Discussion:** $\alpha$ multiplies $k_{t}$ but **not** $K_{t}$. Shouldn't we scale the entire update $\delta u_{t} = \alpha(k_{t} + K_{t} \delta x_{t})$?
 :::
 
+[^11]: $\hat{x}$ is the updated nominal value (originally $\bar{x}$) of $x$
+
+<!--
 ## Why $\alpha$ Scales Only $k_{t}$ {.smaller}
 
 Both $k_{t}$ and $K_{t} \delta x_{t}$ arise from minimizing $\tilde{Q}_{t}$ — both are part of the optimal solution to the linearized sub-problem. The distinction is **open-loop vs. closed-loop**:
 
 | Term | Character | Role |
 |------|-----------|------|
-| $k_{t} = -Q_{uu}^{-1} Q_u$ | **Open-loop** (feedforward) | Depends only on $t$; the search direction |
+| $k_{t} = -\hat{Q}_{uu}^{-1} \hat{q}_u$ | **Open-loop** (feedforward) | Depends only on $t$; the search direction |
 | $K_{t} \delta x_{t}$ | **Closed-loop** (feedback) | Reacts to whatever $\delta x_{t}$ the nonlinear rollout produces |
 
 ::: {.callout-note appearance="minimal"}
-**Connection to LQR:** In LQR the full optimal policy is $u_t^* = -K_t x_t$ — the feedback gain IS the solution, not a correction. iLQR adds the feedforward $k_t$ only because $Q_u \neq 0$ off the optimum; at convergence $k_t \to 0$ and only the feedback remains.
+**Connection to LQR:** In LQR the full optimal policy is $u_t^* = -K_t x_t$ — the feedback gain IS the solution, not a correction. iLQR adds the feedforward $k_t$ only because $\hat{q}_u \neq 0$ off the optimum; at convergence $k_t \to 0$ and only the feedback remains.
 :::
 
 ## Why $\alpha$ Scales Only $k_{t}$ {.smaller}
@@ -201,6 +203,7 @@ Three-panel figure:
 **What to observe:** The linearized method produces controls that look optimal in the linear model, but the true (nonlinear) trajectory they generate is far from the goal. The nonlinear pass wins decisively on this problem.
 :::
 :::
+-->
 
 # Line Search
 
@@ -236,7 +239,7 @@ for _ in range(50):
 
 The backward pass implicitly computes the predicted improvement:
 
-$$\Delta J = \sum_{k=0}^{T-1}\left(Q_u^T k_{t} + \frac{1}{2} k_{t}^T Q_{uu} k_{t}\right) = -\frac{1}{2}\sum_{k=0}^{T-1} k_{t}^T Q_{uu} k_{t} \;\leq\; 0$$
+$$\Delta J = \sum_{k=0}^{T-1}\left(\hat{q}_u^T k_{t} + \frac{1}{2} k_{t}^T \hat{Q}_{uu} k_{t}\right) = -\frac{1}{2}\sum_{k=0}^{T-1} k_{t}^T \hat{Q}_{uu} k_{t} \;\leq\; 0$$
 
 ::: {.fragment fragment-index=1}
 This motivates a stronger **Armijo condition**:
@@ -248,15 +251,15 @@ Actual decrease must be at least a fraction $\gamma$ of the quadratic model's pr
 
 ::: {.fragment fragment-index=2}
 ::: {.callout-note appearance="minimal"}
-**At convergence:** $k_{t} \to 0$ (because $Q_u \to 0$), so $\Delta J \to 0$ and $\alpha = 1$ is accepted immediately on the first try — the line search costs nothing.
+**At convergence:** $k_{t} \to 0$ (because $\hat{q}_u \to 0$), so $\Delta J \to 0$ and $\alpha = 1$ is accepted immediately on the first try — the line search costs nothing.
 :::
 :::
 
 ## Exercise: Optimality at Convergence {.smaller}
 
-At convergence, $k_{t} = -Q_{uu}^{-1} Q_u \to 0$, which means:
+At convergence, $k_{t} = -\hat{Q}_{uu}^{-1} \hat{q}_u \to 0$, which means:
 
-$$Q_u = r_t + B_{t}^T V_{t+1,x} = 0 \quad \text{for all } t$$
+$$\hat{q}_u = r_t + B_{t}^T \mathbf{v}_{t+1} = 0 \quad \text{for all } t$$
 
 ::: {.fragment fragment-index=1}
 **Question:** Write out what this says in terms of the original cost and dynamics.  What classical optimality condition does it correspond to?
@@ -265,7 +268,7 @@ $$Q_u = r_t + B_{t}^T V_{t+1,x} = 0 \quad \text{for all } t$$
 ::: {.fragment fragment-index=2}
 **Answer:** This is the discrete-time **Pontryagin Maximum Principle** stationarity condition:
 
-$$\frac{\partial c_{t}}{\partial u_{t}} + B_{t}^T \lambda_{t+1} = 0, \qquad \lambda_{t+1} = V_{t+1,x}$$
+$$\frac{\partial c_{t}}{\partial u_{t}} + B_{t}^T \lambda_{t+1} = 0, \qquad \lambda_{t+1} = \mathbf{v}_{t+1}$$
 
 where $\lambda_{t}$ is the **costate** (adjoint variable). iLQR converges precisely when the KKT conditions are satisfied.
 :::
@@ -283,12 +286,12 @@ where $\lambda_{t}$ is the **costate** (adjoint variable). iLQR converges precis
 
 **2. Repeat until convergence:**
 
-**2a. Backward pass** — init $V_{T,x} = c_{T,x}$, $V_{T,xx} = c_{T,xx}$; for $t = T-1, \dots, 0$:
+**2a. Backward pass** — init $\mathbf{v}_{T} = \mathbf{c}_{T}$, $\mathbf{V}_{T} = \mathbf{C}_{T}$; for $t = T-1, \dots, 0$:
 
 - Compute Jacobians $A_{t}, B_{t}$ and cost derivatives at $(\bar{x}_{t}, \bar{u}_{t})$
-- Compute $Q_x, Q_u, Q_{xx}, Q_{uu}, Q_{ux}$ via the recursion
-- Gains: $k_{t} = -Q_{uu}^{-1} Q_u$, $\quad K_{t} = -Q_{uu}^{-1} Q_{ux}$
-- Update: $V_{t,x} = Q_x + Q_{xu} k_{t}$, $\quad V_{t,xx} = Q_{xx} + Q_{xu} K_{t}$
+- Compute $\hat{q}_x, \hat{q}_u, \hat{Q}_{xx}, \hat{Q}_{uu}, \hat{Q}_{ux}$ via the recursion
+- Gains: $k_{t} = -\hat{Q}_{uu}^{-1} \hat{q}_u$, $\quad K_{t} = -\hat{Q}_{uu}^{-1} \hat{Q}_{ux}$
+- Update: $\mathbf{v}_{t} = \hat{q}_x + \hat{Q}_{xu} k_{t}$, $\quad \mathbf{V}_{t} = \hat{Q}_{xx} + \hat{Q}_{xu} K_{t}$
 
 **2b. Forward pass** — from $\hat{x}_0 = \bar{x}_0$, simulate with $\hat{u}_{t} = \bar{u}_{t} + \alpha k_{t} + K_{t}(\hat{x}_{t} - \bar{x}_{t})$
 
@@ -303,9 +306,9 @@ where $\lambda_{t}$ is the **costate** (adjoint variable). iLQR converges precis
 |----------|-----|---------------------|
 | Dynamics | $A_{t} x_{t} + B_{t} u_{t}$ | $\bar{x}_{t+1} + A_{t} \delta x_{t} + B_{t} \delta u_{t}$ |
 | Cost | Quadratic in $(x, u)$ | Quadratic in $(\delta x, \delta u)$; linear terms nonzero |
-| $Q_{uu}$ | $R + B^T P B$ | $c_{uu} + B^T V_{xx} B$ |
+| $\hat{Q}_{uu}$ | $R + B^T P B$ | $c_{uu} + B^T V_{xx} B$ |
 | Optimal control | $u^* = -K x$ | $\delta u^* = k + K \delta x$ |
-| Feedforward | None ($Q_u = 0$ at optimum) | $k = -Q_{uu}^{-1} Q_u$ (drives improvement) |
+| Feedforward | None ($\hat{q}_u = 0$ at optimum) | $k = -\hat{Q}_{uu}^{-1} \hat{q}_u$ (drives improvement) |
 | Hessian recursion | Discrete Riccati equation | Same Schur complement form |
 
 ::: {.fragment}
@@ -353,10 +356,10 @@ Snapshots at iterations 0, 1, 2, 4, 8, 15, 25, 50, 100 (darker = later).
 
 iLQR uses only first-order Jacobians of $f_{t}$. DDP adds second-order terms:
 
-$$Q_{xx} \mathrel{+}= \sum_i (V_{t+1,x})^{(i)} f_{t,xx}^{(i)}, \quad Q_{uu} \mathrel{+}= \cdots, \quad Q_{ux} \mathrel{+}= \cdots$$
+$$\hat{Q}_{xx} \mathrel{+}= \sum_i (\mathbf{v}_{t+1})^{(i)} f_{t,xx}^{(i)}, \quad \hat{Q}_{uu} \mathrel{+}= \cdots, \quad \hat{Q}_{ux} \mathrel{+}= \cdots$$
 
 ::: {.fragment fragment-index=1}
-- Terms scale as $\mathcal{O}(\|V_{t+1,x}\|)$ — vanish near the optimum where $V_{t+1,x} \to 0$
+- Terms scale as $\mathcal{O}(\|\mathbf{v}_{t+1}\|)$ — vanish near the optimum where $\mathbf{v}_{t+1} \to 0$
 - Better convergence rate far from the optimum; expensive and rarely used in practice
 - iLQR is sometimes called **Gauss-Newton DDP**
 :::
@@ -386,7 +389,7 @@ $$\hat{u}_{t} = \bar{u}_{t} + \alpha\, k_{t} + K_{t}(\hat{x}_{t} - \bar{x}_{t}),
 ::: {.fragment fragment-index=2}
 **Line search:** halve $\alpha$ until $J$ decreases; $k_{t} \to 0$ signals convergence
 
-**Convergence ↔ optimality:** $Q_u = 0$ is the discrete-time PMP stationarity condition
+**Convergence ↔ optimality:** $\hat{q}_u = 0$ is the discrete-time PMP stationarity condition
 
 **DDP vs. iLQR:** dynamics Hessian terms improve convergence rate but are rarely worth the cost
 :::

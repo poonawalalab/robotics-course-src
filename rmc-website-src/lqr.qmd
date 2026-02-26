@@ -59,7 +59,7 @@ These slides follow [Sergey Levine's formulation](http://rail.eecs.berkeley.edu/
 
 At each time $t$, the dynamics and cost are:
 
-$$\mathbf{x}_{t+1} = A_t \begin{bmatrix}\mathbf{x}_t \\ \mathbf{u}_t\end{bmatrix} + \mathbf{a}_t$$
+$$\mathbf{x}_{t+1} = \mathbf{A}_{t} \begin{bmatrix}\mathbf{x}_t \\ \mathbf{u}_t\end{bmatrix} + \mathbf{a}_t$$
 
 $$c_t(\mathbf{x}_t, \mathbf{u}_t) = \frac{1}{2}\begin{bmatrix}\mathbf{x}_t \\ \mathbf{u}_t\end{bmatrix}^{\!T} \mathbf{C}_t \begin{bmatrix}\mathbf{x}_t \\ \mathbf{u}_t\end{bmatrix} + \begin{bmatrix}\mathbf{x}_t \\ \mathbf{u}_t\end{bmatrix}^{\!T} \mathbf{c}_t$$
 
@@ -77,14 +77,14 @@ A unit-mass particle: $\ddot{p} = u$. State $\mathbf{x}_t = [p_t,\, v_t]^T$, con
 
 Discrete dynamics (timestep $\Delta t$):
 
-$$A_t = \begin{bmatrix}1 & \Delta t & \tfrac{\Delta t^2}{2} \\ 0 & 1 & \Delta t\end{bmatrix}, \quad \mathbf{a}_t = \mathbf{0}$$
+$$\mathbf{A}_{t} = \begin{bmatrix}1 & \Delta t & \tfrac{\Delta t^2}{2} \\ 0 & 1 & \Delta t\end{bmatrix}, \quad \mathbf{a}_t = \mathbf{0}$$
 
 Quadratic cost with no cross terms and $\mathbf{c}_t = \mathbf{0}$:
 
 $$\mathbf{C}_t = \begin{bmatrix} q_p & 0 & 0 \\ 0 & q_v & 0 \\ 0 & 0 & r \end{bmatrix}, \quad \mathbf{C}_T = \begin{bmatrix} q_f & 0 \\ 0 & q_f \end{bmatrix}$$
 
 ::: {.callout-note appearance="minimal"}
-$A_t$ maps the **augmented** state $[\mathbf{x}_t;\, \mathbf{u}_t]$ to $\mathbf{x}_{t+1}$. The columns correspond to $[p_t,\, v_t,\, a_t]$.
+$\mathbf{A}_{t}$ maps the **augmented** state $[\mathbf{x}_t;\, \mathbf{u}_t]$ to $\mathbf{x}_{t+1}$. The columns correspond to $[p_t,\, v_t,\, a_t]$.
 :::
 
 # Dynamic Programming
@@ -93,7 +93,7 @@ $A_t$ maps the **augmented** state $[\mathbf{x}_t;\, \mathbf{u}_t]$ to $\mathbf{
 
 Define the **action-value function** (Q-function) at time $t$:
 
-$$\mathbf{Q}_t(\mathbf{x}_t, \mathbf{u}_t) = c_t(\mathbf{x}_t,\mathbf{u}_t) + V_{t+1}^*\!\left(A_t\begin{bmatrix}\mathbf{x}_t\\\mathbf{u}_t\end{bmatrix} + \mathbf{a}_t\right)$$
+$$\mathbf{Q}_t(\mathbf{x}_t, \mathbf{u}_t) = c_t(\mathbf{x}_t,\mathbf{u}_t) + V_{t+1}^*\!\left(\mathbf{A}_{t}\begin{bmatrix}\mathbf{x}_t\\\mathbf{u}_t\end{bmatrix} + \mathbf{a}_t\right)$$
 
 Since $V_{t+1}^*(\mathbf{x}) = \frac{1}{2}\mathbf{x}^T \mathbf{V}_{t+1} \mathbf{x} + \mathbf{x}^T \mathbf{v}_{t+1}$ is quadratic, $\mathbf{Q}_t$ is also quadratic:
 
@@ -101,7 +101,22 @@ $$\mathbf{Q}_t(\mathbf{x}_t,\mathbf{u}_t) = \mathrm{const} + \frac{1}{2}\begin{b
 
 where
 
-$$\hat{\mathbf{Q}}_t = \mathbf{C}_t + A_t^T \mathbf{V}_{t+1} A_t, \qquad \hat{\mathbf{q}}_t = \mathbf{c}_t + A_t^T \mathbf{V}_{t+1} \mathbf{a}_t + A_t^T \mathbf{v}_{t+1}$$
+$$\hat{\mathbf{Q}}_t = \mathbf{C}_t + \mathbf{A}_{t}^T \mathbf{V}_{t+1} \mathbf{A}_{t}, \qquad \hat{\mathbf{q}}_t = \mathbf{c}_t + \mathbf{A}_{t}^T \mathbf{V}_{t+1} \mathbf{a}_t + \mathbf{A}_{t}^T \mathbf{v}_{t+1}$$
+
+
+## The Q-Function {.smaller}
+$$
+\begin{aligned}
+\hat{\mathbf{Q}}_t  &= \mathbf{C}_t + \mathbf{A}_{t}^T \mathbf{V}_{t+1} \mathbf{A}_{t}\\
+&= \begin{bmatrix} Q_t^{cost} & S_t^{\!T}  \\ S_t& R_t \end{bmatrix} + \begin{bmatrix}  A_t^{\!T}  \\ B_t^{\!T}\end{bmatrix} \mathbf{V}_{t+1} \begin{bmatrix}  A_t  & B_t\end{bmatrix}\\
+&= \begin{bmatrix} Q_t^{cost} & S_t^{\!T}  \\ S_t& R_t \end{bmatrix} + \begin{bmatrix}  A_t^{\!T} \mathbf{V}_{t+1} A_t &  A_t^{\!T} \mathbf{V}_{t+1} B_t\\ B_t^{\!T} \mathbf{V}_{t+1} A_t &  B_t^{\!T} \mathbf{V}_{t+1} B_t\end{bmatrix} \\
+&=  \begin{bmatrix} Q_t^{cost} + A_t^{\!T} \mathbf{V}_{t+1} A_t & S_t^{\!T} + A_t^{\!T} \mathbf{V}_{t+1} B_t\\ S_t + B_t^{\!T} \mathbf{V}_{t+1} A_t & R_t+  B_t^{\!T} \mathbf{V}_{t+1} B_t\end{bmatrix} = \begin{bmatrix} \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{x}} & \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}} \\ \hat{\mathbf{Q}}_{\mathbf{u}\mathbf{x}} & \hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}} \end{bmatrix}\\
+\qquad \hat{\mathbf{q}}_t &= \begin{bmatrix}  q_t  \\ r_t\end{bmatrix} + \begin{bmatrix}  A_t^{\!T} \mathbf{V}_{t+1} \mathbf{a}_t \\ B_t^{\!T}\mathbf{V}_{t+1} \mathbf{a}_t\end{bmatrix}  +  \begin{bmatrix}  A_t^{\!T} \mathbf{v}_{t+1}  \\ B_t^{\!T}\mathbf{v}_{t+1} \end{bmatrix} = \begin{bmatrix} \hat{\mathbf{q}}_{\mathbf{x}} \\ \hat{\mathbf{q}}_{\mathbf{u}} \end{bmatrix}
+\end{aligned}
+$$
+
+<!-- $\begin{bmatrix} Q_t^{cost} & S_t^{\!T}  \\ S_t& R_t \end{bmatrix}$ -->
+<!-- $\begin{bmatrix}  A_t  \\ B_t\end{bmatrix}$ -->
 
 ## Optimal Control at Each Step {.smaller}
 
@@ -113,7 +128,12 @@ Setting $\nabla_{\mathbf{u}_t} \mathbf{Q}_t = 0$:
 
 $$\boxed{\mathbf{u}_t^* = \mathbf{K}_t \mathbf{x}_t + \mathbf{k}_t}$$
 
-$$\mathbf{K}_t = -\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{x}}, \qquad \mathbf{k}_t = -\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\hat{\mathbf{q}}_{\mathbf{u}}$$
+$$
+\begin{aligned}
+\mathbf{K}_t &= -\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{x}} = -\left( R_t+  B_t^{\!T} \mathbf{V}_{t+1} B_t  \right)^{-1}  ( S_t + B_t^{\!T} \mathbf{V}_{t+1} A_t )\\
+\mathbf{k}_t &= -\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\hat{\mathbf{q}}_{\mathbf{u}} = \left( R_t+  B_t^{\!T} \mathbf{V}_{t+1} B_t \right)^{-1}  (r_t + B_t^{\!T}\mathbf{V}_{t+1} \mathbf{a}_t+ B_t^{\!T}\mathbf{v}_{t+1})
+\end{aligned}
+$$
 
 ::: {.callout-tip appearance="minimal"}
 The optimal policy is **affine** in state: $\mathbf{u}_t^* = \mathbf{K}_t \mathbf{x}_t + \mathbf{k}_t$. When $\mathbf{c}_t = 0$ and $\mathbf{a}_t = 0$, then $\mathbf{k}_t = 0$ (linear policy).
@@ -127,30 +147,30 @@ $$V_t^*(\mathbf{x}_t) = \frac{1}{2}\mathbf{x}_t^T \mathbf{V}_t \mathbf{x}_t + \m
 
 where
 
-$$\mathbf{V}_t = \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{x}} + \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}}\mathbf{K}_t$$
+$$\mathbf{V}_t = \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{x}} + \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}}\mathbf{K}_t = \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{x}} - \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}} \hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{x}}$$
 
-$$\mathbf{v}_t = \hat{\mathbf{q}}_{\mathbf{x}} + \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}}\mathbf{k}_t$$
+$$\mathbf{v}_t = \hat{\mathbf{q}}_{\mathbf{x}} + \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}}\mathbf{k}_t  = \hat{\mathbf{q}}_{\mathbf{x}} - \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}}\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\hat{\mathbf{q}}_{\mathbf{u}}$$
 
-This is again quadratic — so the structure repeats at $t-1, t-2, \dots, 0$.
+The cost-to-go at time $t$ is again quadratic (in $\mathbf{x}_t$) — so the structure repeats at $t-1, t-2, \dots, 0$.
 
 ## Algorithm {.smaller}
 
 ::: {.callout-tip icon=false}
 ### Finite Horizon LQR
 
-**Inputs:** $A_t$, $\mathbf{a}_t$, $\mathbf{C}_t$, $\mathbf{c}_t$ for $t=0\dots T$
+**Inputs:** $\mathbf{A}_{t}$, $\mathbf{a}_t$, $\mathbf{C}_t$, $\mathbf{c}_t$ for $t=0\dots T$
 
 **Backward pass** — initialize $\mathbf{V}_T = \mathbf{C}_{\mathbf{x}\mathbf{x},T}$, $\mathbf{v}_T = \mathbf{c}_{\mathbf{x},T}$; for $t = T-1,\dots,0$:
 
-1. $\hat{\mathbf{Q}}_t = \mathbf{C}_t + A_t^T \mathbf{V}_{t+1} A_t$
-2. $\hat{\mathbf{q}}_t = \mathbf{c}_t + A_t^T(\mathbf{V}_{t+1}\mathbf{a}_t + \mathbf{v}_{t+1})$
+1. $\hat{\mathbf{Q}}_t = \mathbf{C}_t + \mathbf{A}_{t}^T \mathbf{V}_{t+1} \mathbf{A}_{t}$
+2. $\hat{\mathbf{q}}_t = \mathbf{c}_t + \mathbf{A}_{t}^T(\mathbf{V}_{t+1}\mathbf{a}_t + \mathbf{v}_{t+1})$
 3. $\mathbf{K}_t = -\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{x}}$, $\quad\mathbf{k}_t = -\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\hat{\mathbf{q}}_{\mathbf{u}}$
 4. $\mathbf{V}_t = \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{x}} + \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}}\mathbf{K}_t$, $\quad\mathbf{v}_t = \hat{\mathbf{q}}_{\mathbf{x}} + \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}}\mathbf{k}_t$
 
 **Forward pass** — given $\mathbf{x}_0$, for $t = 0,\dots,T-1$:
 
 5. $\mathbf{u}_t^* = \mathbf{K}_t\mathbf{x}_t + \mathbf{k}_t$
-6. $\mathbf{x}_{t+1} = A_t[\mathbf{x}_t;\,\mathbf{u}_t^*] + \mathbf{a}_t$
+6. $\mathbf{x}_{t+1} = \mathbf{A}_{t}[\mathbf{x}_t;\,\mathbf{u}_t^*] + \mathbf{a}_t$
 :::
 
 # Interactive Demo
@@ -278,7 +298,7 @@ app = App(app_ui, server)
 
 | Symbol | Meaning |
 |--------|---------|
-| $A_t$, $\mathbf{a}_t$ | Augmented dynamics (maps $[\mathbf{x}_t;\mathbf{u}_t]$ to $\mathbf{x}_{t+1}$) |
+| $\mathbf{A}_{t}$, $\mathbf{a}_t$ | Augmented dynamics (maps $[\mathbf{x}_t;\mathbf{u}_t]$ to $\mathbf{x}_{t+1}$) |
 | $\mathbf{C}_t$, $\mathbf{c}_t$ | Quadratic and linear cost parameters |
 | $\mathbf{Q}_t(\mathbf{x}_t,\mathbf{u}_t)$ | Q-function (action-value function) |
 | $\hat{\mathbf{Q}}_t$, $\hat{\mathbf{q}}_t$ | Matrix/vector of Q-function |
@@ -286,6 +306,5 @@ app = App(app_ui, server)
 | $\mathbf{K}_t$, $\mathbf{k}_t$ | Feedback gain and feedforward term |
 
 **Connection to RL:** $\mathbf{Q}_t$ is the Q-function; $V_t^*$ is the value function.
-The backward pass is exactly **policy evaluation + improvement** for LQ systems.
 
 **Next step:** iLQR — linearize nonlinear dynamics at each iteration and re-run LQR.

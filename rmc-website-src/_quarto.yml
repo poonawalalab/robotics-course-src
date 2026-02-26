@@ -24,6 +24,8 @@ website:
         - extras.qmd
         - text: "Matrix Review (LQR)"
           href: matrix_review.qmd
+        - text: "Block Systems & Schur Complement"
+          href: schur_complement.qmd
 
 format:
   html:

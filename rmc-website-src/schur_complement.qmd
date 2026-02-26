@@ -1,0 +1,403 @@
+---
+title: "Block Systems and the Schur Complement"
+author-meta: "Hasan A. Poonawala"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+
+execute:
+  freeze: auto
+---
+
+The LQR backward pass computes the value function matrix $\mathbf{V}_t$ from the Q-function matrix
+$\hat{\mathbf{Q}}_t$ using the formula
+
+$$\mathbf{V}_t = \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{x}} - \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}}\,\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{u}}^{-1}\,\hat{\mathbf{Q}}_{\mathbf{u}\mathbf{x}}.$$
+
+This expression is an instance of the **Schur complement**, a quantity that appears naturally
+when you eliminate one block of variables from a block-structured linear system.
+This page builds that algebraic machinery from scratch: scalar $2\times 2$ systems first,
+then block matrices, then the LQR connection.
+
+Work through each exercise before expanding the solution.
+
+---
+
+## Part 1: Scalar 2×2 Systems
+
+Consider the linear system
+
+$$\begin{bmatrix} a & b \\ c & d \end{bmatrix}\begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} p \\ q \end{bmatrix},$$
+
+where $a, b, c, d$ are scalars and $a \neq 0$.
+
+---
+
+### Exercise 1 — Eliminate $x$, identify the Schur complement {#sec-ex1}
+
+**(a)** From the first equation $ax + by = p$, write $x$ as a function of $y$, $a$, $b$, and $p$.
+
+**(b)** Substitute your expression for $x$ into the second equation $cx + dy = q$.
+Simplify to obtain a single equation of the form $S \cdot y = r$.
+Write $S$ and $r$ explicitly in terms of $a, b, c, d, p, q$.
+
+**(c)** Solve the concrete system
+
+$$\begin{bmatrix} 2 & 1 \\ 4 & 3 \end{bmatrix}\begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 5 \\ 11 \end{bmatrix}$$
+
+by elimination: compute $S$, solve for $y$, then back-substitute to find $x$.
+Check your answer by substituting back into both equations.
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 1
+
+**(a)** Solving $ax + by = p$ for $x$:
+$$x = a^{-1}(p - by).$$
+
+**(b)** Substitute into $cx + dy = q$:
+$$c \cdot a^{-1}(p - by) + dy = q$$
+$$ca^{-1}p - ca^{-1}by + dy = q$$
+$$(d - ca^{-1}b)\,y = q - ca^{-1}p.$$
+
+So
+
+$$\boxed{S = d - ca^{-1}b}, \qquad r = q - ca^{-1}p.$$
+
+::: {.callout-tip appearance="minimal"}
+**Schur complement of $a$.**
+The scalar $S = d - ca^{-1}b$ is called the **Schur complement** of the $(1,1)$ entry $a$
+in the $2\times 2$ matrix.
+It is what remains of $d$ after the "influence" of $a$ is eliminated.
+The determinant of the full matrix equals $aS$.
+:::
+
+**(c)** With $a=2$, $b=1$, $c=4$, $d=3$, $p=5$, $q=11$:
+
+$$S = 3 - 4 \cdot \tfrac{1}{2} \cdot 1 = 3 - 2 = 1.$$
+$$r = 11 - 4 \cdot \tfrac{5}{2} = 11 - 10 = 1.$$
+$$y = S^{-1}r = 1, \qquad x = a^{-1}(p - by) = \tfrac{5-1}{2} = 2.$$
+
+**Check:** $2(2) + 1(1) = 5$ ✓, $4(2) + 3(1) = 11$ ✓.
+:::
+
+---
+
+### Exercise 2 — Eliminate $y$ instead {#sec-ex2}
+
+Now reverse the order: use the **second** equation to express $y$ in terms of $x$,
+then substitute into the first equation. Assume $d \neq 0$.
+
+**(a)** From the second equation, write $y$ as a function of $x$, $c$, $d$, and $q$.
+
+**(b)** Substitute into the first equation $ax + by = p$ and simplify to $\tilde{S}\cdot x = \tilde{r}$.
+Write $\tilde{S}$ (the **Schur complement of $d$**) and $\tilde{r}$ explicitly.
+
+**(c)** Apply this approach to the same concrete system from Exercise 1(c)
+and verify you get $x = 2$, $y = 1$.
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 2
+
+**(a)** From $cx + dy = q$:
+$$y = d^{-1}(q - cx).$$
+
+**(b)** Substitute into $ax + by = p$:
+$$ax + b\,d^{-1}(q - cx) = p$$
+$$(a - bd^{-1}c)\,x = p - bd^{-1}q.$$
+
+So
+
+$$\boxed{\tilde{S} = a - bd^{-1}c}, \qquad \tilde{r} = p - bd^{-1}q.$$
+
+This is the Schur complement of $d$.
+
+**(c)** With $d=3$, $b=1$, $c=4$: $\tilde{S} = 2 - 1\cdot\tfrac{4}{3} = \tfrac{2}{3}$, $\tilde{r} = 5 - 1\cdot\tfrac{11}{3} = \tfrac{4}{3}$.
+
+$x = \tilde{S}^{-1}\tilde{r} = \tfrac{4/3}{2/3} = 2$. Then $y = d^{-1}(q - cx) = (11 - 8)/3 = 1$. ✓
+:::
+
+---
+
+## Part 2: Block Matrix Systems
+
+Now let $A$, $B$, $C$, $D$ be **matrices** of compatible sizes, and $x$, $y$, $p$, $q$ be column vectors:
+
+$$\underbrace{\begin{bmatrix} A & B \\ C & D \end{bmatrix}}_{\mathcal{M}}\begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} p \\ q \end{bmatrix},$$
+
+where $A$ is $n\times n$, $D$ is $m\times m$, $B$ is $n\times m$, $C$ is $m\times n$.
+The same elimination strategy from Part 1 works — each step now involves matrix inverses
+and multiplications instead of scalar divisions.
+
+---
+
+### Exercise 3 — Block elimination, eliminate $x$ first {#sec-ex3}
+
+Assume $A$ is invertible.
+
+**(a)** From the first block row $Ax + By = p$, write $x$ in terms of $y$, $A$, $B$, $p$.
+
+**(b)** Substitute into the second block row $Cx + Dy = q$ and simplify.
+You should obtain $S_A\,y = r_A$ where $S_A$ is the **Schur complement of $A$**.
+Write $S_A$ and $r_A$.
+
+**(c)** Write the complete solution $(x, y)$.
+
+**(d)** In the symmetric case where $C = B^T$, $A = A^T \succ 0$, $D = D^T \succ 0$,
+show that $S_A$ is symmetric.
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 3
+
+**(a)** Solving $Ax + By = p$ for $x$:
+$$x = A^{-1}(p - By).$$
+
+**(b)** Substitute into $Cx + Dy = q$:
+$$CA^{-1}(p - By) + Dy = q$$
+$$CA^{-1}p - CA^{-1}By + Dy = q$$
+$$(D - CA^{-1}B)\,y = q - CA^{-1}p.$$
+
+$$\boxed{S_A = D - CA^{-1}B}, \qquad r_A = q - CA^{-1}p.$$
+
+**(c)** Complete solution:
+$$y = S_A^{-1}\,r_A, \qquad x = A^{-1}(p - By).$$
+
+**(d)** With $C = B^T$ and $A$ symmetric, $(A^{-1})^T = (A^T)^{-1} = A^{-1}$, so
+$$S_A^T = D^T - B^T(A^{-1})^T B = D - B^T A^{-1}B = S_A. \checkmark$$
+
+$S_A$ is symmetric.
+:::
+
+---
+
+### Exercise 4 — Block elimination, eliminate $y$ first {#sec-ex4}
+
+Assume $D$ is invertible.
+
+**(a)** From the second block row $Cx + Dy = q$, write $y$ in terms of $x$.
+
+**(b)** Substitute into the first block row and simplify to $S_D\,x = r_D$.
+Write the **Schur complement of $D$**, $S_D$, and $r_D$.
+
+**(c)** Write the complete solution $(x, y)$.
+
+**(d)** Compare $S_D$ and $S_A$.
+Does swapping which block you eliminate first change which Schur complement appears?
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 4
+
+**(a)** From $Cx + Dy = q$:
+$$y = D^{-1}(q - Cx).$$
+
+**(b)** Substitute into $Ax + By = p$:
+$$Ax + BD^{-1}(q - Cx) = p$$
+$$(A - BD^{-1}C)\,x = p - BD^{-1}q.$$
+
+$$\boxed{S_D = A - BD^{-1}C}, \qquad r_D = p - BD^{-1}q.$$
+
+**(c)** Complete solution:
+$$x = S_D^{-1}\,r_D, \qquad y = D^{-1}(q - Cx).$$
+
+**(d)** The two Schur complements are different objects of different sizes:
+$S_A = D - CA^{-1}B$ is $m\times m$ (same size as $D$),
+while $S_D = A - BD^{-1}C$ is $n\times n$ (same size as $A$).
+Eliminating $x$ first leaves an equation for $y$ involving $S_A$;
+eliminating $y$ first leaves an equation for $x$ involving $S_D$.
+Which Schur complement is relevant depends on which variable you want to solve for last.
+:::
+
+---
+
+## Part 3: The Schur Complement in LQR
+
+Recall from the LQR slides that at each time step $t$ the **Q-function** is
+
+$$Q_t(x_t, u_t) = \frac{1}{2}\begin{bmatrix}x_t \\ u_t\end{bmatrix}^{\!T} \hat{\mathbf{Q}}_t \begin{bmatrix}x_t \\ u_t\end{bmatrix}, \qquad \hat{\mathbf{Q}}_t = \begin{bmatrix}\hat{Q}_{xx} & \hat{Q}_{xu} \\ \hat{Q}_{ux} & \hat{Q}_{uu}\end{bmatrix}.$$
+
+We drop the time subscripts on the blocks for brevity.
+The matrix $\hat{\mathbf{Q}}_t$ is symmetric positive definite, so $\hat{Q}_{uu} \succ 0$ and $\hat{Q}_{xu} = \hat{Q}_{ux}^T$.
+
+The optimal control $u_t^*$ minimizes $Q_t$ over $u_t$ with $x_t$ held fixed.
+
+---
+
+### Exercise 5 — Expand the Q-function and find the optimal control {#sec-ex5}
+
+**(a)** Carry out the block matrix multiplication in $Q_t(x_t, u_t)$.
+You should obtain three terms:
+
+$$Q_t = (\text{pure } x_t \text{ term}) + (\text{cross term}) + (\text{pure } u_t \text{ term}).$$
+
+**(b)** Compute $\nabla_{u_t} Q_t$ (treating $x_t$ as a constant).
+Set it to zero and write the resulting linear equation.
+
+**(c)** This stationarity equation is exactly the **second block row** of $\hat{\mathbf{Q}}_t [x_t;\, u_t] = 0$.
+Solve for $u_t^*$, identifying the feedback gain $K_t$.
+
+::: {.callout-tip appearance="minimal"}
+Compare to Exercise 4(a) with $C = \hat{Q}_{ux}$, $D = \hat{Q}_{uu}$, $q = 0$:
+the substitution step there gave $y = D^{-1}(q - Cx) = -D^{-1}Cx$.
+Here $u_t$ plays the role of $y$, so the same substitution directly yields the feedback gain $K_t = -D^{-1}C$.
+:::
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 5
+
+**(a)** Expanding $\frac{1}{2}[x^T,\, u^T]\begin{bmatrix}Q_{xx}&Q_{xu}\\Q_{ux}&Q_{uu}\end{bmatrix}\begin{bmatrix}x\\u\end{bmatrix}$
+(dropping time subscripts):
+
+$$Q_t = \underbrace{\frac{1}{2}x^T Q_{xx}\, x}_{\text{pure }x} + \underbrace{x^T Q_{xu}\, u}_{\text{cross}} + \underbrace{\frac{1}{2}u^T Q_{uu}\, u}_{\text{pure }u}.$$
+
+The cross term picks up a coefficient of $1$ (not $\frac{1}{2}$) because $Q_{xu}$ and $Q_{ux}$ together contribute $x^T Q_{xu} u + u^T Q_{ux} x = 2x^T Q_{xu} u$, and the prefactor $\frac{1}{2}$ cancels the 2.
+
+**(b)** Differentiating with respect to $u$ (treating $x$ as a constant):
+
+$$\nabla_u Q_t = Q_{ux}\, x + Q_{uu}\, u.$$
+
+Setting to zero: $Q_{uu}\, u = -Q_{ux}\, x$.
+
+**(c)** This is the second block row of $\hat{\mathbf{Q}}_t[x;\,u]=0$ (with $C = Q_{ux}$, $D = Q_{uu}$, $q=0$).
+Solving for $u$:
+
+$$\boxed{u_t^* = -Q_{uu}^{-1} Q_{ux}\, x_t = K_t\, x_t}, \qquad K_t = -Q_{uu}^{-1} Q_{ux}.$$
+
+This is the LQR feedback gain.
+Comparing with Exercise 4(a), the substitution gave $y = -D^{-1}C\,x$ (with $q=0$).
+The gain $K_t = -D^{-1}C\big|_{D=\hat{Q}_{uu},\, C=\hat{Q}_{ux}}$ is that substitution coefficient —
+**the optimal control formula is literally the substitution step of block elimination**.
+:::
+
+---
+
+### Exercise 6 — The value function is the Schur complement {#sec-ex6}
+
+::: {.callout-note appearance="minimal"}
+**Two steps, one block elimination.**
+Exercise 4 had two steps: (1) use the second block row to write $y = -D^{-1}Cx$,
+then (2) substitute into the first block row to get $S_D\,x = r_D$ with $S_D = A - BD^{-1}C$.
+The LQR backward pass does exactly the same two things:
+Exercise 5 (step 1) found $u^* = K_t x_t$ from the stationarity condition — this is the substitution, with $K_t = -D^{-1}C$.
+This exercise (step 2) substitutes $u^*$ back into $Q_t$ — this produces the Schur complement $\mathbf{V}_t = S_D$.
+:::
+
+The **value function** is $V_t^*(x_t) = Q_t(x_t,\, u_t^*(x_t))$.
+
+**(a)** Substitute $u_t^* = K_t\, x_t = -Q_{uu}^{-1}Q_{ux}\, x_t$ into each of the three terms
+from Exercise 5(a).
+Your result should take the form $V_t^*(x_t) = \frac{1}{2}x_t^T \mathbf{V}_t\, x_t$.
+Find $\mathbf{V}_t$.
+
+**(b)** Compare $\mathbf{V}_t$ to the Schur complement $S_D$ from Exercise 4(b), with the identification
+
+$$A \;\leftrightarrow\; \hat{Q}_{xx}, \quad B \;\leftrightarrow\; \hat{Q}_{xu}, \quad C \;\leftrightarrow\; \hat{Q}_{ux}, \quad D \;\leftrightarrow\; \hat{Q}_{uu}.$$
+
+What is $\mathbf{V}_t$ in terms of a Schur complement?
+
+**(c)** The LQR slides give $\mathbf{V}_t = \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{x}} + \hat{\mathbf{Q}}_{\mathbf{x}\mathbf{u}} K_t$.
+Substitute $K_t = -Q_{uu}^{-1}Q_{ux}$ and confirm this matches the Schur complement.
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 6
+
+**(a)** Let $u^* = -Q_{uu}^{-1}Q_{ux}\,x$ (dropping time subscripts). Evaluate each term:
+
+- **Pure $x$ term:** $\frac{1}{2}x^T Q_{xx}\,x$ (unchanged).
+- **Cross term:** $x^T Q_{xu}\,u^* = x^T Q_{xu}(-Q_{uu}^{-1}Q_{ux}\,x) = -x^T Q_{xu}Q_{uu}^{-1}Q_{ux}\,x$.
+- **Pure $u$ term:** $\frac{1}{2}u^{*T}Q_{uu}\,u^* = \frac{1}{2}x^T Q_{ux}^T Q_{uu}^{-1} Q_{uu} Q_{uu}^{-1} Q_{ux}\,x = \frac{1}{2}x^T Q_{xu}Q_{uu}^{-1}Q_{ux}\,x$.
+
+  (Used $Q_{xu} = Q_{ux}^T$ and $Q_{uu}^{-T} = Q_{uu}^{-1}$.)
+
+Summing:
+
+$$V_t^* = \frac{1}{2}x^T Q_{xx}\,x - x^T Q_{xu}Q_{uu}^{-1}Q_{ux}\,x + \frac{1}{2}x^T Q_{xu}Q_{uu}^{-1}Q_{ux}\,x$$
+
+$$= \frac{1}{2}x^T\underbrace{\bigl(Q_{xx} - Q_{xu}Q_{uu}^{-1}Q_{ux}\bigr)}_{\mathbf{V}_t}x.$$
+
+**(b)** With the identification $A=Q_{xx}$, $B=Q_{xu}$, $C=Q_{ux}$, $D=Q_{uu}$:
+
+$$S_D = A - BD^{-1}C = Q_{xx} - Q_{xu}Q_{uu}^{-1}Q_{ux} = \mathbf{V}_t.$$
+
+::: {.callout-important appearance="minimal"}
+**The value function matrix $\mathbf{V}_t$ is the Schur complement of $\hat{Q}_{uu}$ in $\hat{\mathbf{Q}}_t$.**
+
+The LQR backward pass eliminates $u_t$ from the Q-function — using the second block row
+(the stationarity condition $\nabla_u Q = 0$) to express $u^*$ in terms of $x_t$,
+then substituting back — and this is precisely block elimination producing the Schur complement.
+:::
+
+**(c)** Substituting $K_t = -Q_{uu}^{-1}Q_{ux}$:
+
+$$\mathbf{V}_t = Q_{xx} + Q_{xu}K_t = Q_{xx} + Q_{xu}(-Q_{uu}^{-1}Q_{ux}) = Q_{xx} - Q_{xu}Q_{uu}^{-1}Q_{ux}. \checkmark$$
+:::
+
+---
+
+### Exercise 7 — Numerical verification {#sec-ex7}
+
+Use the **scalar** double-integrator system with $a = b = q = r = 1$ and terminal cost
+$p_T = 1$ (so $V_T = [1]$, a $1\times 1$ matrix here since we treat state and control as scalar).
+
+At the last backward step, the Q-function blocks are:
+
+$$\hat{Q}_{xx} = q + a^2 V_T = 1 + 1, \quad \hat{Q}_{xu} = a V_T b = 1, \quad \hat{Q}_{ux} = 1, \quad \hat{Q}_{uu} = r + b^2 V_T = 1 + 1.$$
+
+**(a)** Write the full $2\times 2$ matrix $\hat{\mathbf{Q}}$.
+
+**(b)** Compute the Schur complement of $\hat{Q}_{uu}$ to obtain $\mathbf{V}_{T-1}$.
+
+**(c)** Verify that $\mathbf{V}_{T-1}$ matches the scalar Riccati recursion
+
+$$p_{T-1} = q + \frac{a^2 p_T}{r + b^2 p_T}$$
+
+with $a = b = q = r = 1$ and $p_T = 1$.
+
+**(d)** The feedback gain is $K_{T-1} = -\hat{Q}_{uu}^{-1}\hat{Q}_{ux}$.
+Compute it.
+Then verify $\mathbf{V}_{T-1} = \hat{Q}_{xx} + \hat{Q}_{xu} K_{T-1}$ (the slide formula).
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 7
+
+**(a)**
+$$\hat{\mathbf{Q}} = \begin{bmatrix}2 & 1 \\ 1 & 2\end{bmatrix}.$$
+
+**(b)** Schur complement of $\hat{Q}_{uu} = 2$:
+
+$$\mathbf{V}_{T-1} = \hat{Q}_{xx} - \hat{Q}_{xu}\hat{Q}_{uu}^{-1}\hat{Q}_{ux} = 2 - 1 \cdot \tfrac{1}{2} \cdot 1 = \tfrac{3}{2}.$$
+
+**(c)** Scalar Riccati recursion with $a = b = q = r = 1$, $p_T = 1$:
+
+$$p_{T-1} = 1 + \frac{1}{1 + 1} = 1 + \tfrac{1}{2} = \tfrac{3}{2}. \checkmark$$
+
+The Schur complement and the Riccati recursion give the same answer —
+they are the same algebraic computation.
+
+**(d)** Feedback gain:
+
+$$K_{T-1} = -\hat{Q}_{uu}^{-1}\hat{Q}_{ux} = -\tfrac{1}{2}\cdot 1 = -\tfrac{1}{2}.$$
+
+Slide formula:
+
+$$\hat{Q}_{xx} + \hat{Q}_{xu} K_{T-1} = 2 + 1\cdot(-\tfrac{1}{2}) = \tfrac{3}{2} = \mathbf{V}_{T-1}. \checkmark$$
+:::
+
+---
+
+## Summary
+
+| Concept | Formula |
+|:--------|:--------|
+| **Schur complement of $a$** (scalar, eliminate $x$ first) | $S = d - c a^{-1} b$ |
+| **Schur complement of $d$** (scalar, eliminate $y$ first) | $\tilde{S} = a - b d^{-1} c$ |
+| **Schur complement of $A$** (block, eliminate $x$ first) | $S_A = D - CA^{-1}B$ |
+| **Schur complement of $D$** (block, eliminate $y$ first) | $S_D = A - BD^{-1}C$ |
+| **LQR optimal control = substitution step** (second block row, $q=0$) | $u_t^* = K_t x_t$, $\quad K_t = -\hat{Q}_{uu}^{-1}\hat{Q}_{ux} = -D^{-1}C\big\vert_{D=\hat{Q}_{uu},\,C=\hat{Q}_{ux}}$ |
+| **LQR value function matrix = Schur complement** (substitute $u^*$ into Q-function) | $\mathbf{V}_t = \hat{Q}_{xx} - \hat{Q}_{xu}\hat{Q}_{uu}^{-1}\hat{Q}_{ux} = S_D\big\vert_{D=\hat{Q}_{uu}}$ |
+
+**Key insight.**
+The LQR backward pass is block Gaussian elimination applied to the Q-function matrix:
+use the second block row (stationarity $\nabla_u Q = 0$) to express $u^*$ in terms of $x_t$,
+then substitute back to get $V_t^*(x_t)$.
+The matrix of the resulting quadratic form is the Schur complement of $\hat{Q}_{uu}$ in $\hat{\mathbf{Q}}_t$.
+This is why the Riccati recursion has the form it does.
