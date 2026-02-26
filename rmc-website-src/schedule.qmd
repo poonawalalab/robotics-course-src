@@ -26,7 +26,7 @@ execute:
 |Feb 10	    | Search-based Motion Planning				|[Search](https://poonawalalab.github.io/rmc-s21/assets/pdf/20_Search.pdf)	|  OneNote 	| 10.3 	| 			|
 |Feb 12	    | Motion Planning RRT, Polynomial Blends   	|[MP1](https://poonawalalab.github.io/rmc-s21/assets/pdf/21_Motion_Planning_I.pdf), [MP2](https://poonawalalab.github.io/rmc-s21/assets/pdf/22_Motion_Planning_II.pdf)													|   OneNote	| 10.3 	| 	5		|	
 |Feb 17	    | Optimal Control   	|[Optimal Control PDF](https://poonawalalab.github.io/rmc-s21/assets/pdf/18_LQR.pdf)|   	| 	| 	|
-|Feb 19	    | Optimal Control   	|[Optimal Control site](lqr.html), [Simple LQR](lqr_simple.html)| [Matrix Review](matrix_review.html)	| 	| 	|
+|Feb 19	    | LQR   	|[OC Web slides](lqr.html), [Simple LQR](lqr_simple.html)| [Matrix Review](matrix_review.html)	| 	| 	|
 |Feb 24	    | iLQR   	| [iLQR](ilqr.html) | 	| 	| 	|
 |Feb 26	    | iLQR: Line Search, Forward Pass   	| [iLQR](ilqr.html) | 	| 	| 	|
 |Mar 03	    | Model Predictive Control   	| [MPC](mpc.html) | 	| 	| 	|

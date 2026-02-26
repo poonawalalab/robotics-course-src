@@ -48,7 +48,7 @@ Asymptotic stability <br>
 ::: {.fragment fragment-index=1}
 **What if the real state drifts from the plan?** Disturbances, model mismatch, new information.
 
-The feedback gain $K_k$ handles small deviations — but what about large ones, or problems with constraints?
+The feedback gain $K_k$ handles small deviations — but what about large ones, or problems with constraints (other than dynamics)?
 :::
 
 ::: {.fragment fragment-index=2}
@@ -110,7 +110,7 @@ Without constraints: **LQR and MPC give the identical control** — MPC adds no 
 
 ::: {.fragment fragment-index=3}
 ::: {.callout-tip appearance="minimal"}
-**MPC earns its keep when:**
+**MPC is used when**
 
 1. **Constraints** on $u$ or $x$ must be enforced
 2. **Time-varying reference** (track a trajectory, not just regulate to origin)
@@ -158,10 +158,8 @@ Unconstrained iLQR / LQR ignores physical limits. Real systems have:
 | **Safety / obstacle** | Keep state outside a forbidden region |
 | **Terminal** | Reach a target set at $k = T$ |
 
-::: {.fragment}
 ::: {.callout-warning appearance="minimal"}
 Ignoring an active constraint (e.g., clipping the control post-hoc) invalidates the optimality of the LQR/iLQR solution. The optimal unconstrained $u^*$ can violate limits by large margins.
-:::
 :::
 
 ## Handling Constraints in MPC {.smaller}
@@ -258,6 +256,7 @@ Terminal cost and terminal constraint are often used together: the terminal set 
 :::
 :::
 
+<!--
 ## Why This Gives Stability {.smaller}
 
 **Claim:** With terminal cost $V_f$ satisfying $V_f(Ax + BKx) \leq V_f(x) - c(x, Kx)$ for $x \in \mathcal{X}_f$, the MPC value function $J^*(x_t)$ is a **Lyapunov function**.
@@ -286,6 +285,7 @@ $J^*$ decreases at each timestep → **asymptotic stability** of the origin.
 This is the standard Lyapunov stability proof for MPC. It requires: (1) terminal cost condition, (2) terminal constraint ensures the shifted sequence is feasible.
 :::
 :::
+-->
 
 # Practical MPC
 
@@ -324,27 +324,23 @@ The last control is repeated (held) as a placeholder for the new horizon end.
 
 ## LQR → iLQR → MPC {.smaller}
 
-::: {.fragment fragment-index=1}
 | Method | Dynamics | Constraints | When solved | Stability |
 |--------|----------|-------------|-------------|-----------|
 | **LQR** | Linear | None | Once, offline | Guaranteed (infinite horizon) |
 | **iLQR** | Nonlinear | None | Once, offline | Trajectory-local |
 | **Linear MPC** | Linear | Yes | Online, every step | Guaranteed with terminal cost |
 | **Nonlinear MPC** | Nonlinear | Yes | Online, every step | Guaranteed with terminal cost/constraint |
-:::
 
-::: {.fragment fragment-index=2}
+## MPC {.smaller}
+
 **The receding horizon principle:**
 
 - Re-solve from the current state → robust to disturbances and model error
 - Apply only $u_0^*$ → plan adapts at every step
 - Discard and recompute → no commitment to a fixed trajectory
-:::
 
-::: {.fragment fragment-index=3}
 **Stability requires design effort:**
 
 $$\text{Terminal cost } V_f = x^T P_\infty x \quad + \quad \text{Terminal constraint } x_T \in \mathcal{X}_f$$
 
 $\implies$ MPC value function $J^*(x_t)$ is a Lyapunov function $\implies$ asymptotic stability
-:::

@@ -254,7 +254,7 @@ Actual decrease must be at least a fraction $\gamma$ of the quadratic model's pr
 **At convergence:** $k_{t} \to 0$ (because $\hat{q}_u \to 0$), so $\Delta J \to 0$ and $\alpha = 1$ is accepted immediately on the first try — the line search costs nothing.
 :::
 :::
-
+<!--
 ## Exercise: Optimality at Convergence {.smaller}
 
 At convergence, $k_{t} = -\hat{Q}_{uu}^{-1} \hat{q}_u \to 0$, which means:
@@ -272,8 +272,7 @@ $$\frac{\partial c_{t}}{\partial u_{t}} + B_{t}^T \lambda_{t+1} = 0, \qquad \lam
 
 where $\lambda_{t}$ is the **costate** (adjoint variable). iLQR converges precisely when the KKT conditions are satisfied.
 :::
-
-# Full Algorithm
+-->
 
 ## iLQR: Complete Algorithm {.smaller}
 
@@ -304,7 +303,7 @@ where $\lambda_{t}$ is the **costate** (adjoint variable). iLQR converges precis
 
 | Quantity | LQR | iLQR (per iteration) |
 |----------|-----|---------------------|
-| Dynamics | $A_{t} x_{t} + B_{t} u_{t}$ | $\bar{x}_{t+1} + A_{t} \delta x_{t} + B_{t} \delta u_{t}$ |
+| Dynamics | $x_{t+1} = A_{t} x_{t} + B_{t} u_{t}$ | $\delta {x}_{t+1} = A_{t} \delta x_{t} + B_{t} \delta u_{t}$ |
 | Cost | Quadratic in $(x, u)$ | Quadratic in $(\delta x, \delta u)$; linear terms nonzero |
 | $\hat{Q}_{uu}$ | $R + B^T P B$ | $c_{uu} + B^T V_{xx} B$ |
 | Optimal control | $u^* = -K x$ | $\delta u^* = k + K \delta x$ |
@@ -317,21 +316,19 @@ The backward pass is **structurally identical to LQR** applied to the deviation 
 :::
 :::
 
-# Convergence
-
 ## Demo: Iterates 
 ```{python}
 {{< include ../code/ilqr_iterates.py >}}
 ```
-\ 
+ 
+Pendulum swing-up from $\theta_0 = 3.0$ rad, $T = 200$ steps.
+Snapshots at iterations 0, 1, 2, 4, 8, 15, 25, 50, 100 (darker = later).
 
-
+<!--
 ## Demo: Iterates {.smaller}
 
 
 
-Pendulum swing-up from $\theta_0 = 3.0$ rad, $T = 200$ steps.
-Snapshots at iterations 0, 1, 2, 4, 8, 15, 25, 50, 100 (darker = later).
 
 ::: {.fragment fragment-index=1}
 **Phase portrait (left):** successive iterates sweep from the initial open-loop trajectory toward the swing-up.
@@ -347,6 +344,7 @@ Snapshots at iterations 0, 1, 2, 4, 8, 15, 25, 50, 100 (darker = later).
 **Discussion:** Even at iteration 0 the trajectory stays bounded. Why? The $K_{t}$ feedback keeps each rollout near the nominal — without it, early iterates would be far more erratic.
 :::
 :::
+-->
 
 # Extensions
 
@@ -373,8 +371,6 @@ $$\hat{Q}_{xx} \mathrel{+}= \sum_i (\mathbf{v}_{t+1})^{(i)} f_{t,xx}^{(i)}, \qua
 | MPC | Re-solve at each timestep with a receding horizon |
 | Warm-starting | Initialize next solve from the shifted previous solution |
 
-# Summary
-
 ## Summary {.smaller}
 
 **Forward pass update:**
@@ -382,7 +378,7 @@ $$\hat{u}_{t} = \bar{u}_{t} + \alpha\, k_{t} + K_{t}(\hat{x}_{t} - \bar{x}_{t}),
 
 ::: {.fragment fragment-index=1}
 - $\alpha$ scales only $k_{t}$ — the Newton search direction in $u$
-- $K_{t} \delta x_{t}$ corrects for nonlinear drift; it is not a search direction unless dynamics are linear
+- $K_{t} \delta x_{t}$ corrects for nonlinear drift
 - Using nonlinear dynamics keeps the trajectory **feasible** at every iteration
 :::
 
@@ -394,6 +390,7 @@ $$\hat{u}_{t} = \bar{u}_{t} + \alpha\, k_{t} + K_{t}(\hat{x}_{t} - \bar{x}_{t}),
 **DDP vs. iLQR:** dynamics Hessian terms improve convergence rate but are rarely worth the cost
 :::
 
+<!--
 ## Summary {.smaller}
 
 **Computational complexity per iteration:**
@@ -403,3 +400,4 @@ $$\hat{u}_{t} = \bar{u}_{t} + \alpha\, k_{t} + K_{t}(\hat{x}_{t} - \bar{x}_{t}),
 | Backward pass | $\mathcal{O}(T(n^3 + m^3))$ — matrix inversions dominate |
 | Forward pass (per line-search trial) | $\mathcal{O}(T \cdot \text{cost of } f)$ |
 | Iterations to convergence | Typically 10–100 for smooth problems |
+-->
