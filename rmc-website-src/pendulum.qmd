@@ -1,0 +1,292 @@
+---
+pagetitle: "Simple Pendulum"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "Optimal Control •<a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+execute:
+    freeze: auto
+---
+
+## The Simple Pendulum {.center .smaller}
+<hr>
+
+### A testbed for nonlinear optimal control
+
+<br/>
+
+::: {layout="[120, 60]"}
+__Instructor__: Hasan A. Poonawala<br>
+<br>
+Mechanical and Aerospace Engineering <br>
+University of Kentucky, Lexington, KY, USA
+
+__Topics__: <br>
+Equation of motion <br>
+State space <br>
+Equilibria <br>
+Phase portrait <br>
+Swing-up goal <br>
+:::
+
+# The Model
+
+## Equation of Motion {.smaller}
+
+A torque-controlled pendulum of length $L$, mass $m$, damping $b$:
+
+$$mL^2 \ddot\theta = mgL\sin\theta - b\dot\theta + \tau$$
+
+::: {.fragment fragment-index=1}
+Normalised (divide by $mL^2$, absorb constants into coefficients):
+
+$$\boxed{\ddot\theta = \underbrace{1.1}_{\text{grav.}} \sin\theta \;-\; \underbrace{0.1}_{\text{damp.}}\,\dot\theta \;+\; u}$$
+
+where $u = \tau/(mL^2)$ is the normalised torque input.
+:::
+
+::: {.fragment fragment-index=2}
+**State vector:** $x = \begin{bmatrix}\theta \\ \dot\theta\end{bmatrix}$
+
+**State-space form:**
+$$\dot x = f(x, u) = \begin{bmatrix}\dot\theta \\ 1.1\sin\theta - 0.1\dot\theta + u\end{bmatrix}$$
+:::
+
+## Sign Convention {.smaller}
+
+::: {.columns}
+
+::: {.column width="50%"}
+$\theta$ is measured from the **upright vertical**
+
+| $\theta$ | Position |
+|----------|----------|
+| $0$ | Straight up |
+| $\pm\pi/2$ | Horizontal |
+| $\pm\pi$ | Hanging down |
+
+<br>
+
+Positive $u$ applies torque in the direction of increasing $\theta$.
+:::
+
+::: {.column width="50%"}
+
+```{python}
+#| echo: false
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+fig, ax = plt.subplots(figsize=(3.8, 4.2))
+ax.set_xlim(-1.4, 1.4); ax.set_ylim(-1.5, 1.4)
+ax.set_aspect("equal"); ax.axis("off")
+
+# pivot
+ax.plot(0, 0, "ko", ms=8, zorder=5)
+
+# three pendulum positions
+configs = [
+    (0.0,       "0",          "green",  r"$\theta=0$"),
+    (np.pi/2,   "pi_half",    "steelblue", r"$\theta=\pi/2$"),
+    (np.pi*0.9, "pi",         "firebrick", r"$\theta\approx\pi$"),
+]
+L = 1.0
+for (ang, key, col, lbl) in configs:
+    # pendulum hangs from pivot; tip at (sin θ, -cos θ)
+    px, py = np.sin(ang), np.cos(ang)
+    ax.plot([0, px], [0, py], "-", color=col, lw=2.5)
+    ax.plot(px, py, "o", color=col, ms=12, zorder=5)
+    offset = np.array([px, py]) * 0.22
+    ax.text(px + offset[0], py + offset[1], lbl, color=col,
+            ha="center", va="center", fontsize=10)
+
+# arc showing θ > 0 direction
+theta_arc = np.linspace(0, np.pi/2, 60)
+r = 0.35
+ax.plot(r * np.sin(theta_arc), r * np.cos(theta_arc),
+        "k--", lw=1.2, alpha=0.6)
+ax.annotate("", xy=(r*np.sin(np.pi/2-0.05), r*np.cos(np.pi/2-0.05)),
+            xytext=(r*np.sin(np.pi/2-0.15), r*np.cos(np.pi/2-0.15)),
+            arrowprops=dict(arrowstyle="-|>", color="black", lw=1.0))
+ax.text(0.42, 0.05, r"$+\theta$", fontsize=10, color="black")
+
+# vertical reference dashed line
+ax.plot([0, 0], [0, 1.1], "k--", lw=0.8, alpha=0.4)
+
+ax.set_title("Pendulum convention", fontsize=10, pad=4)
+plt.tight_layout()
+plt.show()
+```
+:::
+:::
+
+# Equilibria
+
+## Where Does the Pendulum Rest? {.smaller}
+
+At equilibrium: $\dot x = 0$ with $u = 0$, so $\dot\theta = 0$ and $\sin\theta = 0$.
+
+$$\sin\theta = 0 \implies \theta = 0, \;\pm\pi, \;\pm 2\pi, \ldots$$
+
+::: {.fragment fragment-index=1}
+Two physically distinct equilibria in $[-\pi, \pi]$:
+
+| $(\theta, \dot\theta)$ | Physical position | Stability |
+|------------------------|-------------------|-----------|
+| $(0,\; 0)$ | **Upright** (balanced) | Unstable |
+| $(\pm\pi,\; 0)$ | **Hanging down** | Stable |
+
+:::
+
+::: {.fragment fragment-index=2}
+**Linearisation at each equilibrium** — let $\theta = \theta^* + \delta\theta$:
+
+- At $\theta^* = 0$: $\ddot{\delta\theta} \approx 1.1\,\delta\theta \;(+\text{ damping})$ → **positive** eigenvalue → unstable
+- At $\theta^* = \pi$: $\ddot{\delta\theta} \approx -1.1\,\delta\theta \;(+\text{ damping})$ → **negative** eigenvalue → stable
+:::
+
+::: {.fragment fragment-index=3}
+::: {.callout-note appearance="minimal"}
+**Takeaway:** without control, the pendulum settles at $\theta = \pi$ (hanging). Reaching $\theta = 0$ (upright) requires active control — even to *stay* there.
+:::
+:::
+
+# Phase Portrait
+
+## The Phase Plane {.smaller}
+
+Plot $\dot\theta$ vs $\theta$ — each point is a state, arrows show $\dot x = f(x,0)$.
+
+```{python}
+#| echo: false
+import sys, os
+sys.path.insert(0, os.path.join(os.getcwd(), "..", "code"))
+from pendulum_intro import plot_phase_portrait
+plot_phase_portrait()
+```
+
+## Reading the Phase Portrait {.smaller}
+
+::: {.fragment fragment-index=1}
+**Closed loops** around $(\pm\pi, 0)$ → oscillations near the downward equilibrium
+(pendulum swings back and forth without enough energy to go over the top).
+:::
+
+::: {.fragment fragment-index=2}
+**Separatrix** — the curves passing through $(0, 0)$ and the unstable equilibria.
+Trajectories inside the separatrix loop; trajectories outside spin continuously.
+:::
+
+::: {.fragment fragment-index=3}
+**Damping** causes the loops to spiral *inward* toward $(\pm\pi, 0)$ — energy is
+gradually lost, and the pendulum settles at rest.
+:::
+
+::: {.fragment fragment-index=4}
+::: {.callout-tip appearance="minimal"}
+The initial condition for our swing-up problem is
+$x_0 = (3.0,\; 0) \approx (\pi - 0.14,\; 0)$ — just to the left of the downward equilibrium.
+:::
+:::
+
+# Without Control
+
+## Zero-Control Rollout {.smaller}
+
+Starting at $x_0 = (3.0, 0)$ with $u \equiv 0$:
+
+```{python}
+#| echo: false
+import sys, os
+sys.path.insert(0, os.path.join(os.getcwd(), "..", "code"))
+from pendulum_intro import plot_zero_control
+plot_zero_control()
+```
+
+## What We Observe {.smaller}
+
+::: {.fragment fragment-index=1}
+The trajectory **spirals inward** toward the downward equilibrium $(\pi, 0)$.
+
+- Starting near $\theta = \pi$, the pendulum oscillates with decreasing amplitude
+- Damping removes energy; the pendulum never reaches the upright position
+:::
+
+::: {.fragment fragment-index=2}
+The upright equilibrium $(0, 0)$ is **far away** in phase space — zero control cannot
+get us there, regardless of the initial condition (unless we start exactly there).
+:::
+
+::: {.fragment fragment-index=3}
+::: {.callout-important appearance="minimal"}
+**The swing-up problem:** choose a control sequence $u_0, u_1, \dots, u_{T-1}$ that
+drives the state from $x_0 = (3.0, 0)$ to $(0, 0)$ and keeps it there.
+:::
+:::
+
+# The Swing-Up Goal
+
+## What We Want {.smaller}
+
+```{python}
+#| echo: false
+import sys, os
+sys.path.insert(0, os.path.join(os.getcwd(), "..", "code"))
+from pendulum_intro import plot_swingup_goal
+plot_swingup_goal()
+```
+
+## Why is This Hard? {.smaller}
+
+::: {.fragment fragment-index=1}
+**Nonlinearity.** Linear control (e.g., LQR at the upright) only works near the goal.
+Starting at $\theta_0 \approx \pi$ places us far outside the linear region.
+:::
+
+::: {.fragment fragment-index=2}
+**The goal is unstable.** Even if we reach $(0,0)$, we must immediately switch to a
+stabilising controller — or include that requirement in the trajectory optimisation.
+:::
+
+::: {.fragment fragment-index=3}
+**Energy must be added at the right time.** The pendulum must build enough angular
+momentum to carry it over the top, without overshooting.
+:::
+
+::: {.fragment fragment-index=4}
+::: {.callout-note appearance="minimal"}
+**iLQR solves this by:** starting from an initial (e.g., zero-control) trajectory,
+then iteratively refining it via local quadratic approximations of the cost and
+linear approximations of the dynamics — until the trajectory reaches the goal.
+:::
+:::
+
+## Summary {.smaller}
+
+| Concept | Value |
+|---------|-------|
+| State | $x = [\theta,\; \dot\theta]^\top$ |
+| Dynamics | $\ddot\theta = 1.1\sin\theta - 0.1\dot\theta + u$ |
+| Stable eq. | $(\pm\pi,\; 0)$ — pendulum hanging down |
+| Unstable eq. | $(0,\; 0)$ — pendulum upright |
+| Initial state $x_0$ | $(3.0,\; 0)$ — near downward eq. |
+| Goal | $(0,\; 0)$ — upright, balanced |
+
+::: {.fragment}
+::: {.callout-tip appearance="minimal"}
+The phase portrait makes clear why swing-up requires a nontrivial trajectory:
+the goal lies on the **other side of the separatrix** from the natural free motion.
+:::
+:::

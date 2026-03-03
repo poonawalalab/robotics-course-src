@@ -8,6 +8,8 @@ format:
 execute: 
   echo: false
   freeze: auto
+
+coursepdf: assets/extras/
 ---
 
 |Date		|Topic										| Slides						| [Notes](https://poonawalalab.github.io/rmc-s21/assets/pdf/00_RMC_Notes.pdf) | Modern Robotics Chapter	| RMC Book[^1]	|
@@ -26,10 +28,14 @@ execute:
 |Feb 10	    | Search-based Motion Planning				|[Search](https://poonawalalab.github.io/rmc-s21/assets/pdf/20_Search.pdf)	|  OneNote 	| 10.3 	| 			|
 |Feb 12	    | Motion Planning RRT, Polynomial Blends   	|[MP1](https://poonawalalab.github.io/rmc-s21/assets/pdf/21_Motion_Planning_I.pdf), [MP2](https://poonawalalab.github.io/rmc-s21/assets/pdf/22_Motion_Planning_II.pdf)													|   OneNote	| 10.3 	| 	5		|	
 |Feb 17	    | Optimal Control   	|[Optimal Control PDF](https://poonawalalab.github.io/rmc-s21/assets/pdf/18_LQR.pdf)|   	| 	| 	|
+| - |Linear Dynamical Systems| [Linearization]({{< meta coursepdf >}}/ME340_08_Linearization_Notes.pdf), [LTI Systems]({{< meta coursepdf >}}/ME340_10_Linear_State_Variable_Equations_Notes.pdf)|
 |Feb 19	    | LQR   	|[OC Web slides](lqr.html), [Simple LQR](lqr_simple.html)| [Matrix Review](matrix_review.html)	| 	| 	|
 |Feb 24	    | iLQR   	| [iLQR](ilqr.html) | 	| 	| 	|
-|Feb 26	    | iLQR: Line Search, Forward Pass   	| [iLQR](ilqr.html) | 	| 	| 	|
-|Mar 03	    | Model Predictive Control   	| [MPC](mpc.html) | 	| 	| 	|
+|Feb 26	    | iLQR: Line Search, Forward Pass, MPC  	| [iLQR](ilqr.html), [MPC](mpc.html) | 	| 	| 	|
+| - |ODEs| [ODE Slides]({{< meta coursepdf >}}/ME340_A1_Differential_Equations_Slides.pdf) [ODE Models]({{< meta coursepdf >}}/ME340_02_ODE_Models_Notes.pdf), [Mechanical Sys]({{< meta coursepdf >}}/ME340_03_Mechanical_Systems.pdf),  [Electrical Sys]({{< meta coursepdf >}}/ME340_04_Electrical\ Systems.pdf),
+|Mar 03	    | Modeling   	| [Powered Mechanisms](assets/pdfs/02_Robots_As_Powered_Mechanisms.pdf), [Dynamics](assets/pdfs/08_Euler_Lagrangian_Models.pdf), [Actuation](assets/pdfs/09_Actuation.pdf) | 	| 	| 	|
+|Mar 05	    | Feedback Control   	| [Feedback Control](https://poonawalalab.github.io/rmc-s21/assets/pdf/10_Feedforward_Feedback_Tracking.pdf) | 	| 	| 	|
+| - |Control Systems|[Laplace Transforms]({{< meta coursepdf >}}/ME340_05_Laplace_Transform_Notes.pdf), [Transfer Functions]({{< meta coursepdf >}}/ME340_06_Transfer_Functions_Notes.pdf), [Stability]({{< meta coursepdf >}}/stability.pdf)  |
 
 [^1]: _Robot Modeling and Control_, M. W. Spong, S. Hutchinson, and M. Vidyasagar, John Wiley \& Sons, 2006.
 <!--

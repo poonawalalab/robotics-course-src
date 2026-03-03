@@ -1,0 +1,606 @@
+---
+title: "Polynomial Trajectory Blending"
+author-meta: "Hasan A. Poonawala"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+
+execute:
+  freeze: auto
+---
+
+After a motion planner (PRM, RRT, potential functions) outputs a sequence of
+waypoint configurations $q_1, q_2, \ldots, q_{N+1}$ with associated times
+$t_1 < t_2 < \cdots < t_{N+1}$, we need a **smooth trajectory** $q(t)$ that
+passes through each waypoint at the right time.
+This page develops the idea of **polynomial blending**: fitting low-degree
+polynomials on each time interval and choosing them so that $q(t)$ is smooth
+across the junctions.
+
+Work through each exercise before expanding the solution.
+
+---
+
+## Part 1: Linear Interpolation
+
+The simplest choice for the segment connecting $q_i$ to $q_{i+1}$ is a
+**linear polynomial**.
+
+---
+
+### Exercise 1 — Deriving the linear blend {#sec-ex1}
+
+Consider two waypoints $q_1$ and $q_2$ that the trajectory must visit at times
+$t_1$ and $t_2 > t_1$, respectively.
+Define
+
+$$q(t) = q_1 + \frac{t - t_1}{t_2 - t_1}(q_2 - q_1), \qquad t \in [t_1, t_2].$$
+
+**(a)** Rewrite $q(t)$ in the form $q(t) = a_1 t + a_0$.
+Express the coefficients $a_0$ and $a_1$ in terms of $q_1$, $q_2$, $t_1$, $t_2$.
+
+**(b)** Verify that $q(t_1) = q_1$ and $q(t_2) = q_2$.
+
+**(c)** Compute $\dot{q}(t)$.
+What can you say about the velocity during this interval?
+
+**(d)** A robot joint must move from $q_1 = 0$ rad to $q_2 = \pi/2$ rad,
+starting at $t_1 = 0$ s and arriving at $t_2 = 3$ s.
+Find the numerical values of $a_0$ and $a_1$, and state the joint velocity in rad/s.
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 1
+
+**(a)** Expand the interpolation formula:
+
+$$q(t) = q_1 + \frac{q_2 - q_1}{t_2 - t_1}\,t - \frac{q_2 - q_1}{t_2 - t_1}\,t_1
+       = \underbrace{\frac{q_2 - q_1}{t_2 - t_1}}_{a_1}\,t
+         + \underbrace{\frac{q_1 t_2 - q_2 t_1}{t_2 - t_1}}_{a_0}.$$
+
+So
+
+$$\boxed{a_1 = \frac{q_2 - q_1}{t_2 - t_1}, \qquad a_0 = \frac{q_1 t_2 - q_2 t_1}{t_2 - t_1}.}$$
+
+**(b)** Boundary check:
+
+$$q(t_1) = a_1 t_1 + a_0 = \frac{(q_2-q_1)t_1 + q_1 t_2 - q_2 t_1}{t_2-t_1}
+          = \frac{q_1(t_2-t_1)}{t_2-t_1} = q_1. \checkmark$$
+
+$$q(t_2) = a_1 t_2 + a_0 = \frac{(q_2-q_1)t_2 + q_1 t_2 - q_2 t_1}{t_2-t_1}
+          = \frac{q_2(t_2-t_1)}{t_2-t_1} = q_2. \checkmark$$
+
+**(c)**
+
+$$\dot{q}(t) = a_1 = \frac{q_2 - q_1}{t_2 - t_1}.$$
+
+The velocity is **constant** throughout the interval — the joint sweeps at a
+uniform rate.
+
+**(d)** With $q_1 = 0$, $q_2 = \pi/2$, $t_1 = 0$, $t_2 = 3$:
+
+$$a_1 = \frac{\pi/2 - 0}{3 - 0} = \frac{\pi}{6} \approx 0.524 \text{ rad/s}, \qquad
+  a_0 = \frac{0 \cdot 3 - (\pi/2) \cdot 0}{3} = 0.$$
+
+The joint travels at a constant $\pi/6$ rad/s.
+:::
+
+---
+
+## Part 2: The Velocity-Continuity Problem
+
+A single linear segment is perfectly smooth, but concatenating two linear
+segments can produce a **velocity jump** at the junction.
+
+---
+
+### Exercise 2 — Velocity discontinuity at a junction {#sec-ex2}
+
+A path planner returns three waypoints:
+$q_1 = 0$, $q_2 = 1$, $q_3 = 0$ (in radians), at times
+$t_1 = 0$ s, $t_2 = 2$ s, $t_3 = 3$ s.
+
+Define $q_a(t)$ as the linear blend from $q_1$ to $q_2$ on $[t_1, t_2]$, and
+$q_b(t)$ as the linear blend from $q_2$ to $q_3$ on $[t_2, t_3]$.
+
+**(a)** Write explicit formulas for $q_a(t)$ and $q_b(t)$ using the result
+from Exercise 1.
+
+**(b)** Compute the (constant) velocities $\dot{q}_a$ and $\dot{q}_b$ on
+their respective intervals.
+
+**(c)** Evaluate $\dot{q}_a(t_2^-)$ and $\dot{q}_b(t_2^+)$ — the velocities
+just before and just after $t_2$.
+Are they equal?
+
+**(d)** Why is a velocity discontinuity at a junction physically problematic
+for a real robot?
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 2
+
+**(a)**
+
+$$q_a(t) = 0 + \frac{t - 0}{2 - 0}(1 - 0) = \frac{t}{2}, \qquad t \in [0, 2].$$
+
+$$q_b(t) = 1 + \frac{t - 2}{3 - 2}(0 - 1) = 1 - (t - 2) = 3 - t, \qquad t \in [2, 3].$$
+
+**(b)**
+
+$$\dot{q}_a = \frac{q_2 - q_1}{t_2 - t_1} = \frac{1 - 0}{2} = 0.5 \text{ rad/s}.$$
+
+$$\dot{q}_b = \frac{q_3 - q_2}{t_3 - t_2} = \frac{0 - 1}{1} = -1 \text{ rad/s}.$$
+
+**(c)** The velocity just before $t_2$ is $+0.5$ rad/s; just after it is $-1$ rad/s.
+They are **not equal** — there is a jump of $1.5$ rad/s at the junction.
+
+**(d)** An instantaneous velocity change requires **infinite acceleration** (and
+therefore infinite torque).
+Real actuators have finite torque limits, so they physically cannot execute
+this trajectory.
+Additionally, high-acceleration transients cause mechanical wear, vibration,
+and poor tracking.
+
+::: {.callout-important appearance="minimal"}
+**Takeaway.** Concatenating linear segments produces a $C^0$ (position-continuous)
+but not $C^1$ (velocity-continuous) trajectory.
+We need higher-degree polynomials to eliminate the velocity jump.
+:::
+:::
+
+---
+
+## Part 3: Quadratic Polynomial Blends
+
+A degree-2 polynomial on an interval has **three** free coefficients, enough
+to satisfy one endpoint position, one endpoint position, and one endpoint velocity.
+By choosing the initial and final velocities carefully we can enforce velocity
+continuity at every interior junction.
+
+---
+
+### Exercise 3 — Quadratic polynomial for a single segment {#sec-ex3}
+
+We seek a quadratic $q(t) = a_0 + a_1 t + a_2 t^2$ on $[0, T]$ satisfying:
+
+| Condition | Equation |
+|:----------|:---------|
+| $q(0) = q_1$ | — |
+| $q(T) = q_2$ | — |
+| $\dot{q}(0) = v_0$ | — |
+
+**(a)** Write the three conditions as a linear system $M\mathbf{c} = \mathbf{b}$
+where $\mathbf{c} = [a_0,\, a_1,\, a_2]^T$.
+
+**(b)** Solve for $a_0$, $a_1$, $a_2$ in terms of $q_1$, $q_2$, $T$, $v_0$.
+
+**(c)** What is the exit velocity $\dot{q}(T)$?
+
+**(d)** A joint must travel from $q_1 = 0$ to $q_2 = 1$ rad in $T = 2$ s,
+starting from rest ($v_0 = 0$).
+Find the coefficients numerically.
+What is the exit velocity $\dot{q}(2)$?
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 3
+
+**(a)** Computing $q(0)$, $q(T)$, and $\dot{q}(0) = a_1$:
+
+$$\begin{bmatrix}1 & 0 & 0 \\ 1 & T & T^2 \\ 0 & 1 & 0\end{bmatrix}
+  \begin{bmatrix}a_0 \\ a_1 \\ a_2\end{bmatrix}
+  = \begin{bmatrix}q_1 \\ q_2 \\ v_0\end{bmatrix}.$$
+
+**(b)** The first and third rows give immediately:
+
+$$a_0 = q_1, \qquad a_1 = v_0.$$
+
+Substituting into the second row:
+
+$$q_1 + v_0 T + a_2 T^2 = q_2 \implies \boxed{a_2 = \frac{q_2 - q_1 - v_0 T}{T^2}.}$$
+
+**(c)** The exit velocity is
+
+$$\dot{q}(T) = a_1 + 2a_2 T = v_0 + \frac{2(q_2 - q_1 - v_0 T)}{T} = \frac{2(q_2-q_1)}{T} - v_0.$$
+
+::: {.callout-tip appearance="minimal"}
+When $v_0 = 0$, the exit velocity is $2(q_2-q_1)/T$ — twice the average
+linear-blend velocity.
+The joint accelerates uniformly through the whole segment rather than moving
+at constant speed.
+:::
+
+**(d)** With $q_1=0$, $q_2=1$, $T=2$, $v_0=0$:
+
+$$a_0 = 0, \quad a_1 = 0, \quad a_2 = \frac{1 - 0 - 0}{4} = 0.25.$$
+
+$$q(t) = 0.25\, t^2.$$
+
+Exit velocity: $\dot{q}(2) = 2 \times 0.25 \times 2 = 1$ rad/s.
+The joint arrives moving — it does **not** stop at $q_2$ unless a second
+segment is designed to bring it to rest.
+:::
+
+---
+
+### Exercise 4 — Two-segment quadratic blend with velocity continuity {#sec-ex4}
+
+We now build a two-segment trajectory through $q_1 = 0$, $q_2 = 1$, $q_3 = 0$ rad
+at $t_1 = 0$ s, $t_2 = 2$ s, $t_3 = 4$ s, with the robot **starting from rest**
+($\dot{q}(t_1) = 0$).
+
+**Segment 1:** $q_a(t) = a_0 + a_1 t + a_2 t^2$ on $[0, 2]$,
+with $q_a(0) = 0$, $q_a(2) = 1$, $\dot{q}_a(0) = 0$.
+
+**Segment 2:** $q_b(t) = b_0 + b_1 t + b_2 t^2$ on $[2, 4]$,
+with $q_b(2) = 1$, $q_b(4) = 0$, and **velocity continuity** $\dot{q}_b(2) = \dot{q}_a(2)$.
+
+**(a)** Use Exercise 3 to find $a_0$, $a_1$, $a_2$ for segment 1.
+Compute the junction velocity $\dot{q}_a(2)$.
+
+**(b)** Write the three conditions on $q_b$ as a $3\times 3$ linear system
+$M\mathbf{b} = \mathbf{r}$ (in terms of $b_0$, $b_1$, $b_2$).
+
+**(c)** Solve the system from (b) to find $b_0$, $b_1$, $b_2$.
+
+**(d)** Compute the exit velocity $\dot{q}_b(4)$.
+Is the robot at rest when it arrives at $q_3$?
+Comment on why this is or is not a problem.
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 4
+
+**(a)** From Exercise 3(b) with $q_1=0$, $q_2=1$, $T=2$, $v_0=0$:
+
+$$a_0 = 0, \quad a_1 = 0, \quad a_2 = 0.25.$$
+
+$$\dot{q}_a(t) = 2a_2 t = 0.5\,t, \qquad \dot{q}_a(2) = 1 \text{ rad/s}.$$
+
+**(b)** The three conditions on $q_b(t) = b_0 + b_1 t + b_2 t^2$:
+
+- $q_b(2) = 1$: $b_0 + 2b_1 + 4b_2 = 1$
+- $q_b(4) = 0$: $b_0 + 4b_1 + 16b_2 = 0$
+- $\dot{q}_b(2) = 1$: $b_1 + 4b_2 = 1$
+
+$$\begin{bmatrix}1 & 2 & 4 \\ 1 & 4 & 16 \\ 0 & 1 & 4\end{bmatrix}
+  \begin{bmatrix}b_0 \\ b_1 \\ b_2\end{bmatrix}
+  = \begin{bmatrix}1 \\ 0 \\ 1\end{bmatrix}.$$
+
+**(c)** From the third row: $b_1 = 1 - 4b_2$.
+Substitute into the first row: $b_0 + 2(1-4b_2) + 4b_2 = 1 \implies b_0 = -1 + 4b_2$.
+Substitute both into the second row:
+
+$$(-1+4b_2) + 4(1-4b_2) + 16b_2 = 0$$
+$$3 + 4b_2 = 0 \implies b_2 = -\tfrac{3}{4}.$$
+
+Then $b_1 = 1 - 4(-\tfrac{3}{4}) = 4$ and $b_0 = -1 + 4(-\tfrac{3}{4}) = -4$.
+
+$$q_b(t) = -4 + 4t - \tfrac{3}{4}t^2.$$
+
+**(d)** Exit velocity: $\dot{q}_b(4) = b_1 + 2b_2(4) = 4 + 2(-\tfrac{3}{4})(4) = 4 - 6 = -2$ rad/s.
+
+The robot arrives at $q_3 = 0$ moving at $-2$ rad/s — it is **not at rest**.
+
+::: {.callout-important appearance="minimal"}
+**Limitation of quadratic blends.**
+A quadratic on each segment has only 3 free parameters.
+Using them to enforce two endpoint positions and one velocity continuity
+condition uses all 3 DOF, leaving **no freedom to control the exit velocity**.
+To independently specify both entry and exit velocities on a single segment,
+we need a **cubic** (4 parameters).
+:::
+:::
+
+---
+
+## Part 4: Constraint Counting
+
+Choosing the polynomial degree is a balancing act between smoothness and the
+number of conditions we can satisfy.
+
+---
+
+### Exercise 5 — Counting constraints and degrees of freedom {#sec-ex5}
+
+Consider $M$ segments connecting $M+1$ waypoints.
+Each segment uses a degree-$d$ polynomial (with $d+1$ coefficients).
+
+**(a)** How many total coefficients (degrees of freedom) are there across all $M$ segments?
+
+**(b)** State the number of **endpoint interpolation conditions** (position must
+match the waypoint at each end of each segment).
+
+**(c)** At each of the $M-1$ **interior junctions**, we require continuity of
+$q$ and its first $k$ derivatives (i.e., $C^k$ continuity).
+How many junction conditions is that in total?
+
+**(d)** For the trajectory to be uniquely determined (number of conditions equals
+number of DOF), what relationship must hold between $d$, $k$, and $M$?
+Write the equation and simplify.
+
+**(e)** Verify your formula with two cases from the slides:
+
+- **Linear blends** ($d=1$, $k=0$): no interior continuity beyond position.
+  Confirm the condition count matches the DOF.
+
+- **Quadratic blends** ($d=2$, $k=1$): velocity-continuous.
+  Confirm that for $M$ segments, you have exactly 1 leftover DOF per segment
+  plus 2 boundary conditions to specify (e.g., initial and final velocities).
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 5
+
+**(a)** Each segment has $d+1$ coefficients, so the total DOF is
+
+$$\text{DOF} = M(d+1).$$
+
+**(b)** Each segment has two endpoint interpolation conditions (one per end),
+giving $2M$ conditions.
+However, adjacent segments share a waypoint, so the $M+1$ waypoints generate
+$M+1$ distinct position constraints (each interior waypoint is hit by two
+segments, but the conditions are the same value, so they only count once per segment boundary).
+
+A cleaner count: each segment imposes 2 endpoint position conditions, but
+interior waypoint positions are each shared by two segments.
+Equivalently, the total number of **unique** position conditions is $M+1$
+(one per waypoint), and each interior waypoint gives one condition on each of
+the two adjacent segments — but they enforce the same value, so it is
+simpler to count per-segment.
+
+Per-segment counting: 2 position conditions per segment $\Rightarrow$ $2M$ position conditions total.
+
+**(c)** At each interior junction, enforcing $C^k$ continuity means matching
+$q$, $\dot{q}$, $\ddot{q}$, $\ldots$, $q^{(k)}$ — that is $k+1$ conditions
+per junction, across $M-1$ junctions:
+
+$$\text{junction conditions} = (k+1)(M-1).$$
+
+**(d)** Setting total conditions equal to total DOF:
+
+$$2M + (k+1)(M-1) = M(d+1).$$
+
+Expand the left side:
+
+$$2M + (k+1)M - (k+1) = M(d+1).$$
+
+$$M\bigl(2 + k + 1\bigr) - (k+1) = M(d+1).$$
+
+$$M(d+1) = M(k+3) - (k+1).$$
+
+For large $M$ (the boundary term $k+1$ becomes negligible) the dominant
+balance is $d = k+2$.
+Exactly:
+
+$$\boxed{d = k + 2 + \frac{-(k+1)}{M}}.$$
+
+For this to give an integer $d$ for all $M$, we typically accept one remaining
+degree of freedom per problem and fix it with boundary conditions (initial
+and final velocity, acceleration, etc.).
+
+**(e)**
+
+- **Linear, $d=1$, $k=0$:** Each segment has 2 coefficients; we impose 2
+  position conditions per segment and 0 junction conditions ($k=0$ means
+  only position continuity, but position continuity is already included in
+  the endpoint conditions). DOF $= 2M$, conditions $= 2M$. Balanced exactly.
+  No freedom to specify velocities — which is why the velocities jump.
+
+- **Quadratic, $d=2$, $k=1$:** Each segment has 3 coefficients. Total DOF $= 3M$.
+  Conditions: $2M$ (positions) $+ 1\cdot(M-1)$ (velocity continuity at interior junctions) $= 3M - 1$.
+  There is **1 extra DOF**, which we use to specify one boundary velocity
+  (e.g., $\dot{q}(t_1) = v_0$).
+  This matches the setup in Exercise 4, where specifying $v_0$ uniquely
+  determined all coefficients.
+
+::: {.callout-tip appearance="minimal"}
+**Rule of thumb.** Degree-$d$ polynomials enforce $C^{d-1}$ continuity with
+a small number of free boundary conditions left over.
+Cubic ($d=3$) blends — the most common choice in robotics — give $C^2$
+continuity (position, velocity, acceleration), leaving 2 boundary DOF for
+specifying initial and final velocities.
+:::
+:::
+
+---
+
+## Part 5: From Assignment 2 Path to Trajectory
+
+The previous parts developed the theory one dimension at a time.
+Assignment 2 produces a **multi-dimensional path** — an array of $N+1$ waypoints
+$\{q_0, q_1, \ldots, q_N\} \subset \mathbb{R}^n$
+(where $n = 2$ for the 2D planning problems, $n = 7$ for the Franka arm) —
+but with **no timing information**.
+This exercise walks through every step needed to turn that array into a smooth,
+time-parameterized trajectory suitable for a tracking controller.
+
+---
+
+### Exercise 6 — Path to trajectory for Assignment 2 {#sec-ex6}
+
+**Setup.** Load a path produced by your Assignment 2 planner:
+
+```python
+import numpy as np
+data = np.load("map_1_rrt.npz")   # or franka_1_path.npz, etc.
+path = data["path"]                # shape (N+1, n)
+```
+
+**(a) Assign times proportional to path length.**
+A robot that moves at roughly constant speed should spend more time on long
+segments than short ones.
+Let $\ell_k = \|q_k - q_{k-1}\|_2$ be the Euclidean length of the $k$-th
+segment ($k = 1, \ldots, N$), and let $L = \sum_{k=1}^N \ell_k$ be the total
+path length.
+Given a desired total travel time $T_{\text{total}}$, define
+
+$$t_0 = 0, \qquad t_k = T_{\text{total}}\,\frac{\sum_{j=1}^{k}\ell_j}{L}, \quad k = 1, \ldots, N.$$
+
+Write a Python function `assign_times(path, T_total)` that returns the array
+$[t_0, t_1, \ldots, t_N]$.
+What happens to $t_k$ if two consecutive waypoints are identical
+($\ell_k = 0$)?
+How would you handle that case?
+
+**(b) Independent blending per dimension.**
+The polynomial blending in Parts 1–4 was written for a scalar $q(t)$.
+Explain in one or two sentences why the same construction applies independently
+to **each column** of the waypoint array when $n > 1$.
+What assumption does this rely on?
+
+**(c) Cubic spline with zero boundary velocities.**
+A robot that starts and ends at rest should satisfy
+$\dot{q}(t_0) = 0$ and $\dot{q}(t_N) = 0$ (zero velocity in every dimension
+at the endpoints).
+Use `scipy.interpolate.CubicSpline` with the `bc_type='clamped'` option
+(which enforces zero first derivatives at both ends) to build the trajectory.
+
+```python
+from scipy.interpolate import CubicSpline
+
+def make_trajectory(path, T_total):
+    times = assign_times(path, T_total)
+    # CubicSpline fits all columns simultaneously
+    traj = CubicSpline(times, path, bc_type='clamped')
+    return traj, times
+```
+
+What does `traj(t)` return for a scalar $t$?
+What does `traj(t, 1)` return?
+
+**(d) Verify interpolation and smoothness.**
+After building `traj`, check two properties:
+
+1. **Interpolation:** confirm numerically that `traj(times[k])` $\approx$ `path[k]`
+   for every $k$.
+2. **Zero boundary velocities:** confirm that `traj(0, 1)` and
+   `traj(T_total, 1)` are close to zero.
+
+Write the two verification checks as short Python assertions or print
+statements.
+
+**(e) Evaluate at a query time.**
+A tracking controller will call the trajectory at each control timestep
+$t \in [0, T_{\text{total}}]$ to get the desired configuration $q_d(t)$ and
+velocity $\dot{q}_d(t)$.
+
+Write the two lines a controller would use to query both at a given time `t`:
+
+```python
+q_d  = ...   # desired configuration at time t
+dq_d = ...   # desired velocity at time t
+```
+
+**(f) Visualize.**
+Plot each dimension of `traj(t)` over $[0, T_{\text{total}}]$.
+For the Franka path, this means 7 subplots (one per joint).
+For the 2D path, plot $x(t)$ and $y(t)$, then also plot the spatial path
+$y$ vs. $x$ alongside the original waypoints to confirm the spline passes
+through them.
+
+::: {.callout-note collapse="true"}
+## Solution — Exercise 6
+
+**(a)**
+
+```python
+def assign_times(path, T_total):
+    # segment lengths
+    diffs = np.diff(path, axis=0)            # (N, n)
+    lengths = np.linalg.norm(diffs, axis=1)  # (N,)
+    cumlen = np.concatenate([[0], np.cumsum(lengths)])
+    L = cumlen[-1]
+    if L == 0:
+        # degenerate path: all waypoints identical
+        return np.linspace(0, T_total, len(path))
+    return T_total * cumlen / L
+```
+
+If two consecutive waypoints are identical ($\ell_k = 0$), the times $t_{k-1}$
+and $t_k$ are equal, which causes `CubicSpline` to fail (repeated knots).
+The simplest fix is to remove duplicate waypoints before building the spline,
+or to add a tiny jitter — but the cleaner approach is to deduplicate the path
+in a post-processing step after planning.
+
+**(b)** The time stamps $t_0, \ldots, t_N$ are shared across all dimensions.
+Because each dimension's blending problem is a scalar cubic spline problem
+with the same knot vector, the problems are independent: the coefficient
+for dimension $i$ depends only on the $i$-th column of the waypoint array.
+This relies on the assumption that **all joints are driven simultaneously** —
+joint $i$ must be at waypoint $q_k[i]$ at time $t_k$ for every $i$.
+
+**(c)** `traj(t)` returns an $n$-vector of configuration values (one per
+dimension).
+`traj(t, 1)` returns the **first derivative** — i.e., the velocity
+$\dot{q}(t)$ — as an $n$-vector.
+The integer argument to a `CubicSpline` object selects the derivative order.
+
+**(d)**
+
+```python
+traj, times = make_trajectory(path, T_total=10.0)
+
+# 1. Interpolation check
+for k, t in enumerate(times):
+    err = np.max(np.abs(traj(t) - path[k]))
+    assert err < 1e-10, f"waypoint {k} not interpolated: error = {err}"
+
+# 2. Zero boundary velocities
+print("start velocity:", traj(times[0],  1))   # should be ~0
+print("end   velocity:", traj(times[-1], 1))   # should be ~0
+```
+
+**(e)**
+
+```python
+q_d  = traj(t)     # desired configuration, shape (n,)
+dq_d = traj(t, 1)  # desired velocity,      shape (n,)
+```
+
+**(f)** For the 2D case:
+
+```python
+import matplotlib.pyplot as plt
+
+T_total = 10.0
+traj, times = make_trajectory(path, T_total)
+t_fine = np.linspace(0, T_total, 500)
+q_fine = traj(t_fine)   # shape (500, 2)
+
+fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+axes[0].plot(t_fine, q_fine[:, 0]); axes[0].set(xlabel="t", ylabel="x")
+axes[1].plot(t_fine, q_fine[:, 1]); axes[1].set(xlabel="t", ylabel="y")
+axes[2].plot(q_fine[:, 0], q_fine[:, 1], label="spline")
+axes[2].plot(path[:, 0], path[:, 1], 'o', label="waypoints")
+axes[2].set(xlabel="x", ylabel="y"); axes[2].legend()
+plt.tight_layout()
+```
+
+::: {.callout-tip appearance="minimal"}
+**Why cubic splines work here.**
+`scipy.interpolate.CubicSpline` solves the same constraint-counting problem
+from Exercise 5: for $N$ segments it sets up a $4N \times 4N$ tridiagonal
+system enforcing $C^2$ continuity at all interior junctions plus the two
+clamped endpoint conditions, and solves it in $O(N)$ time.
+The resulting trajectory is $C^2$ — position, velocity, and acceleration are
+all continuous — which is the minimum smoothness required for a well-posed
+tracking control problem.
+:::
+:::
+
+---
+
+## Summary
+
+| Polynomial degree | Coefficients per segment | Smoothness achievable | Typical boundary DOF |
+|:-----------------:|:------------------------:|:---------------------:|:--------------------:|
+| 1 (linear) | 2 | $C^0$ (position only) | 0 |
+| 2 (quadratic) | 3 | $C^1$ (velocity continuous) | 1 |
+| 3 (cubic) | 4 | $C^2$ (acceleration continuous) | 2 |
+| $d$ | $d+1$ | $C^{d-1}$ | $\approx d-1$ |
+
+**Key ideas:**
+
+- Path planners output a sequence of waypoints; a **local planner** fits polynomials to convert them into a time-parameterized trajectory.
+- Linear blends are the simplest but produce velocity jumps at junctions that require infinite torque.
+- Adding one polynomial degree buys one more order of continuity at junctions.
+- The number of free polynomial coefficients must match the number of conditions (endpoint positions + junction smoothness + boundary velocities).
+- Cubic blends are the workhorse in practice: they achieve $C^2$ smoothness while keeping the linear systems small and well-conditioned.
