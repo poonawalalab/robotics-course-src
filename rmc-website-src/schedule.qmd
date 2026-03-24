@@ -12,7 +12,7 @@ execute:
 coursepdf: assets/extras/
 ---
 
-|Date		|Topic										| Slides						| [Notes](https://poonawalalab.github.io/rmc-s21/assets/pdf/00_RMC_Notes.pdf) | Modern Robotics Chapter	| RMC Book[^1]	|
+|Date		|Topic										| Slides						| [Notes](https://poonawalalab.github.io/rmc-s21/assets/pdf/00_RMC_Notes.pdf) | Modern Robotics Chapter[^2]	| RMC Book[^1]	|
 |:---		|:---										|:---							|:---	|:---:						|:---:		|
 |Jan 13	    | Course Overview; Motion Tasks				| [Overview](overview.html)		|								| 1	|1			|
 |Jan 15	    | `MuJoCo` Setup							|[`MuJoCo`](mujoco.html)		| [webpage](introduction.html)	|  	| 			|
@@ -33,10 +33,15 @@ coursepdf: assets/extras/
 |Feb 24	    | iLQR   	| [iLQR](ilqr.html) | 	| 	| 	|
 |Feb 26	    | iLQR: Line Search, Forward Pass, MPC  	| [iLQR](ilqr.html), [MPC](mpc.html) | 	| 	| 	|
 | - |ODEs| [ODE Slides]({{< meta coursepdf >}}/ME340_A1_Differential_Equations_Slides.pdf) [ODE Models]({{< meta coursepdf >}}/ME340_02_ODE_Models_Notes.pdf), [Mechanical Sys]({{< meta coursepdf >}}/ME340_03_Mechanical_Systems.pdf),  [Electrical Sys]({{< meta coursepdf >}}/ME340_04_Electrical\ Systems.pdf),
-|Mar 03	    | Modeling   	| [Powered Mechanisms](assets/pdfs/02_Robots_As_Powered_Mechanisms.pdf), [Dynamics](assets/pdfs/08_Euler_Lagrangian_Models.pdf), [Actuation](assets/pdfs/09_Actuation.pdf) | 	| 	| 	|
-|Mar 05	    | Feedback Control   	| [Feedback Control](https://poonawalalab.github.io/rmc-s21/assets/pdf/10_Feedforward_Feedback_Tracking.pdf) | 	| 	| 	|
-| - |Control Systems|[Laplace Transforms]({{< meta coursepdf >}}/ME340_05_Laplace_Transform_Notes.pdf), [Transfer Functions]({{< meta coursepdf >}}/ME340_06_Transfer_Functions_Notes.pdf), [Stability]({{< meta coursepdf >}}/stability.pdf)  |
+|Mar 03	    | Modeling   	| [Powered Mechanisms](assets/pdfs/02_Robots_As_Powered_Mechanisms.pdf) | Ch 3, OneNote	| Ch 3.1	| Ch 7.6	|
+|Mar 05	    | Dynamics   	| [Dynamics](assets/pdfs/08_Euler_Lagrangian_Models.pdf), [Actuation](assets/pdfs/09_Actuation.pdf) | Ch 3, OneNote	| Ch 3.1	| Ch 7.6	|
+| - |Control Systems|[Laplace Transforms]({{< meta coursepdf >}}/ME340_05_Laplace_Transform_Notes.pdf), [Transfer Functions]({{< meta coursepdf >}}/ME340_06_Transfer_Functions_Notes.pdf), [Stability]({{< meta coursepdf >}}/stability.pdf), [Feedback/forward Control](https://poonawalalab.github.io/rmc-s21/assets/pdf/10_Feedforward_Feedback_Tracking.pdf)  |
+| Mar 10 | Independent Joint Control, Gravity Compensated PD| [IJC](https://poonawalalab.github.io/rmc-s21/assets/pdf/11_IJC_PID.pdf), [GravComp](https://poonawalalab.github.io/rmc-s21/assets/pdf/12_GC_PD.pdf) |4.1-4.2|11.4.2.1 | 6, 8.1|
+| Mar 12 | Inverse Dynamics Control| [InvDyn](https://poonawalalab.github.io/rmc-s21/assets/pdf/13_Inverse_Dynamics_CTC.pdf)|4.2|11.4.2.2 | 8.2|
+| Mar 24 | Velocity Kinematics; Inverse Kinematics | [Vel Kin](assets/pdfs/05_Velocities_Of_Frames.pdf), [Inv Kin](assets/pdfs/07_Inverse_Kinematics.pdf)|2.2;2.3|3.3;6 | 4.1-4.5; 3.2|
 
+
+[^2] : [Modern Robotics wiki](https://hades.mech.northwestern.edu/index.php/Modern_Robotics#Book)
 [^1]: _Robot Modeling and Control_, M. W. Spong, S. Hutchinson, and M. Vidyasagar, John Wiley \& Sons, 2006.
 <!--
 |Jan 17	    |Robots as powered mechanisms				|  \pdflink{Powered Mechanisms}{02_Robots_As_Powered_Mechanisms} | | 2.1-2.3|1|

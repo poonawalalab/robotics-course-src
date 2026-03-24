@@ -1,0 +1,522 @@
+---
+pagetitle: "3D Orientations"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "3D Orientations •<a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+execute:
+    freeze: auto
+---
+
+## 3D Orientations {.center .smaller}
+<hr>
+
+### Rotation Matrices · Euler Angles · Quaternions
+
+<br/>
+
+::: {layout="[120, 60]"}
+__Instructor__: Hasan A. Poonawala<br>
+<br>
+Mechanical and Aerospace Engineering <br>
+University of Kentucky, Lexington, KY, USA
+
+__Topics__: <br>
+Rotation Matrices (SO(3)) <br>
+Euler Angles <br>
+Quaternions <br>
+Comparison & Practical Notes <br>
+:::
+
+# Rotation Matrices
+
+## What Is an Orientation? {.smaller}
+
+A **coordinate frame** $\{B\}$ attached to a rigid body is described by three orthonormal axes $\mathbf{b}_1, \mathbf{b}_2, \mathbf{b}_3$ expressed in a fixed world frame $\{W\}$.
+
+. . .
+
+The **rotation matrix** ${}^W R_B \in \mathbb{R}^{3\times 3}$ stacks those axes as columns:
+
+$${}^W R_B = \begin{bmatrix} | & | & | \\ \mathbf{b}_1 & \mathbf{b}_2 & \mathbf{b}_3 \\ | & | & | \end{bmatrix}$$
+
+. . .
+
+::: {.callout-note appearance="minimal"}
+Each column is a unit vector of $\{B\}$ written in $\{W\}$ coordinates. Reading columns gives "where the body axes point."
+:::
+
+## The Special Orthogonal Group SO(3) {.smaller}
+
+A rotation matrix satisfies two conditions:
+
+1. **Orthonormality** — $R^T R = I_3$, equivalently $R^{-1} = R^T$
+2. **Proper rotation** — $\det(R) = +1$
+
+. . .
+
+The set of all such matrices forms the **Lie group SO(3)**:
+
+$$\mathrm{SO}(3) = \bigl\{R \in \mathbb{R}^{3\times 3} \mid R^T R = I,\ \det R = 1\bigr\}$$
+
+. . .
+
+::: {.callout-tip appearance="minimal"}
+SO(3) is a group: closed under multiplication, has identity $I$, every element has an inverse $R^{-1} = R^T$, and multiplication is associative.
+:::
+
+## Basic Rotations {.smaller}
+
+Rotation by angle $\theta$ about the **$x$-axis**:
+
+$$R_x(\theta) = \begin{bmatrix} 1 & 0 & 0 \\ 0 & \cos\theta & -\sin\theta \\ 0 & \sin\theta & \cos\theta \end{bmatrix}$$
+
+. . .
+
+About the **$y$-axis**:
+
+$$R_y(\theta) = \begin{bmatrix} \cos\theta & 0 & \sin\theta \\ 0 & 1 & 0 \\ -\sin\theta & 0 & \cos\theta \end{bmatrix}$$
+
+. . .
+
+About the **$z$-axis**:
+
+$$R_z(\theta) = \begin{bmatrix} \cos\theta & -\sin\theta & 0 \\ \sin\theta & \cos\theta & 0 \\ 0 & 0 & 1 \end{bmatrix}$$
+
+## Rotating Vectors {.smaller}
+
+If $\mathbf{p}^B$ are the coordinates of a point in frame $\{B\}$, its coordinates in $\{W\}$ are:
+
+$$\mathbf{p}^W = {}^W R_B\, \mathbf{p}^B$$
+
+. . .
+
+To go the other direction — from world to body — use $R^{-1} = R^T$:
+
+$$\mathbf{p}^B = {}^W R_B^T\, \mathbf{p}^W$$
+
+. . .
+
+::: {.callout-note appearance="minimal"}
+**Active vs. passive interpretation.** The same matrix $R$ can either rotate a vector (active) or change the frame in which it is expressed (passive). We use the passive interpretation: $R$ maps body coordinates to world coordinates.
+:::
+
+## Composing Rotations {.smaller}
+
+Two sequential rotations compose by **matrix multiplication**:
+
+$${}^W R_C = {}^W R_B \cdot {}^B R_C$$
+
+. . .
+
+Order matters — rotation is **not commutative**:
+
+$$R_x(\alpha)\,R_z(\beta) \neq R_z(\beta)\,R_x(\alpha) \quad \text{in general}$$
+
+. . .
+
+::: {.callout-tip appearance="minimal"}
+Read the composition **right to left**: ${}^W R_C$ first applies ${}^B R_C$ (body → intermediate), then ${}^W R_B$ (intermediate → world).
+:::
+
+## Properties Summary {.smaller}
+
+| Property | Expression |
+|---|---|
+| Inverse = transpose | $R^{-1} = R^T$ |
+| Determinant | $\det(R) = +1$ |
+| Columns are orthonormal | $R^T R = I$ |
+| Composition | $R_{AC} = R_{AB} R_{BC}$ |
+| Identity | $R = I_3$ (no rotation) |
+| 9 entries, 3 DOF | 6 orthonormality constraints |
+
+. . .
+
+::: {.callout-important appearance="minimal"}
+Rotation matrices have **9 numbers** but only **3 degrees of freedom**. The 6 orthonormality constraints reduce the effective dimension.
+:::
+
+# Euler Angles
+
+## Euler's Theorem {.smaller}
+
+> **Euler's Rotation Theorem:** Any orientation of a rigid body can be achieved by a single rotation about some axis through the origin.
+
+. . .
+
+A practical consequence: we can parameterize any $R \in \mathrm{SO}(3)$ with just **three numbers**.
+
+. . .
+
+**Euler angles** do this by decomposing $R$ into three successive rotations about (body or world) axes:
+
+$$R = R_{i}(\alpha)\, R_{j}(\beta)\, R_{k}(\gamma), \quad i,j,k \in \{x, y, z\},\ i \neq j \neq i$$
+
+## ZYX Convention (Yaw–Pitch–Roll) {.smaller}
+
+The most common convention in aerospace and robotics:
+
+$$R = R_z(\psi)\, R_y(\theta)\, R_x(\phi)$$
+
+| Angle | Symbol | Rotation Axis | Name |
+|---|---|---|---|
+| 1st | $\psi$ | $z$ | Yaw |
+| 2nd | $\theta$ | $y$ | Pitch |
+| 3rd | $\phi$ | $x$ | Roll |
+
+. . .
+
+Applied right to left: first roll about $x$, then pitch about (new) $y$, then yaw about (new) $z$.
+
+. . .
+
+::: {.callout-note appearance="minimal"}
+This is an **intrinsic** sequence — each rotation is about the **body's** current axis. Equivalently, the same result is obtained by **extrinsic** rotations in the reversed order: $R_x(\phi)$ then $R_y(\theta)$ then $R_z(\psi)$ about **fixed** world axes.
+:::
+
+## Expanded ZYX Matrix {.smaller}
+
+Multiplying out $R_z(\psi)\,R_y(\theta)\,R_x(\phi)$:
+
+$$R = \begin{bmatrix}
+c_\psi c_\theta & c_\psi s_\theta s_\phi - s_\psi c_\phi & c_\psi s_\theta c_\phi + s_\psi s_\phi \\
+s_\psi c_\theta & s_\psi s_\theta s_\phi + c_\psi c_\phi & s_\psi s_\theta c_\phi - c_\psi s_\phi \\
+-s_\theta        & c_\theta s_\phi                         & c_\theta c_\phi
+\end{bmatrix}$$
+
+where $c_\alpha \equiv \cos\alpha$, $s_\alpha \equiv \sin\alpha$.
+
+. . .
+
+**Extracting angles** from $R$ (when $\cos\theta \neq 0$):
+
+$$\theta = \arcsin(-R_{31}), \quad \phi = \mathrm{atan2}(R_{32}, R_{33}), \quad \psi = \mathrm{atan2}(R_{21}, R_{11})$$
+
+## Gimbal Lock {.smaller}
+
+When $\theta = \pm 90°$ (pitch straight up or down), the matrix simplifies and **$\phi$ and $\psi$ become indistinguishable** — one degree of freedom is lost.
+
+. . .
+
+::: {.callout-important appearance="minimal"}
+**Gimbal lock** is not a physical constraint — the body can still rotate freely. It is a **singularity of the parameterization**: infinitely many $(\phi, \psi)$ pairs map to the same $R$ when $\theta = \pm 90°$.
+:::
+
+. . .
+
+Practical consequences:
+
+- Numerical instability near $\theta = \pm 90°$
+- Cannot smoothly interpolate through singularity
+- Discontinuous angle extraction
+
+## Euler Angle Pros and Cons {.smaller}
+
+::: {layout="[50,50]"}
+::: {}
+**Advantages**
+
+- Minimal — only 3 numbers
+- Intuitive for human interpretation
+- Easy to specify end-effector poses
+- Singularity-free away from gimbal lock
+:::
+
+::: {}
+**Disadvantages**
+
+- Gimbal lock at certain configurations
+- Many conventions (12+ in use)
+- Not unique (multiple angle sets → same $R$)
+- Poor for interpolation near singularity
+- Velocity kinematics require a Jacobian
+:::
+:::
+
+# Quaternions
+
+## Motivation {.smaller}
+
+Can we find a **compact, singularity-free** representation?
+
+. . .
+
+**Axis-angle** representation: any rotation is a rotation by angle $\theta$ about unit axis $\hat{\mathbf{u}} = (u_x, u_y, u_z)^T$, giving the Rodrigues formula:
+
+$$R = I + \sin\theta\, [\hat{\mathbf{u}}]_\times + (1-\cos\theta)\, [\hat{\mathbf{u}}]_\times^2$$
+
+. . .
+
+where $[\hat{\mathbf{u}}]_\times$ is the skew-symmetric cross-product matrix:
+
+$$[\hat{\mathbf{u}}]_\times = \begin{bmatrix} 0 & -u_z & u_y \\ u_z & 0 & -u_x \\ -u_y & u_x & 0 \end{bmatrix}$$
+
+. . .
+
+::: {.callout-tip appearance="minimal"}
+Axis-angle still has a singularity at $\theta = 0$ (axis is undefined). Quaternions resolve this by encoding both axis and angle algebraically.
+:::
+
+## Unit Quaternions {.smaller}
+
+A **quaternion** is a 4-tuple:
+
+$$\mathbf{q} = w + x\,\mathbf{i} + y\,\mathbf{j} + z\,\mathbf{k} = (w,\, \mathbf{v}), \quad \mathbf{v} = (x,y,z)^T$$
+
+. . .
+
+For rotations we use **unit quaternions** — those with $\|\mathbf{q}\| = 1$:
+
+$$w^2 + x^2 + y^2 + z^2 = 1$$
+
+. . .
+
+**Encoding axis-angle** $(\hat{\mathbf{u}}, \theta)$ as a quaternion:
+
+$$\mathbf{q} = \left(\cos\frac{\theta}{2},\; \hat{\mathbf{u}}\sin\frac{\theta}{2}\right)$$
+
+. . .
+
+::: {.callout-note appearance="minimal"}
+**Double cover:** $\mathbf{q}$ and $-\mathbf{q}$ encode the **same rotation**. Unit quaternions live on $S^3 \subset \mathbb{R}^4$, and SO(3) is the quotient $S^3/\{\pm 1\}$.
+:::
+
+## Quaternion Algebra {.smaller}
+
+The imaginary units satisfy $\mathbf{i}^2 = \mathbf{j}^2 = \mathbf{k}^2 = \mathbf{ijk} = -1$, giving:
+
+$$\mathbf{i}\mathbf{j} = \mathbf{k},\quad \mathbf{j}\mathbf{k} = \mathbf{i},\quad \mathbf{k}\mathbf{i} = \mathbf{j}$$
+
+. . .
+
+**Quaternion product** $(w_1, \mathbf{v}_1) \otimes (w_2, \mathbf{v}_2)$:
+
+$$\mathbf{q}_1 \otimes \mathbf{q}_2 = \bigl(w_1 w_2 - \mathbf{v}_1\cdot\mathbf{v}_2,\; w_1\mathbf{v}_2 + w_2\mathbf{v}_1 + \mathbf{v}_1 \times \mathbf{v}_2\bigr)$$
+
+. . .
+
+**Conjugate** and **inverse** (for unit quaternions):
+
+$$\mathbf{q}^* = (w, -\mathbf{v}), \qquad \mathbf{q}^{-1} = \mathbf{q}^* \quad (\text{since } \|\mathbf{q}\|=1)$$
+
+## Rotating a Vector {.smaller}
+
+To rotate a 3-vector $\mathbf{p}$ by quaternion $\mathbf{q}$, embed $\mathbf{p}$ as a pure quaternion $\tilde{\mathbf{p}} = (0, \mathbf{p})$ and compute:
+
+$$\tilde{\mathbf{p}}' = \mathbf{q} \otimes \tilde{\mathbf{p}} \otimes \mathbf{q}^*$$
+
+. . .
+
+The result $\tilde{\mathbf{p}}' = (0, \mathbf{p}')$ is again a pure quaternion, and $\mathbf{p}'$ is the rotated vector.
+
+. . .
+
+::: {.callout-tip appearance="minimal"}
+This is equivalent to $\mathbf{p}' = R\,\mathbf{p}$ where $R$ is the rotation matrix corresponding to $\mathbf{q}$. The sandwich product $\mathbf{q}(\cdot)\mathbf{q}^*$ preserves vector length.
+:::
+
+## Quaternion to Rotation Matrix {.smaller}
+
+Given $\mathbf{q} = (w, x, y, z)$, the equivalent rotation matrix is:
+
+$$R(\mathbf{q}) = \begin{bmatrix}
+1 - 2(y^2+z^2) & 2(xy - wz) & 2(xz + wy) \\
+2(xy + wz) & 1 - 2(x^2+z^2) & 2(yz - wx) \\
+2(xz - wy) & 2(yz + wx) & 1 - 2(x^2+y^2)
+\end{bmatrix}$$
+
+. . .
+
+This follows directly from expanding $\mathbf{q} \otimes \tilde{\mathbf{p}} \otimes \mathbf{q}^*$ and collecting terms.
+
+## Composing Rotations {.smaller}
+
+Two sequential rotations compose by quaternion multiplication:
+
+$$\mathbf{q}_{AC} = \mathbf{q}_{AB} \otimes \mathbf{q}_{BC}$$
+
+. . .
+
+This mirrors matrix composition — read right to left.
+
+. . .
+
+::: {.callout-important appearance="minimal"}
+**Numerical drift:** After many multiplications, $\|\mathbf{q}\|$ may drift from 1 due to floating-point errors. Re-normalize periodically:
+$$\mathbf{q} \leftarrow \frac{\mathbf{q}}{\|\mathbf{q}\|}$$
+:::
+
+## Spherical Linear Interpolation (SLERP) {.smaller}
+
+Quaternions enable smooth interpolation between two orientations $\mathbf{q}_0$ and $\mathbf{q}_1$:
+
+$$\mathrm{slerp}(\mathbf{q}_0, \mathbf{q}_1, t) = \mathbf{q}_0 \left(\mathbf{q}_0^{-1} \otimes \mathbf{q}_1\right)^t, \quad t \in [0, 1]$$
+
+. . .
+
+Or equivalently, via the angle $\Omega = \arccos(\mathbf{q}_0 \cdot \mathbf{q}_1)$:
+
+$$\mathrm{slerp}(\mathbf{q}_0, \mathbf{q}_1, t) = \frac{\sin((1-t)\Omega)}{\sin\Omega}\,\mathbf{q}_0 + \frac{\sin(t\Omega)}{\sin\Omega}\,\mathbf{q}_1$$
+
+. . .
+
+::: {.callout-tip appearance="minimal"}
+SLERP traces a **geodesic** on $S^3$ — the shortest path between two orientations. Simple linear interpolation of Euler angles does not give the shortest path and can produce unexpected trajectories.
+:::
+
+## SLERP: Numerical Example {.smaller}
+
+**Setup:** interpolate from identity to 90° rotation about $\hat{z}$, evaluate at $t = 0.5$.
+
+$$\mathbf{q}_0 = (1,\;0,\;0,\;0), \qquad \mathbf{q}_1 = \left(\cos 45°,\;0,\;0,\;\sin 45°\right) = \left(\tfrac{\sqrt{2}}{2},\;0,\;0,\;\tfrac{\sqrt{2}}{2}\right)$$
+
+. . .
+
+**Step 1 — find $\Omega$:**
+
+$$\cos\Omega = \mathbf{q}_0 \cdot \mathbf{q}_1 = \tfrac{\sqrt{2}}{2} \;\Longrightarrow\; \Omega = 45°$$
+
+::: {.callout-note appearance="minimal"}
+$\Omega = 45°$ is **half** the rotation angle (90°). This is a direct consequence of the half-angle encoding $w = \cos(\theta/2)$.
+:::
+
+. . .
+
+**Step 2 — evaluate at $t = 0.5$:**
+
+$$\mathrm{slerp} = \frac{\sin 22.5°}{\sin 45°}\,\mathbf{q}_0 + \frac{\sin 22.5°}{\sin 45°}\,\mathbf{q}_1 \approx 0.541\,(\mathbf{q}_0 + \mathbf{q}_1)$$
+
+$$= 0.541\,(1.707,\;0,\;0,\;0.707) \approx (0.924,\;0,\;0,\;0.383)$$
+
+## SLERP: Decoding the Result {.smaller}
+
+$$\mathbf{q}_{0.5} \approx (\underbrace{0.924}_{w},\;0,\;0,\;\underbrace{0.383}_{v_z})$$
+
+. . .
+
+**Decode the rotation angle:**
+
+$$w = \cos\!\tfrac{\theta}{2} = 0.924 = \cos 22.5° \;\Longrightarrow\; \theta = 45°$$
+
+**Decode the rotation axis:**
+
+$$\hat{\mathbf{u}} = \frac{\mathbf{v}}{\|\mathbf{v}\|} = \frac{(0,\;0,\;0.383)}{0.383} = \hat{z}$$
+
+. . .
+
+So $\mathbf{q}_{0.5}$ is a **45° rotation about $\hat{z}$** — exactly halfway between 0° and 90°, on the same axis. ✓
+
+::: {.callout-tip appearance="minimal"}
+This holds generally: SLERP between two rotations **about the same axis** stays on that axis and scales the angle linearly. For rotations about different axes, the intermediate axis traces a curved path on $S^3$.
+:::
+
+## SLERP: Where Is the Axis Computed? {.smaller}
+
+In the multiplicative form $\mathrm{slerp} = \mathbf{q}_0 \left(\mathbf{q}_0^{-1} \otimes \mathbf{q}_1\right)^t$, the axis is explicit:
+
+$$\mathbf{q}_{rel} = \mathbf{q}_0^{-1} \otimes \mathbf{q}_1 \quad \leftarrow \text{relative rotation from } \mathbf{q}_0 \text{ to } \mathbf{q}_1$$
+
+The **axis of $\mathbf{q}_{rel}$** (the normalized vector part) is the axis about which SLERP rotates. Raising to the power $t$ scales only the angle, leaving the axis unchanged:
+
+$$\mathbf{q}_{rel}^t \;\text{ corresponds to angle } t\alpha \text{ about } \hat{\mathbf{u}} \quad (\mathbf{q}_{rel} \text{ encodes angle } \alpha \text{ about } \hat{\mathbf{u}})$$
+
+. . .
+
+**In our example** ($\mathbf{q}_0 =$ identity):
+
+$$\mathbf{q}_{rel} = \mathbf{q}_0^{-1} \otimes \mathbf{q}_1 = \mathbf{q}_1 = \left(\tfrac{\sqrt{2}}{2},\;0,\;0,\;\tfrac{\sqrt{2}}{2}\right) \;\Rightarrow\; \hat{\mathbf{u}} = \hat{z}$$
+
+. . .
+
+In the **dot-product formula**, the axis is not extracted explicitly — it is preserved implicitly because the weighted sum $\alpha_0\,\mathbf{q}_0 + \alpha_1\,\mathbf{q}_1$ stays on the great circle whose tangent direction encodes $\hat{\mathbf{u}}$.
+
+# Comparison
+
+## Side-by-Side Comparison {.smaller}
+
+| | Rotation Matrix | Euler Angles | Quaternion |
+|---|---|---|---|
+| **Parameters** | 9 (3 DOF) | 3 | 4 (3 DOF) |
+| **Constraints** | $R^TR=I$, $\det=1$ | none | $\|\mathbf{q}\|=1$ |
+| **Singularities** | none | gimbal lock | none |
+| **Composition** | matrix multiply | convert → multiply → convert | $\otimes$ multiply |
+| **Interpolation** | complex | problematic | SLERP |
+| **Human intuition** | low | high | low |
+| **Memory** | 9 floats | 3 floats | 4 floats |
+| **Numerical stability** | drifts from SO(3) | - | normalize periodically |
+
+## When to Use Which {.smaller}
+
+::: {layout="[33,33,33]"}
+::: {}
+**Rotation Matrices**
+
+Best for:
+
+- Deriving equations (Jacobians, dynamics)
+- Linear algebra manipulations
+- Expressing velocity relations
+- Composing many transforms analytically
+:::
+
+::: {}
+**Euler Angles**
+
+Best for:
+
+- User interfaces / teleoperation
+- Specifying initial conditions
+- Small-angle approximations
+- Aerospace attitude display
+:::
+
+::: {}
+**Quaternions**
+
+Best for:
+
+- Real-time control / estimation
+- Motion planning & interpolation
+- Simulation & numerical integration
+- State estimation (EKF, UKF)
+:::
+:::
+
+. . .
+
+::: {.callout-note appearance="minimal"}
+In practice: **store** orientations as quaternions, **display** as Euler angles, **derive** equations with rotation matrices.
+:::
+
+## Key Relationships {.smaller}
+
+$$\underbrace{(\phi, \theta, \psi)}_{\text{Euler ZYX}} \xrightarrow{\text{3 basic rotations}} \underbrace{R \in \mathrm{SO}(3)}_{\text{rotation matrix}} \xrightarrow{\text{Shepperd's method}} \underbrace{\mathbf{q} \in S^3}_{\text{unit quaternion}}$$
+
+. . .
+
+Going backwards:
+
+$$\mathbf{q} \xrightarrow{R(\mathbf{q})} R \xrightarrow{\mathrm{atan2}} (\phi, \theta, \psi)$$
+
+. . .
+
+The **Lie algebra** $\mathfrak{so}(3)$ (skew-symmetric matrices) relates to all three via the **exponential map**:
+
+$$R = e^{[\boldsymbol{\omega}]_\times}, \qquad \mathbf{q} \approx \left(1,\, \tfrac{\boldsymbol{\omega}}{2}\right) \text{ for small } \|\boldsymbol{\omega}\|$$
+
+. . .
+
+::: {.callout-tip appearance="minimal"}
+The vector $\boldsymbol{\omega} \in \mathbb{R}^3$ is the **rotation vector** (axis times angle). It is the minimal, globally-defined representation — but it too has a singularity at $\|\boldsymbol{\omega}\| = 2\pi k$.
+:::

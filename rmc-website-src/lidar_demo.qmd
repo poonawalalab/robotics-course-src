@@ -1,0 +1,23 @@
+---
+pagetitle: "LiDAR Demo"
+author-meta: "Hasan A. Poonawala"
+format:
+  revealjs:
+    css: styles.css
+    controls: true
+    html-math-method: mathml
+    smaller: false
+    slide-number: true
+    footer: "LiDAR Demo • <a href=\"index.html\"> ME 676 Home</a>"
+    preview-links: auto
+    standalone: false
+    self-contained: false
+    chalkboard:
+      theme: whiteboard
+      boardmarker-width: 3
+
+execute:
+    freeze: auto
+---
+
+{{< include _lidar_slide.qmd >}}
