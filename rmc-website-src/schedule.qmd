@@ -40,9 +40,11 @@ coursepdf: assets/extras/
 | Mar 12 | Inverse Dynamics Control| [InvDyn](https://poonawalalab.github.io/rmc-s21/assets/pdf/13_Inverse_Dynamics_CTC.pdf)|4.2|11.4.2.2 | 8.2|
 | Mar 24 | Forward Kinematics | [Fwd Kin](https://poonawalalab.github.io/rmc-s21/assets/pdf/06_Forward_Kinematics_Jacobians.pdf)|2.2;2.3|4 | 3.1|
 | Mar 26 | Velocity Kinematics; Inverse Kinematics | [Vel Kin](assets/pdfs/05_Velocities_Of_Frames.pdf), [Inv Kin](assets/pdfs/07_Inverse_Kinematics.pdf)|2.2;2.3|3.3;6 | 4.1-4.5; 3.2|
+| Mar 31 | Task Space Inv Dyn | [InvDyn](https://poonawalalab.github.io/rmc-s21/assets/pdf/13_Inverse_Dynamics_CTC.pdf)|4.2.3|11.4.2 | 9.3|
+| Apr 2 | Project Proposal | || | |
 
 
-[^2] : [Modern Robotics wiki](https://hades.mech.northwestern.edu/index.php/Modern_Robotics#Book)
+[^2]: [Modern Robotics wiki](https://hades.mech.northwestern.edu/index.php/Modern_Robotics#Book)
 
 [^1]: _Robot Modeling and Control_, M. W. Spong, S. Hutchinson, and M. Vidyasagar, John Wiley \& Sons, 2006.
 <!--
