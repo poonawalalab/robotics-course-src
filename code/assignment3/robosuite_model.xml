@@ -1,33 +1,33 @@
 <mujoco model="base">
-	<compiler angle="radian" meshdir="meshes/" inertiagrouprange="0 0" autolimits="true" />
+	<compiler angle="radian" meshdir="robot_models/franka/assets/" inertiagrouprange="0 0" autolimits="true" />
 	<option impratio="20" cone="elliptic" density="1.2" viscosity="0.00002" timestep="0.002" />
 	<size nconmax="5000" njmax="5000" />
 
 	<asset>
 		<texture builtin="gradient" height="256" rgb1=".9 .9 1." rgb2=".2 .3 .4" type="skybox" width="256" />
-		<texture file="/Users/hasan/code/python/robosuite/robosuite/models/assets/arenas/../textures/light-gray-floor-tile.png" type="2d" name="texplane" />
+		<texture file="robot_models/franka/assets/textures/light-gray-floor-tile.png" type="2d" name="texplane" />
 		<material name="floorplane" reflectance="0.01" shininess="0.0" specular="0.0" texrepeat="2 2" texture="texplane" texuniform="true" />
 
-		<texture file="/Users/hasan/code/python/robosuite/robosuite/models/assets/arenas/../textures/ceramic.png" type="cube" name="tex-ceramic" />
+		<texture file="robot_models/franka/assets/textures/ceramic.png" type="cube" name="tex-ceramic" />
 		<material name="table_ceramic" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-ceramic" />
 
-		<texture file="/Users/hasan/code/python/robosuite/robosuite/models/assets/arenas/../textures/steel-brushed.png" type="cube" name="tex-steel-brushed" />
+		<texture file="robot_models/franka/assets/textures/steel-brushed.png" type="cube" name="tex-steel-brushed" />
 		<material name="table_legs_metal" reflectance="0.8" shininess="0.8" texrepeat="1 1" texture="tex-steel-brushed" />
 
-		<texture file="/Users/hasan/code/python/robosuite/robosuite/models/assets/arenas/../textures/light-gray-plaster.png" type="2d" name="tex-light-gray-plaster" />
+		<texture file="robot_models/franka/assets/textures/light-gray-plaster.png" type="2d" name="tex-light-gray-plaster" />
 		<material name="walls_mat" reflectance="0.0" shininess="0.1" specular="0.1" texrepeat="3 3" texture="tex-light-gray-plaster" texuniform="true" />
 
 		<texture name="textable" builtin="flat" height="512" width="512" rgb1="0.5 0.5 0.5" rgb2="0.5 0.5 0.5" />
 		<material name="table_mat" texture="textable" />
 
-		<mesh name="robot0_link0" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/meshes/link0.stl" />
-		<mesh name="robot0_link1" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/meshes/link1.stl" />
-		<mesh name="robot0_link2" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/meshes/link2.stl" />
-		<mesh name="robot0_link3" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/meshes/link3.stl" />
-		<mesh name="robot0_link4" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/meshes/link4.stl" />
-		<mesh name="robot0_link5" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/meshes/link5.stl" />
-		<mesh name="robot0_link6" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/meshes/link6.stl" />
-		<mesh name="robot0_link7" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/meshes/link7.stl" />
+		<mesh name="robot0_link0" file="robots/panda/meshes/link0.stl" />
+		<mesh name="robot0_link1" file="robots/panda/meshes/link1.stl" />
+		<mesh name="robot0_link2" file="robots/panda/meshes/link2.stl" />
+		<mesh name="robot0_link3" file="robots/panda/meshes/link3.stl" />
+		<mesh name="robot0_link4" file="robots/panda/meshes/link4.stl" />
+		<mesh name="robot0_link5" file="robots/panda/meshes/link5.stl" />
+		<mesh name="robot0_link6" file="robots/panda/meshes/link6.stl" />
+		<mesh name="robot0_link7" file="robots/panda/meshes/link7.stl" />
 
 		<material name="robot0_Face636_001" specular="0.5" shininess="0.45" rgba="0.901961 0.921569 0.929412 1.000000" />
 		<material name="robot0_Part__Feature017_001" specular="0.5" shininess="0.45" rgba="1.000000 1.000000 1.000000 1.000000" />
@@ -41,49 +41,49 @@
 		<material name="robot0_Shell009_001" specular="0.5" shininess="0.45" rgba="0.250980 0.250980 0.250980 1.000000" />
 		<material name="robot0_Shell010_001" specular="0.5" shininess="0.45" rgba="0.901961 0.921569 0.929412 1.000000" />
 		<material name="robot0_Shell_001" specular="0.5" shininess="0.45" rgba="0.250980 0.250980 0.250980 1.000000" />
-		<mesh name="robot0_link0_vis_0" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link0_vis/link0_vis_0.obj" />
-		<mesh name="robot0_link0_vis_1" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link0_vis/link0_vis_1.obj" />
-		<mesh name="robot0_link0_vis_2" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link0_vis/link0_vis_2.obj" />
-		<mesh name="robot0_link0_vis_3" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link0_vis/link0_vis_3.obj" />
-		<mesh name="robot0_link0_vis_4" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link0_vis/link0_vis_4.obj" />
-		<mesh name="robot0_link0_vis_5" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link0_vis/link0_vis_5.obj" />
-		<mesh name="robot0_link0_vis_6" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link0_vis/link0_vis_6.obj" />
-		<mesh name="robot0_link0_vis_7" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link0_vis/link0_vis_7.obj" />
-		<mesh name="robot0_link0_vis_8" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link0_vis/link0_vis_8.obj" />
-		<mesh name="robot0_link0_vis_9" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link0_vis/link0_vis_9.obj" />
-		<mesh name="robot0_link0_vis_10" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link0_vis/link0_vis_10.obj" />
-		<mesh name="robot0_link0_vis_11" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link0_vis/link0_vis_11.obj" />
+		<mesh name="robot0_link0_vis_0" file="robots/panda/obj_meshes/link0_vis/link0_vis_0.obj" />
+		<mesh name="robot0_link0_vis_1" file="robots/panda/obj_meshes/link0_vis/link0_vis_1.obj" />
+		<mesh name="robot0_link0_vis_2" file="robots/panda/obj_meshes/link0_vis/link0_vis_2.obj" />
+		<mesh name="robot0_link0_vis_3" file="robots/panda/obj_meshes/link0_vis/link0_vis_3.obj" />
+		<mesh name="robot0_link0_vis_4" file="robots/panda/obj_meshes/link0_vis/link0_vis_4.obj" />
+		<mesh name="robot0_link0_vis_5" file="robots/panda/obj_meshes/link0_vis/link0_vis_5.obj" />
+		<mesh name="robot0_link0_vis_6" file="robots/panda/obj_meshes/link0_vis/link0_vis_6.obj" />
+		<mesh name="robot0_link0_vis_7" file="robots/panda/obj_meshes/link0_vis/link0_vis_7.obj" />
+		<mesh name="robot0_link0_vis_8" file="robots/panda/obj_meshes/link0_vis/link0_vis_8.obj" />
+		<mesh name="robot0_link0_vis_9" file="robots/panda/obj_meshes/link0_vis/link0_vis_9.obj" />
+		<mesh name="robot0_link0_vis_10" file="robots/panda/obj_meshes/link0_vis/link0_vis_10.obj" />
+		<mesh name="robot0_link0_vis_11" file="robots/panda/obj_meshes/link0_vis/link0_vis_11.obj" />
 
 		<material name="robot0_Part__Feature_001" specular="0.5" shininess="0.45" rgba="1.000000 1.000000 1.000000 1.000000" />
-		<mesh name="robot0_link1_vis" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link1_vis/link1_vis.obj" />
+		<mesh name="robot0_link1_vis" file="robots/panda/obj_meshes/link1_vis/link1_vis.obj" />
 
 		<material name="robot0_Part__Feature024" specular="0.5" shininess="0.45" rgba="1.000000 1.000000 1.000000 1.000000" />
-		<mesh name="robot0_link2_vis" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link2_vis/link2_vis.obj" />
+		<mesh name="robot0_link2_vis" file="robots/panda/obj_meshes/link2_vis/link2_vis.obj" />
 
 		<material name="robot0_Part__Feature001_010_001_002" specular="0.5" shininess="0.45" rgba="1.000000 1.000000 1.000000 1.000000" />
 		<material name="robot0_Part__Feature002_007_001_002" specular="0.5" shininess="0.45" rgba="1.000000 1.000000 1.000000 1.000000" />
 		<material name="robot0_Part__Feature003_004_001_002" specular="0.5" shininess="0.45" rgba="1.000000 1.000000 1.000000 1.000000" />
 		<material name="robot0_Part__Feature_001_001_001_002" specular="0.5" shininess="0.45" rgba="0.250980 0.250980 0.250980 1.000000" />
-		<mesh name="robot0_link3_vis_0" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link3_vis/link3_vis_0.obj" />
-		<mesh name="robot0_link3_vis_1" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link3_vis/link3_vis_1.obj" />
-		<mesh name="robot0_link3_vis_2" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link3_vis/link3_vis_2.obj" />
-		<mesh name="robot0_link3_vis_3" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link3_vis/link3_vis_3.obj" />
+		<mesh name="robot0_link3_vis_0" file="robots/panda/obj_meshes/link3_vis/link3_vis_0.obj" />
+		<mesh name="robot0_link3_vis_1" file="robots/panda/obj_meshes/link3_vis/link3_vis_1.obj" />
+		<mesh name="robot0_link3_vis_2" file="robots/panda/obj_meshes/link3_vis/link3_vis_2.obj" />
+		<mesh name="robot0_link3_vis_3" file="robots/panda/obj_meshes/link3_vis/link3_vis_3.obj" />
 
 		<material name="robot0_Part__Feature001_001_003_001" specular="0.5" shininess="0.45" rgba="1.000000 1.000000 1.000000 1.000000" />
 		<material name="robot0_Part__Feature002_001_003_001" specular="0.5" shininess="0.45" rgba="0.250980 0.250980 0.250980 1.000000" />
 		<material name="robot0_Part__Feature003_001_003_001" specular="0.5" shininess="0.45" rgba="1.000000 1.000000 1.000000 1.000000" />
 		<material name="robot0_Part__Feature_002_003_001" specular="0.5" shininess="0.45" rgba="1.000000 1.000000 1.000000 1.000000" />
-		<mesh name="robot0_link4_vis_0" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link4_vis/link4_vis_0.obj" />
-		<mesh name="robot0_link4_vis_1" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link4_vis/link4_vis_1.obj" />
-		<mesh name="robot0_link4_vis_2" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link4_vis/link4_vis_2.obj" />
-		<mesh name="robot0_link4_vis_3" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link4_vis/link4_vis_3.obj" />
+		<mesh name="robot0_link4_vis_0" file="robots/panda/obj_meshes/link4_vis/link4_vis_0.obj" />
+		<mesh name="robot0_link4_vis_1" file="robots/panda/obj_meshes/link4_vis/link4_vis_1.obj" />
+		<mesh name="robot0_link4_vis_2" file="robots/panda/obj_meshes/link4_vis/link4_vis_2.obj" />
+		<mesh name="robot0_link4_vis_3" file="robots/panda/obj_meshes/link4_vis/link4_vis_3.obj" />
 
 		<material name="robot0_Part__Feature_002_004_003" specular="0.5" shininess="0.45" rgba="1.000000 1.000000 1.000000 1.000000" />
 		<material name="robot0_Shell001_001_001_003" specular="0.5" shininess="0.45" rgba="0.250000 0.250000 0.250000 1.000000" />
 		<material name="robot0_Shell_001_001_003" specular="0.5" shininess="0.45" rgba="1.000000 1.000000 1.000000 1.000000" />
-		<mesh name="robot0_link5_vis_0" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link5_vis/link5_vis_0.obj" />
-		<mesh name="robot0_link5_vis_1" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link5_vis/link5_vis_1.obj" />
-		<mesh name="robot0_link5_vis_2" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link5_vis/link5_vis_2.obj" />
+		<mesh name="robot0_link5_vis_0" file="robots/panda/obj_meshes/link5_vis/link5_vis_0.obj" />
+		<mesh name="robot0_link5_vis_1" file="robots/panda/obj_meshes/link5_vis/link5_vis_1.obj" />
+		<mesh name="robot0_link5_vis_2" file="robots/panda/obj_meshes/link5_vis/link5_vis_2.obj" />
 
 		<material name="robot0_Face064_002_001_002_001" specular="0.5" shininess="0.45" rgba="1.000000 0.000000 0.000000 1.000000" />
 		<material name="robot0_Face065_002_001_002_001" specular="0.5" shininess="0.45" rgba="0.000000 1.000000 0.000000 1.000000" />
@@ -102,23 +102,23 @@
 		<material name="robot0_Shell_003_001_002_001" specular="0.5" shininess="0.45" rgba="0.250980 0.250980 0.250980 1.000000" />
 		<material name="robot0_Union001_001_001_002_001" specular="0.5" shininess="0.45" rgba="0.039216 0.541176 0.780392 1.000000" />
 		<material name="robot0_Union_001_001_002_001" specular="0.5" shininess="0.45" rgba="0.039216 0.541176 0.780392 1.000000" />
-		<mesh name="robot0_link6_vis_0" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_0.obj" />
-		<mesh name="robot0_link6_vis_1" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_1.obj" />
-		<mesh name="robot0_link6_vis_2" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_2.obj" />
-		<mesh name="robot0_link6_vis_3" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_3.obj" />
-		<mesh name="robot0_link6_vis_4" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_4.obj" />
-		<mesh name="robot0_link6_vis_5" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_5.obj" />
-		<mesh name="robot0_link6_vis_6" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_6.obj" />
-		<mesh name="robot0_link6_vis_7" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_7.obj" />
-		<mesh name="robot0_link6_vis_8" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_8.obj" />
-		<mesh name="robot0_link6_vis_9" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_9.obj" />
-		<mesh name="robot0_link6_vis_10" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_10.obj" />
-		<mesh name="robot0_link6_vis_11" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_11.obj" />
-		<mesh name="robot0_link6_vis_12" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_12.obj" />
-		<mesh name="robot0_link6_vis_13" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_13.obj" />
-		<mesh name="robot0_link6_vis_14" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_14.obj" />
-		<mesh name="robot0_link6_vis_15" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_15.obj" />
-		<mesh name="robot0_link6_vis_16" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link6_vis/link6_vis_16.obj" />
+		<mesh name="robot0_link6_vis_0" file="robots/panda/obj_meshes/link6_vis/link6_vis_0.obj" />
+		<mesh name="robot0_link6_vis_1" file="robots/panda/obj_meshes/link6_vis/link6_vis_1.obj" />
+		<mesh name="robot0_link6_vis_2" file="robots/panda/obj_meshes/link6_vis/link6_vis_2.obj" />
+		<mesh name="robot0_link6_vis_3" file="robots/panda/obj_meshes/link6_vis/link6_vis_3.obj" />
+		<mesh name="robot0_link6_vis_4" file="robots/panda/obj_meshes/link6_vis/link6_vis_4.obj" />
+		<mesh name="robot0_link6_vis_5" file="robots/panda/obj_meshes/link6_vis/link6_vis_5.obj" />
+		<mesh name="robot0_link6_vis_6" file="robots/panda/obj_meshes/link6_vis/link6_vis_6.obj" />
+		<mesh name="robot0_link6_vis_7" file="robots/panda/obj_meshes/link6_vis/link6_vis_7.obj" />
+		<mesh name="robot0_link6_vis_8" file="robots/panda/obj_meshes/link6_vis/link6_vis_8.obj" />
+		<mesh name="robot0_link6_vis_9" file="robots/panda/obj_meshes/link6_vis/link6_vis_9.obj" />
+		<mesh name="robot0_link6_vis_10" file="robots/panda/obj_meshes/link6_vis/link6_vis_10.obj" />
+		<mesh name="robot0_link6_vis_11" file="robots/panda/obj_meshes/link6_vis/link6_vis_11.obj" />
+		<mesh name="robot0_link6_vis_12" file="robots/panda/obj_meshes/link6_vis/link6_vis_12.obj" />
+		<mesh name="robot0_link6_vis_13" file="robots/panda/obj_meshes/link6_vis/link6_vis_13.obj" />
+		<mesh name="robot0_link6_vis_14" file="robots/panda/obj_meshes/link6_vis/link6_vis_14.obj" />
+		<mesh name="robot0_link6_vis_15" file="robots/panda/obj_meshes/link6_vis/link6_vis_15.obj" />
+		<mesh name="robot0_link6_vis_16" file="robots/panda/obj_meshes/link6_vis/link6_vis_16.obj" />
 
 		<material name="robot0_Part__Mirroring001_004_002" specular="0.5" shininess="0.45" rgba="0.250980 0.250980 0.250980 1.000000" />
 		<material name="robot0_Part__Mirroring002_004_001" specular="0.5" shininess="0.45" rgba="0.250980 0.250980 0.250980 1.000000" />
@@ -128,21 +128,21 @@
 		<material name="robot0_Part__Mirroring006_004_001" specular="0.5" shininess="0.45" rgba="0.250980 0.250980 0.250980 1.000000" />
 		<material name="robot0_Part__Mirroring007_004_001" specular="0.5" shininess="0.45" rgba="0.250980 0.250980 0.250980 1.000000" />
 		<material name="robot0_Part__Mirroring_004_001" specular="0.5" shininess="0.45" rgba="0.898039 0.917647 0.929412 1.000000" />
-		<mesh name="robot0_link7_vis_0" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link7_vis/link7_vis_0.obj" />
-		<mesh name="robot0_link7_vis_1" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link7_vis/link7_vis_1.obj" />
-		<mesh name="robot0_link7_vis_2" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link7_vis/link7_vis_2.obj" />
-		<mesh name="robot0_link7_vis_3" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link7_vis/link7_vis_3.obj" />
-		<mesh name="robot0_link7_vis_4" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link7_vis/link7_vis_4.obj" />
-		<mesh name="robot0_link7_vis_5" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link7_vis/link7_vis_5.obj" />
-		<mesh name="robot0_link7_vis_6" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link7_vis/link7_vis_6.obj" />
-		<mesh name="robot0_link7_vis_7" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/robots/panda/obj_meshes/link7_vis/link7_vis_7.obj" />
-		<mesh name="fixed_mount0_pedestal" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/bases/meshes/rethink_mount/pedestal.stl" />
-		<mesh name="gripper0_right_hand" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/grippers/meshes/panda_gripper/hand.stl" />
-		<mesh name="gripper0_right_hand_vis" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/grippers/meshes/panda_gripper/hand_vis.stl" />
-		<mesh name="gripper0_right_finger" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/grippers/meshes/panda_gripper/finger.stl" />
-		<mesh name="gripper0_right_finger_vis" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/grippers/meshes/panda_gripper/finger_vis.stl" />
-		<mesh name="gripper0_right_finger_vis2" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/grippers/meshes/panda_gripper/finger_longer.stl" />
-		<texture type="cube" name="cube_redwood" file="/Users/hasan/code/python/robosuite/robosuite/models/assets/textures/red-wood.png" /><material texrepeat="1 1" specular="0.4" shininess="0.1" name="cube_redwood_mat" texture="cube_redwood" /></asset>
+		<mesh name="robot0_link7_vis_0" file="robots/panda/obj_meshes/link7_vis/link7_vis_0.obj" />
+		<mesh name="robot0_link7_vis_1" file="robots/panda/obj_meshes/link7_vis/link7_vis_1.obj" />
+		<mesh name="robot0_link7_vis_2" file="robots/panda/obj_meshes/link7_vis/link7_vis_2.obj" />
+		<mesh name="robot0_link7_vis_3" file="robots/panda/obj_meshes/link7_vis/link7_vis_3.obj" />
+		<mesh name="robot0_link7_vis_4" file="robots/panda/obj_meshes/link7_vis/link7_vis_4.obj" />
+		<mesh name="robot0_link7_vis_5" file="robots/panda/obj_meshes/link7_vis/link7_vis_5.obj" />
+		<mesh name="robot0_link7_vis_6" file="robots/panda/obj_meshes/link7_vis/link7_vis_6.obj" />
+		<mesh name="robot0_link7_vis_7" file="robots/panda/obj_meshes/link7_vis/link7_vis_7.obj" />
+		<mesh name="fixed_mount0_pedestal" file="bases/meshes/rethink_mount/pedestal.stl" />
+		<mesh name="gripper0_right_hand" file="grippers/meshes/panda_gripper/hand.stl" />
+		<mesh name="gripper0_right_hand_vis" file="grippers/meshes/panda_gripper/hand_vis.stl" />
+		<mesh name="gripper0_right_finger" file="grippers/meshes/panda_gripper/finger.stl" />
+		<mesh name="gripper0_right_finger_vis" file="grippers/meshes/panda_gripper/finger_vis.stl" />
+		<mesh name="gripper0_right_finger_vis2" file="grippers/meshes/panda_gripper/finger_longer.stl" />
+		<texture type="cube" name="cube_redwood" file="robot_models/franka/assets/textures/red-wood.png" /><material texrepeat="1 1" specular="0.4" shininess="0.1" name="cube_redwood_mat" texture="cube_redwood" /></asset>
 
 	<visual>
 		<map znear="0.001" />

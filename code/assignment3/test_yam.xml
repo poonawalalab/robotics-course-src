@@ -7,18 +7,18 @@
 	</option>
 
 	<asset>
-		<mesh name="base" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/arm/yam/assets/base.stl" />
-		<mesh name="link1" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/arm/yam/assets/link1.stl" />
-		<mesh name="link2" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/arm/yam/assets/link2.stl" />
-		<mesh name="link3" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/arm/yam/assets/link3.stl" />
-		<mesh name="link4" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/arm/yam/assets/link4.stl" />
-		<mesh name="link5" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/arm/yam/assets/link5.stl" />
+		<mesh name="base" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/yam/arm/yam/assets/base.stl" />
+		<mesh name="link1" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/yam/arm/yam/assets/link1.stl" />
+		<mesh name="link2" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/yam/arm/yam/assets/link2.stl" />
+		<mesh name="link3" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/yam/arm/yam/assets/link3.stl" />
+		<mesh name="link4" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/yam/arm/yam/assets/link4.stl" />
+		<mesh name="link5" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/yam/arm/yam/assets/link5.stl" />
 		<texture name="skybox" type="skybox" builtin="gradient" rgb1=".4 .6 .8" rgb2="0 0 0" width="800" height="800" />
 		<texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3" rgb2=".2 .3 .4" width="300" height="300" mark="edge" markrgb=".2 .3 .4" />
 		<material name="grid" texture="grid" texrepeat="4 4" reflectance=".2" />
-		<mesh name="gripper" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/gripper/linear_3507/assets/gripper.stl" />
-		<mesh name="tip_left" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/gripper/linear_3507/assets/mod_tip_left.stl" />
-		<mesh name="tip_right" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/gripper/linear_3507/assets/mod_tip_left.stl"  scale="1 -1 1" />
+		<mesh name="gripper" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/yam/gripper/linear_3507/assets/gripper.stl" />
+		<mesh name="tip_left" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/yam/gripper/linear_3507/assets/mod_tip_left.stl" />
+		<mesh name="tip_right" file="/Users/hasan/teaching/ME676/code/assignment3/robot_models/yam/gripper/linear_3507/assets/mod_tip_left.stl"  scale="1 -1 1" />
 	</asset>
 	<default>
 	<default class="pad_box1">

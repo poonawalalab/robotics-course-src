@@ -50,8 +50,8 @@ def combine_arm_and_gripper_xml() -> str:
     Returns:
         Path to the combined XML file written to /tmp/.
     """
-    arm_path = "robot_models/arm/yam/yam.xml"
-    gripper_path = "robot_models/gripper/linear_3507/linear_3507.xml"
+    arm_path = "robot_models/yam/arm/yam/yam.xml"
+    gripper_path = "robot_models/yam/gripper/linear_3507/linear_3507.xml"
 
     arm_tree = ET.parse(arm_path)
     arm_root = arm_tree.getroot()

@@ -1,3 +1,8 @@
+"""
+Current version achieves a loop for the franka+2-fingered gripper where it reaches HOME with closed gripper, then opens gripper while going to grab, then home while closing (picking up block), then open gripper (dropping gripper) and go-to-grab etc. 
+TODO: proper grasp check logic
+
+"""
 from enum import Enum, auto
 import mujoco
 import numpy as np
@@ -53,7 +58,10 @@ class ArmFSM:
         transitions = {
             State.HOME:    State.APPROACH,
             State.APPROACH:    State.GRASP_CLOSE,
-            State.GRASP_CLOSE: State.HOME,
+            State.GRASP_CLOSE: State.HOME, #loops
+            ## to terminate after lifting:
+            # State.GRASP_CLOSE: State.LIFT,
+            # State.LIFT: State.LIFT, ## terminal state
         }
         self.state = transitions[self.state]
 
@@ -144,7 +152,7 @@ class ArmFSM:
         # set arm joint targets, check if near enough
         self._gripper_close(model,data)
         err = np.linalg.norm(self.q_home - data.qpos[:(model.nu-2)])
-        print("error: " , err)
+        # print("error in joint position: " , err)
         if  err < 0.15:
             print("transition from HOME:")
             self.transition()
@@ -161,7 +169,7 @@ class ArmFSM:
         # close gripper fingers
         self._gripper_close(model,data)
         if self._grasp_stable(data):
-            print("transition to LIFold:",self.grasp_hold)
+            print("transition to HOME:",self.grasp_hold)
             self.transition()
 
     def _grasp_close(self, model, data):
@@ -188,5 +196,5 @@ class ArmFSM:
 
     def _grasp_stable(self, data):
         # e.g. check contact forces or finger position error is small
-        print(data.time)
+        # print("time (transition @ 15):", data.time)
         return data.time > 15.0
