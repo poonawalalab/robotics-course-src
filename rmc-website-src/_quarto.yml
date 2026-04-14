@@ -26,6 +26,8 @@ website:
           href: matrix_review.qmd
         - text: "Block Systems & Schur Complement"
           href: schur_complement.qmd
+        - text: "LQR"
+          href: lqr_opt_activity.qmd
         - text: "Polynomial Trajectory Blending"
           href: poly_blend.qmd
         - text: "Simple Pendulum (phase portrait)"

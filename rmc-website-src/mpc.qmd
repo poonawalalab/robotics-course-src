@@ -73,14 +73,14 @@ At each timestep, the planning window shifts forward by one step.
 t=0:  [●━━━━━━━━━━━━━━━━━━━━●]         solve, apply u_0*
 t=1:    [●━━━━━━━━━━━━━━━━━━━━●]       solve, apply u_1*
 t=2:      [●━━━━━━━━━━━━━━━━━━━━●]     solve, apply u_2*
-           ↑ current state              ↑ horizon end
+           ↑ current state      ↑ horizon end
 ```
 
 ::: {.fragment fragment-index=1}
 **Key properties:**
 
 - The horizon always looks $T$ steps into the future (same length each time)
-- Only $u_0^*$ is ever applied — the rest of the plan is discarded and recomputed
+- Only $u_t^*$ is ever applied — the rest of the plan is discarded and recomputed
 - The re-solve at $t+1$ can be **warm-started** from the shifted solution at $t$
 :::
 
@@ -105,7 +105,7 @@ $$x_{k+1} = Ax_k + Bu_k, \qquad J = x_T^T P_f x_T + \sum_{k=0}^{T-1}(x_k^T Q x_k
 ::: {.fragment fragment-index=2}
 **Linear MPC:** solve the same problem online at each $t$ from $x_t$.
 
-Without constraints: **LQR and MPC give the identical control** — MPC adds no benefit, just cost.
+Without non-dynamics constraints **LQR and MPC give the identical control** (finite horizon case)
 :::
 
 ::: {.fragment fragment-index=3}

@@ -42,7 +42,9 @@ coursepdf: assets/extras/
 | Mar 26 | Velocity Kinematics; Inverse Kinematics | [Vel Kin](assets/pdfs/05_Velocities_Of_Frames.pdf), [Inv Kin](assets/pdfs/07_Inverse_Kinematics.pdf)|2.2;2.3|3.3;6 | 4.1-4.5; 3.2|
 | Mar 31 | Task Space Inv Dyn | [InvDyn](https://poonawalalab.github.io/rmc-s21/assets/pdf/13_Inverse_Dynamics_CTC.pdf)|4.2.3|11.4.2 | 9.3|
 | Apr 2 | Project Proposal | || | |
-| Apr 7 | Force and Impedance Control | | 4.4; 4.5| 11.5; 11.7 |9|
+| Apr 7 | Force and Impedance Control | | 4.4; 4.5; OneNote | 11.5; 11.7 |9|
+| Apr 9 | Manipulability and Null Space Control |  | OneNote |  | |
+| Apr 14 | MPPI | [MPPI](mppi.html) | OneNote |  | |
 
 
 [^2]: [Modern Robotics wiki](https://hades.mech.northwestern.edu/index.php/Modern_Robotics#Book)
