@@ -121,18 +121,28 @@ def redraw(mu, sigma, lam):
     ax_main.set_ylabel(r'$y = f(x) = x^2$', fontsize=13)
     ax_main.legend(loc='upper center', fontsize=10, framealpha=0.92)
 
-    # ── Top panel: input Gaussian p(x) ───────────────────────────────────────
+    # ── Top panel: p_0(x) and q*(x) ──────────────────────────────────────────
     xp = np.linspace(*X_LIM, 400)
     gx = np.exp(-0.5 * ((xp - mu) / sigma) ** 2) / (sigma * np.sqrt(2 * np.pi))
+
+    # q*(x) ∝ p_0(x) · exp(−f(x)/λ), normalized numerically
+    qstar_unnorm = gx * np.exp(-f(xp) / lam)
+    dx = xp[1] - xp[0]
+    qstar = qstar_unnorm / (qstar_unnorm.sum() * dx)
+
     ax_top.fill_between(xp, gx, alpha=0.25, color='royalblue')
-    ax_top.plot(xp, gx, color='royalblue', lw=2)
+    ax_top.plot(xp, gx, color='royalblue', lw=2,
+                label=r'$p_0(x)$')
+    ax_top.fill_between(xp, qstar, alpha=0.18, color='seagreen')
+    ax_top.plot(xp, qstar, color='seagreen', lw=2,
+                label=r'$q^*(x) \propto p_0 e^{-f/\lambda}$')
     ax_top.axvline(mu,     color='royalblue', ls='--', lw=1.6, alpha=0.9,
                    label=fr'$\mu_x = {mu:.2f}$')
     ax_top.axvline(mu_new, color='seagreen',  ls='--', lw=1.6, alpha=0.9,
                    label=fr'$\mu_{{\rm new}} = {mu_new:.2f}$')
     ax_top.set_xlim(*X_LIM)
     ax_top.set_yticks([])
-    ax_top.set_ylabel('$p(x)$', fontsize=11)
+    ax_top.set_ylabel('density', fontsize=11)
     ax_top.tick_params(labelbottom=False)
     ax_top.legend(fontsize=9, loc='upper right', framealpha=0.92)
 
