@@ -44,7 +44,8 @@ coursepdf: assets/extras/
 | Apr 2 | Project Proposal | || | |
 | Apr 7 | Force and Impedance Control | | 4.4; 4.5; OneNote | 11.5; 11.7 |9|
 | Apr 9 | Manipulability and Null Space Control |  | OneNote |  | |
-| Apr 14 | MPPI | [MPPI](mppi.html) | OneNote |  | |
+| Apr 14 | MPPI | [MPPI](mppi.html) |  |  | |
+| Apr 16 | PPO | [PPO](ppo.html) |  |  | |
 
 
 [^2]: [Modern Robotics wiki](https://hades.mech.northwestern.edu/index.php/Modern_Robotics#Book)

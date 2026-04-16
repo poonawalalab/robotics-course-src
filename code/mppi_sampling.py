@@ -63,6 +63,7 @@ gs = gridspec.GridSpec(
 ax_main  = fig.add_subplot(gs[1, 0])
 ax_top   = fig.add_subplot(gs[0, 0])
 ax_right = fig.add_subplot(gs[1, 1])
+ax_top2  = ax_top.twinx()   # right axis for the weight curve w(x) = e^{-f/λ}
 
 # Three sliders
 ax_sl_mu    = fig.add_axes([0.07, 0.04, 0.26, 0.025])
@@ -79,7 +80,7 @@ _yc = f(_xc)
 # ── Draw ──────────────────────────────────────────────────────────────────────
 
 def redraw(mu, sigma, lam):
-    for ax in (ax_main, ax_top, ax_right):
+    for ax in (ax_main, ax_top, ax_top2, ax_right):
         ax.cla()
 
     # ── Compute ───────────────────────────────────────────────────────────────
@@ -144,7 +145,22 @@ def redraw(mu, sigma, lam):
     ax_top.set_yticks([])
     ax_top.set_ylabel('density', fontsize=11)
     ax_top.tick_params(labelbottom=False)
-    ax_top.legend(fontsize=9, loc='upper right', framealpha=0.92)
+
+    # Weight curve w(x) = e^{-f(x)/λ} on twin right axis
+    wx = np.exp(-f(xp) / lam)
+    ax_top2.plot(xp, wx, color='darkorange', lw=1.8, ls='--',
+                 label=r'$e^{-f(x)/\lambda}$')
+    ax_top2.set_xlim(*X_LIM)
+    ax_top2.set_ylim(0, 1.25)
+    ax_top2.set_yticks([0, 0.5, 1.0])
+    ax_top2.tick_params(axis='y', labelsize=8, colors='darkorange')
+    ax_top2.set_ylabel(r'$w(x)$', fontsize=10, color='darkorange')
+
+    # Combined legend from both axes
+    handles1, labels1 = ax_top.get_legend_handles_labels()
+    handles2, labels2 = ax_top2.get_legend_handles_labels()
+    ax_top2.legend(handles1 + handles2, labels1 + labels2,
+                   fontsize=9, loc='upper right', framealpha=0.92)
 
     # ── Right panel: MPPI weighting function w(y) = exp(−y/λ) ────────────────
     # Each sample dot lies exactly on this curve at its own cost value.
