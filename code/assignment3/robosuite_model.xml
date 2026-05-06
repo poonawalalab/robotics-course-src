@@ -287,21 +287,22 @@
 												<inertial pos="0 0 0" mass="0.5" diaginertia="0.05 0.05 0.05" />
 
 												<camera mode="fixed" name="robot0_eye_in_hand" pos="0.0 0 0.075" quat="0 0.707108 0.707108 0" fovy="75" />
+													<site name="gripper0_eih" pos="0.0 0.0 0.075" size="0.01 0.01 0.01" rgba="1 0 1 0" type="sphere" group="1" />
 
 												<body name="gripper0_right_right_gripper" pos="0 0 0" quat="0.707107 0 0 -0.707107">
-													<site name="gripper0_right_ft_frame" pos="0 0 0" size="0.01 0.01 0.01" rgba="1 0 0 1" type="sphere" group="1" />
+													<site name="gripper0_right_ft_frame" pos="0 0 0" size="0.01 0.01 0.01" rgba="1 0 0 0" type="sphere" group="1" />
 													<inertial pos="0 0 0.17" quat="0.707107 0.707107 0 0" mass="0.3" diaginertia="0.09 0.07 0.05" />
 													<geom pos="0 0 0." quat="0.707107 0 0 0.707107" type="mesh" contype="0" conaffinity="0" group="1" mesh="gripper0_right_hand_vis" name="gripper0_right_hand_visual" rgba="1 1 1 1" />
 													<geom pos="0 0 0." quat="0.707107 0 0 0.707107" type="mesh" mesh="gripper0_right_hand" group="0" name="gripper0_right_hand_collision" rgba="0 0 0.5 1" />
 
 													<body name="gripper0_right_eef" pos="0 0 0.097" quat="1 0 0 0">
-												<site name="grasp_site" pos="0 0 0" quat="0 1 0 0" size="0.005" rgba="0 1 0 1" />
-														<site name="gripper0_right_grip_site" pos="0 0 0" size="0.01 0.01 0.01" rgba="1 0 0 0.5" type="sphere" group="1" />
+												<site name="grasp_site" pos="0 0 0" quat="0 1 0 0" size="0.005" rgba="0 1 0 0" />
+														<site name="gripper0_right_grip_site" pos="0 0 0.05" size="0.01 0.01 0.01" rgba="1 0 0 0.0" type="sphere" group="1" />
 														<site name="gripper0_right_ee_x" pos="0.1 0 0" size="0.005 .1" quat="0.707105  0 0.707108 0 " rgba="1 0 0 0" type="cylinder" group="1" />
 														<site name="gripper0_right_ee_y" pos="0 0.1 0" size="0.005 .1" quat="0.707105 0.707108 0 0" rgba="0 1 0 0" type="cylinder" group="1" />
 														<site name="gripper0_right_ee_z" pos="0 0 0.1" size="0.005 .1" quat="1 0 0 0" rgba="0 0 1 0" type="cylinder" group="1" />
 
-														<site name="gripper0_right_grip_site_cylinder" pos="0 0 0" size="0.005 10" rgba="0 1 0 0.3" type="cylinder" group="1" />
+														<site name="gripper0_right_grip_site_cylinder" pos="0 0 0" size="0.005 10" rgba="0 1 0 0.0" type="cylinder" group="1" />
 													</body>
 													<body name="gripper0_right_leftfinger" pos="0 0 0.0524" quat="0.707107 0 0 0.707107">
 														<inertial pos="0 0 0.05" mass="0.1" diaginertia="0.01 0.01 0.005" />
@@ -353,13 +354,15 @@
 				</body>
 			</body>
 		</body>
-		<body pos="0 0 1.0" name="cube_main"><geom rgba="0.5 0 0 1" density="1000" friction="1 0.005 0.0001" solref="0.02 1.0" solimp="0.9 0.95 0.001" type="box" size="0.02190303545867647 0.02009349075725503 0.020425738307833653" pos="0 0 0" group="0" name="cube_g0" />
+		<body pos="0 0 1.0" name="cube_main">
+
+			<geom rgba="0.5 0 0 1" density="1000" friction="1 0.005 0.0001" solref="0.02 1.0" solimp="0.9 0.95 0.001" type="box" size="0.02190303545867647 0.02009349075725503 0.020425738307833653" pos="0 0 0" group="0" name="cube_g0" />
 
 			<geom conaffinity="0" contype="0" mass="1e-8" material="cube_redwood_mat" type="box" size="0.02190303545867647 0.02009349075725503 0.020425738307833653" pos="0 0 0" group="1" name="cube_g0_vis" />
 
 			<joint type="free" name="cube_joint0" />
 
-			<site type="sphere" group="0" pos="0 0 0" size="0.002 0.002 0.002" rgba="1 0 0 1" name="cube_default_site" />
+			<!-- <site group="0" pos="0 0 0" rgba="1 0 0 1" name="cube_default_site" /> -->
 
 		</body>
 
